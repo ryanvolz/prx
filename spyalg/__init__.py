@@ -1,5 +1,5 @@
 """
 
 """
-import amp
-import thresholding
+from . import amp
+from . import thresholding

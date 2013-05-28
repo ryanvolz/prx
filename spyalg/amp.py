@@ -18,7 +18,7 @@
 from __future__ import division
 import numpy as np
 
-from thresholding import softthresh, softthreshp, estnoise
+from .thresholding import softthresh, softthreshp, estnoise
 
 def fdrthresh(x, m):
     return np.sort(np.abs(x), axis=None)[-m]
