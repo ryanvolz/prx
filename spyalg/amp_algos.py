@@ -18,7 +18,10 @@
 from __future__ import division
 import numpy as np
 
-from .thresholding import softthresh, softthreshp, estnoise
+from .thresholding import softthresh, softthreshp
+from .ist_algos import medestnoise
+
+__all__ = ['amp_fdr', 'amp_ffar']
 
 def fdrthresh(x, m):
     return np.sort(np.abs(x), axis=None)[-m]
@@ -35,7 +38,7 @@ def amp_ffar(A, Astar, y, x0, lmbda, maxits=10000, moreinfo=False):
         Asz = Astar(z)
         xprethresh = x + Asz
         # estimate the noise level
-        sigma_est = estnoise(Asz)
+        sigma_est = medestnoise(Asz)
         thresh = lmbda*sigma_est
         # apply soft thresholding to get new sparse estimate
         xnew = softthresh(xprethresh, thresh)
