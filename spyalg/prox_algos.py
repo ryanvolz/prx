@@ -24,7 +24,7 @@ __all__ = ['admm', 'admmlin', 'proxgrad', 'proxgradaccel']
 
 def proxgrad(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5, expand=1.25, 
              reltol=1e-6, abstol=1e-10, maxits=10000, 
-             moreinfo=False, printrate=100):
+             moreinfo=False, printrate=100, xstar=None):
     """Solve: argmin_x ( F(x) + G(A(x) - b) ) using the proximal gradient method.
     
     F and G are callables that return the function value at x or z=A(x)-b.
@@ -83,7 +83,7 @@ def proxgrad(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5, expand=1.25,
     if moreinfo:
         histdtype = [('it', np.int32), ('val', np.float64), 
                      ('step', np.float64), ('resid', np.float64), 
-                     ('thresh', np.float64)]
+                     ('thresh', np.float64), ('err', np.float64)]
         hist = np.zeros((maxits - 1)//printrate + 1, dtype=histdtype)
     
     x = x0
@@ -143,7 +143,11 @@ def proxgrad(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5, expand=1.25,
                    'resid={3:.4} ({4:.3})').format(
                             k, val, stepsize, rnorm, stopthresh))
             if moreinfo:
-                hist[k//printrate] = (k, val, stepsize, rnorm, stopthresh)
+                if xstar is not None:
+                    err = tolnorm(x_new - xstar)/tolnorm(xstar)
+                else:
+                    err = np.nan
+                hist[k//printrate] = (k, val, stepsize, rnorm, stopthresh, err)
         if rnorm < stopthresh:
             break
         
@@ -169,7 +173,8 @@ def proxgrad(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5, expand=1.25,
 
 def proxgradaccel(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5, 
                   expand=1.25, reltol=1e-6, abstol=1e-10, 
-                  maxits=10000, moreinfo=False, printrate=100):
+                  maxits=10000, moreinfo=False, printrate=100,
+                  xstar=None):
     """Solve: argmin_x ( F(x) + G(A(x) - b) ) using accelerated prox. gradient.
     
     F and G are callables that return the function value at x or z=A(x)-b.
@@ -238,7 +243,7 @@ def proxgradaccel(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5,
     if moreinfo:
         histdtype = [('it', np.int32), ('val', np.float64), 
                      ('step', np.float64), ('resid', np.float64), 
-                     ('thresh', np.float64)]
+                     ('thresh', np.float64), ('err', np.float64)]
         hist = np.zeros((maxits - 1)//printrate + 1, dtype=histdtype)
     
     t_old = 1
@@ -319,7 +324,11 @@ def proxgradaccel(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5,
                    'resid={3:.4} ({4:.3})').format(
                             k, val, stepsize, rnorm, stopthresh))
             if moreinfo:
-                hist[k//printrate] = (k, val, stepsize, rnorm, stopthresh)
+                if xstar is not None:
+                    err = tolnorm(x_new - xstar)/tolnorm(xstar)
+                else:
+                    err = np.nan
+                hist[k//printrate] = (k, val, stepsize, rnorm, stopthresh, err)
         if rnorm < stopthresh:
             break
         
@@ -345,7 +354,8 @@ def proxgradaccel(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5,
         return x
 
 def admm(F, G, x0, y0=None, pen=1.0, residgap=2, penfactor=1.5, reltol=1e-6, 
-         abstol=1e-10, maxits=10000, moreinfo=False, printrate=100):
+         abstol=1e-10, maxits=10000, moreinfo=False, printrate=100,
+         xstar=None):
     """Solve: argmin_x ( F(x) + G(x) ) using ADMM.
     
     ADMM stands for Alternating Direction Method of Multipliers.
@@ -397,7 +407,8 @@ def admm(F, G, x0, y0=None, pen=1.0, residgap=2, penfactor=1.5, reltol=1e-6,
         histdtype = [('it', np.int32), ('val', np.float64), 
                      ('pen', np.float64), 
                      ('resid_p', np.float64), ('thresh_p', np.float64),
-                     ('resid_d', np.float64), ('thresh_d', np.float64)]
+                     ('resid_d', np.float64), ('thresh_d', np.float64),
+                     ('err', np.float64)]
         hist = np.zeros((maxits - 1)//printrate + 1, dtype=histdtype)
     
     x = x0
@@ -439,8 +450,12 @@ def admm(F, G, x0, y0=None, pen=1.0, residgap=2, penfactor=1.5, reltol=1e-6,
                    'resid_p={3:.4} ({4:.3}), resid_d={5:.4} ({6:.3})').format(
                    k, val, pen, rnorm, rstopthresh, snorm, sstopthresh))
             if moreinfo:
+                if xstar is not None:
+                    err = tolnorm(x_new - xstar)/tolnorm(xstar)
+                else:
+                    err = np.nan
                 hist[k//printrate] = (k, val, pen, rnorm, rstopthresh, 
-                                      snorm, sstopthresh)
+                                      snorm, sstopthresh, err)
         # can't calculate dual function value, so best stopping criterion
         # is to see if primal and dual feasibility residuals are small
         if rnorm < rstopthresh and snorm < sstopthresh:
@@ -474,7 +489,7 @@ def admm(F, G, x0, y0=None, pen=1.0, residgap=2, penfactor=1.5, reltol=1e-6,
 def admmlin(F, G, A, Astar, b, x0, y0=None, stepsize=1.0, backtrack=0.5,
             expand=1.25, pen=1.0, residgap=2, penfactor=1.5, relax=1.0, 
             reltol=1e-6, abstol=1e-10, maxits=10000, 
-            moreinfo=False, printrate=100):
+            moreinfo=False, printrate=100, xstar=None):
     """Solve: argmin_x ( F(x) + G(A(x) - b) ) using linearized ADMM.
     
     ADMM stands for Alternating Direction Method of Multipliers.
@@ -545,7 +560,8 @@ def admmlin(F, G, A, Astar, b, x0, y0=None, stepsize=1.0, backtrack=0.5,
         histdtype = [('it', np.int32), ('val', np.float64), 
                      ('step', np.float64), ('pen', np.float64), 
                      ('resid_p', np.float64), ('thresh_p', np.float64),
-                     ('resid_d', np.float64), ('thresh_d', np.float64)]
+                     ('resid_d', np.float64), ('thresh_d', np.float64),
+                     ('err', np.float64)]
         hist = np.zeros((maxits - 1)//printrate + 1, dtype=histdtype)
     
     if expand is not None and backtrack is not None:
@@ -624,8 +640,12 @@ def admmlin(F, G, A, Astar, b, x0, y0=None, stepsize=1.0, backtrack=0.5,
                    'resid_p={4:.4} ({5:.3}), resid_d={6:.4} ({7:.3})').format(
                     k, val, stepsize, pen, rnorm, rstopthresh, snorm, sstopthresh))
             if moreinfo:
+                if xstar is not None:
+                    err = tolnorm(x_new - xstar)/tolnorm(xstar)
+                else:
+                    err = np.nan
                 hist[k//printrate] = (k, val, stepsize, pen, rnorm, rstopthresh, 
-                                      snorm, sstopthresh)
+                                      snorm, sstopthresh, err)
         # can't calculate dual function value, so best stopping criterion
         # is to see if primal and dual feasibility residuals are small
         if rnorm < rstopthresh and snorm < sstopthresh:
