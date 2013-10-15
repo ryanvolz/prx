@@ -139,15 +139,16 @@ def proxgrad(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5, expand=1.25,
         
         if printrate is not None and (k % printrate) == 0:
             val = F(x) + G(Axmb)
-            print(('{0}: val={1:.5}, step={2:.4}, ' + 
-                   'resid={3:.4} ({4:.3})').format(
-                            k, val, stepsize, rnorm, stopthresh))
+            dkt = dict(it=k, val=val, step=stepsize, resid=rnorm, 
+                       thresh=stopthresh)
+            print(('{it}: val={val:.5}, step={step:.4}, ' + 
+                   'resid={resid:.4} ({thresh:.3})').format(**dkt))
             if moreinfo:
                 if xstar is not None:
-                    err = tolnorm(x_new - xstar)/tolnorm(xstar)
+                    dkt['err'] = tolnorm(x_new - xstar)/tolnorm(xstar)
                 else:
-                    err = np.nan
-                hist[k//printrate] = (k, val, stepsize, rnorm, stopthresh, err)
+                    dkt['err'] = np.nan
+                hist[k//printrate] = tuple(dkt[key] for key in hist.dtype.names)
         if rnorm < stopthresh:
             break
         
@@ -320,15 +321,16 @@ def proxgradaccel(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5,
         
         if printrate is not None and (k % printrate) == 0:
             val = F(x_new) + G(Axmb)
-            print(('{0}: val={1:.5}, step={2:.4}, ' + 
-                   'resid={3:.4} ({4:.3})').format(
-                            k, val, stepsize, rnorm, stopthresh))
+            dkt = dict(it=k, val=val, step=stepsize, resid=rnorm, 
+                       thresh=stopthresh)
+            print(('{it}: val={val:.5}, step={step:.4}, ' + 
+                   'resid={resid:.4} ({thresh:.3})').format(**dkt))
             if moreinfo:
                 if xstar is not None:
-                    err = tolnorm(x_new - xstar)/tolnorm(xstar)
+                    dkt['err'] = tolnorm(x_new - xstar)/tolnorm(xstar)
                 else:
-                    err = np.nan
-                hist[k//printrate] = (k, val, stepsize, rnorm, stopthresh, err)
+                    dkt['err'] = np.nan
+                hist[k//printrate] = tuple(dkt[key] for key in hist.dtype.names)
         if rnorm < stopthresh:
             break
         
@@ -446,16 +448,18 @@ def admm(F, G, x0, y0=None, pen=1.0, residgap=2, penfactor=1.5, reltol=1e-6,
         
         if printrate is not None and (k % printrate) == 0:
             val = F(x) + G(x)
-            print(('{0}: value={1:.5}, pen={2:.4}, ' + 
-                   'resid_p={3:.4} ({4:.3}), resid_d={5:.4} ({6:.3})').format(
-                   k, val, pen, rnorm, rstopthresh, snorm, sstopthresh))
+            dkt = dict(it=k, val=val, pen=pen, resid_p=rnorm, 
+                       thresh_p=rstopthresh, resid_d=snorm, 
+                       thresh_d=sstopthresh)
+            print(('{it}: value={val:.5}, pen={pen:.4}, ' + 
+                   'resid_p={resid_p:.4} ({thresh_p:.3}), ' +
+                   'resid_d={resid_d:.4} ({thresh_d:.3})').format(**dkt))
             if moreinfo:
                 if xstar is not None:
-                    err = tolnorm(x_new - xstar)/tolnorm(xstar)
+                    dkt['err'] = tolnorm(x_new - xstar)/tolnorm(xstar)
                 else:
-                    err = np.nan
-                hist[k//printrate] = (k, val, pen, rnorm, rstopthresh, 
-                                      snorm, sstopthresh, err)
+                    dkt['err'] = np.nan
+                hist[k//printrate] = tuple(dkt[key] for key in hist.dtype.names)
         # can't calculate dual function value, so best stopping criterion
         # is to see if primal and dual feasibility residuals are small
         if rnorm < rstopthresh and snorm < sstopthresh:
@@ -636,16 +640,18 @@ def admmlin(F, G, A, Astar, b, x0, y0=None, stepsize=1.0, backtrack=0.5,
         
         if printrate is not None and (k % printrate) == 0:
             val = F(x) + G(z) + np.vdot(u/pen, Ax - b - z).real
-            print(('{0}: val={1:.5}, step={2:.4}, pen={3:.4}, ' + 
-                   'resid_p={4:.4} ({5:.3}), resid_d={6:.4} ({7:.3})').format(
-                    k, val, stepsize, pen, rnorm, rstopthresh, snorm, sstopthresh))
+            dkt = dict(it=k, val=val, step=stepsize, pen=pen, 
+                       resid_p=rnorm, thresh_p=rstopthresh,
+                       resid_d=snorm, thresh_d=sstopthresh)
+            print(('{it}: val={val:.5}, step={step:.4}, pen={pen:.4}, ' + 
+                   'resid_p={resid_p:.4} ({thresh_p:.3}), ' + 
+                   'resid_d={resid_d:.4} ({thresh_d:.3})').format(**dkt))
             if moreinfo:
                 if xstar is not None:
-                    err = tolnorm(x_new - xstar)/tolnorm(xstar)
+                    dkt['err'] = tolnorm(x_new - xstar)/tolnorm(xstar)
                 else:
-                    err = np.nan
-                hist[k//printrate] = (k, val, stepsize, pen, rnorm, rstopthresh, 
-                                      snorm, sstopthresh, err)
+                    dkt['err'] = np.nan
+                hist[k//printrate] = tuple(dkt[key] for key in hist.dtype.names)
         # can't calculate dual function value, so best stopping criterion
         # is to see if primal and dual feasibility residuals are small
         if rnorm < rstopthresh and snorm < sstopthresh:
