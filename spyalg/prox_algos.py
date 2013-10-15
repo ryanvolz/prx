@@ -85,10 +85,6 @@ def proxgrad(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5, expand=1.25,
                      ('step', np.float64), ('resid', np.float64), 
                      ('thresh', np.float64)]
         hist = np.zeros((maxits - 1)//printrate + 1, dtype=histdtype)
-        
-    if expand is not None and backtrack is not None:
-        # so initial stepsize is as specified after expansion
-        stepsize = stepsize/expand
     
     x = x0
     Axmb = A(x) - b
@@ -101,10 +97,6 @@ def proxgrad(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5, expand=1.25,
     bts = 0
     
     for k in xrange(maxits):
-        # expand stepsize
-        if expand is not None and backtrack is not None:
-            stepsize = stepsize*expand
-        
         # gradient direction
         grad_new = Astar(gradG(Axmb))
         
@@ -154,6 +146,10 @@ def proxgrad(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5, expand=1.25,
                 hist[k//printrate] = (k, val, stepsize, rnorm, stopthresh)
         if rnorm < stopthresh:
             break
+        
+        # expand stepsize
+        if expand is not None and backtrack is not None:
+            stepsize = stepsize*expand
     
     if printrate is not None:
         if k + 1 >= maxits:
@@ -247,9 +243,6 @@ def proxgradaccel(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5,
     
     t_old = 1
     stepsize_old = stepsize
-    if expand is not None and backtrack is not None:
-        # so initial stepsize is as specified after expansion
-        stepsize = stepsize/expand
     gamma = 1
     
     x = x0
@@ -270,11 +263,6 @@ def proxgradaccel(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5,
         # opposite direction of previous step prox gradient step (x - w)
         if np.vdot(w - x, x - x_old).real > 0:
             t_old = 1
-        
-        # expand stepsize
-        if expand is not None and backtrack is not None:
-            stepsize = stepsize*expand
-            gamma = stepsize_old/stepsize
         
         # loop for backtracking line search
         while True:
@@ -334,6 +322,11 @@ def proxgradaccel(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5,
                 hist[k//printrate] = (k, val, stepsize, rnorm, stopthresh)
         if rnorm < stopthresh:
             break
+        
+        # expand stepsize
+        if expand is not None and backtrack is not None:
+            stepsize = stepsize*expand
+            gamma = stepsize_old/stepsize
     
     if printrate is not None:
         if k + 1 >= maxits:
