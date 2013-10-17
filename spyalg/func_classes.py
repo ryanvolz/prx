@@ -61,6 +61,18 @@ class FunctionWithGradProx(object):
             g(x) = s*f(a*x + b) + <c, x> + d
         
         """
+        # change 'None's to identities
+        if scale is None:
+            scale = 1
+        if stretch is None:
+            stretch = 1
+        if shift is None:
+            shift = 0
+        if linear is None:
+            linear = 0
+        if const is None:
+            const = 0
+        
         self._scale = scale
         self._stretch = stretch
         self._shift = shift
@@ -68,28 +80,59 @@ class FunctionWithGradProx(object):
         self._const = const
         # modify functions to apply parameters
         # (order of operations is important!)
-        if shift is not None:
+        if shift is not None and np.any(shift != 0):
             self.fun = shift_fun(self.fun, shift)
             self.grad = shift_grad(self.grad, shift)
             self.prox = shift_prox(self.prox, shift)
-        if stretch is not None:
+        if stretch is not None and stretch != 1:
             self.fun = stretch_fun(self.fun, stretch)
             self.grad = stretch_grad(self.grad, stretch)
             self.prox = stretch_prox(self.prox, stretch)
-        if scale is not None:
+        if scale is not None and scale != 1:
             self.fun = scale_fun(self.fun, scale)
             self.grad = scale_grad(self.grad, scale)
             self.prox = scale_prox(self.prox, scale)
-        if linear is not None:
+        if linear is not None and np.any(linear != 0):
             self.fun = addlinear_fun(self.fun, linear)
             self.grad = addlinear_grad(self.grad, linear)
             self.prox = addlinear_prox(self.prox, linear)
-        if const is not None:
+        if const is not None and np.any(const != 0):
             self.fun = addconst_fun(self.fun, const)
             # added constant does not change grad or prox functions
     
     def __call__(self, x):
         return self.fun(x)
+    
+    @property
+    def conjugate(self):
+        """Get object for the conjugate function.
+        
+        The convex conjugate of f(x) is defined as 
+            f^*(y) = sup_x ( <y, x> - f(x) ).
+        
+        Additionally, if g(x) = s*f(a*x + b) + <c, x> + d, then
+            g^*(y) = s*f^*(y/(a*s) - c/(a*s)) - <b/a, y> - d.
+        
+        """
+        Conjugate = self._conjugate_class
+        return Conjugate(**self._conjugate_args)
+    
+    @property
+    def _conjugate_class(self):
+        """Return the class for the conjugate function."""
+        raise NotImplementedError
+        
+    @property
+    def _conjugate_args(self):
+        """Return the keyword arguments for the conjugate function in a dict."""
+        scale = self._scale
+        stretch = 1/(self._scale*self._stretch)
+        shift = -stretch*self._linear
+        linear = -self._shift/self._stretch
+        const = -self._const
+        
+        return dict(scale=scale, stretch=stretch, shift=shift, linear=linear, 
+                    const=const)
     
     def fun(self, x):
         raise NotImplementedError
@@ -128,7 +171,7 @@ class LinearFunctionWithGradProx(FunctionWithGradProx):
         # we can eliminate stretching and shifting:
         # s*f(a*x + b) + <c, x> + d ==> a*s*f(x) + <c, x> + (s*f(b) + d)
         
-        # make None parameters into identities
+        # change 'None's to identities
         if scale is None:
             scale = 1
         if stretch is None:
@@ -260,6 +303,9 @@ class L1Norm(NormFunctionWithGradProx):
                           {           0              otherwise
     
     """
+    @property
+    def _conjugate_class(self):
+        return LInfBallInd
     fun = staticmethod(l1norm)
     prox = staticmethod(prox_l1)
     
@@ -315,6 +361,9 @@ class L2Norm(NormFunctionWithGradProx):
                         {           0            otherwise
     
     """
+    @property
+    def _conjugate_class(self):
+        return L2BallInd
     fun = staticmethod(l2norm)
     prox = staticmethod(prox_l2)
 
@@ -329,6 +378,9 @@ class L2NormSqHalf(NormSqFunctionWithGradProx):
         shrink(x, lmbda) = x/(1 + lmbda)
     
     """
+    @property
+    def _conjugate_class(self):
+        return L2NormSqHalf
     fun = staticmethod(l2normsqhalf)
     grad = staticmethod(grad_l2sqhalf)
     prox = staticmethod(prox_l2sqhalf)
@@ -344,6 +396,10 @@ class L2BallInd(NormBallWithGradProx):
     The prox operator is Euclidean projection onto the l2-ball.
     
     """
+    @property
+    def _conjugate_class(self):
+        return L2Norm
+    
     def fun(self, x):
         """Indicator function for the l2-ball with radius=self.radius."""
         nrm = l2norm(x)
@@ -369,6 +425,10 @@ class LInfBallInd(NormBallWithGradProx):
     The prox operator is Euclidean projection onto the linf-ball.
     
     """
+    @property
+    def _conjugate_class(self):
+        return L1Norm
+    
     def fun(self, x):
         """Indicator function for the linf-ball with radius=self.radius."""
         nrm = linfnorm(x)
@@ -417,6 +477,19 @@ class ZerosInd(IndicatorWithGradProx):
         super(ZerosInd, self).__init__(
             scale=scale, stretch=stretch, shift=shift, 
             linear=linear, const=const)
+    
+    @property
+    def _conjugate_class(self):
+        return ZerosInd
+    
+    @property
+    def _conjugate_args(self):
+        # The conjugate of the zero indicator is the indicator for the
+        # complimentary set of zeros.
+        z = ~self._z
+        kwargs = super(ZerosInd, self)._conjugate_args
+        kwargs.update(z=z)
+        return kwargs
     
     @property
     def z(self):
