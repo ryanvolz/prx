@@ -12,7 +12,7 @@ import numpy as np
 
 from .func_classes import (L1Norm, L1L2Norm, L2Norm, L2NormSqHalf, 
                            L2BallInd, LInfBallInd, ZerosInd)
-from .prox_algos import proxgrad, proxgradaccel, admm, admmlin, pdhg
+from .prox_algos import ProxGradProblem, proxgrad, proxgradaccel, admm, admmlin, pdhg
 
 __all__ = ['bpdn', 'dantzig', 'l1rls', 'srlasso', 'zcls']
 
@@ -195,6 +195,38 @@ def l1rls_proxgrad(A, Astar, b, lmbda, x0, **kwargs):
     G = L2NormSqHalf()
     
     return proxgrad(F, G, A, Astar, b, x0, **kwargs)
+
+def l1rlsProblem_proxgrad(A, Astar, b, lmbda, **kwargs):
+    """Solves the l1-regularized least squares problem using proxgrad.
+    
+    argmin_x 0.5*(||A(x) - b||_2)**2 + lmbda*||x||_1
+    
+    This problem is sometimes called the LASSO since it is equivalent
+    to the original LASSO formulation
+        argmin_x 0.5*(||A(x) - b||_2)**2
+          s.t.   ||x||_1 <= tau
+    for appropriate lmbda(tau).
+    
+    This function uses the proximal gradient method, which is equivalent
+    to iterative soft thresholding (ISTA).
+    
+    If the keyword argument 'axis' is given, the l1-norm is replaced by the 
+    combined l1- and l2-norm with the l2-norm taken over the specified axes:
+        l1norm(l2norm(x, axis)).
+    This can be used to solve the 'block' or 'group' sparsity problem.
+    
+    Additional keyword arguments are passed to proxgrad.
+    
+    """
+    try:
+        axis = kwargs.pop('axis')
+    except KeyError:
+        F = L1Norm(scale=lmbda)
+    else:
+        F = L1L2Norm(axis=axis, scale=lmbda)
+    G = L2NormSqHalf()
+    
+    return ProxGradProblem(F, G, A, Astar, b, **kwargs)
 
 l1rls = l1rls_proxgradaccel
 

@@ -9,10 +9,167 @@
 
 from __future__ import division
 import numpy as np
+from bunch import Bunch
 
 from .norms import l1norm, l2norm, l2normsqhalf, linfnorm
 
 __all__ = ['admm', 'admmlin', 'proxgrad', 'proxgradaccel']
+
+def ProxGradProblem(F, G, A, Astar, b, backtrack=0.5, expand=1.25, 
+                    reltol=1e-6, abstol=1e-10, maxits=10000, 
+                    moreinfo=False, printrate=100, xstar=None):
+    """Solve: argmin_x ( F(x) + G(A(x) - b) ) using the proximal gradient method.
+    
+    F and G are callables that return the function value at x or z=A(x)-b.
+    
+    F(x) must be "proximable", so that the callable F.prox(v, s)
+    solves argmin_x ( F(x) + (1/(2s))(||x - v||_2)^2 ).
+    
+    G(z) must be smooth with gradient function callable as G.grad(z). As a
+    function of x, the gradient of the G term is then
+        gradGx(x) = Astar(G.grad(A(x) - b)).
+    
+    A is linear operator, and both the forward (A) and adjoint (Astar)
+    operations must be specified.
+    
+    b is a specified constant.
+    
+    The basic algorithm is described in section 4.2 of [1]. Expanding 
+    backtracking line search is due to [2] and [3].
+    
+    *********
+    Algorithm
+    *********
+    Parameters:
+        stepsize in [0, 2/L]: initial step size when backtracking is used or
+            constant step size for all iterations (where L is the Lipschitz 
+            constant of G.grad)
+        backtrack in [0, 1] or None, amount to decrease step size when local
+            Lipschitz condition is violated
+        expand >= 1 or None, amount to increase step size after every iteration 
+            so that it can adapt to decreasing local Lipschitz constant
+    
+    Update equation:
+        grad_new = Astar(G.grad(A(x) - b))
+        x_new = F.prox(x - stepsize*grad_new), stepsize)
+    
+    Residual (of 0 in subgradF(x_new) + gradGx(x_new)):
+        r = (x - x_new)/stepsize + (grad - grad_new)
+    
+    *********
+    Citations
+    *********
+    [1] N. Parikh and S. Boyd, "Proximal Algorithms," Foundations and Trends in
+    Optimization, vol. 1, no. 3, pp. 123-231, 2013.
+    
+    [2] K. Scheinberg, D. Goldfarb, and X. Bai, "Fast First-Order Methods for 
+    Composite Convex Optimization with Backtracking," pre-print, Apr. 2011
+    
+    [3] S. R. Becker, E. J. Candes, and M. C. Grant, "Templates for convex cone
+    problems with  applications to sparse signal recovery," Mathematical 
+    Programming Computation, vol. 3, no. 3, pp. 165-218, Aug. 2011.
+    
+    """
+    proxF = F.prox
+    gradG = G.grad
+    
+    if moreinfo:
+        histdtype = [('it', np.int32), ('val', np.float64), 
+                     ('step', np.float64), ('resid', np.float64), 
+                     ('thresh', np.float64), ('err', np.float64)]
+        hist = np.zeros((maxits - 1)//printrate + 1, dtype=histdtype)
+    
+    tolnorm = l2norm
+    
+    def solve(x, stepsize=1.0, **ignored):
+        stepsize = float(stepsize)
+        
+        Axmb = A(x) - b
+        GAxmb = G(Axmb)
+        grad = Astar(gradG(Axmb))
+        
+        
+        rabstol = abstol*tolnorm(np.ones_like(x))
+        
+        bts = 0
+    
+        for k in xrange(maxits):
+            # gradient direction
+            grad_new = Astar(gradG(Axmb))
+            
+            # loop for backtracking line search
+            while True:
+                # proximal gradient step
+                x_new = proxF(x - stepsize*grad_new, stepsize)
+                Axmb_new = A(x_new) - b # need in backtracking test and re-use for gradient
+                GAxmb_new = G(Axmb_new) # need in backtracking test and re-use for printing
+
+                if backtrack is None:
+                    # no backtracking specified
+                    break
+                else:
+                    xmx = x_new - x
+                    bound = GAxmb + np.vdot(xmx, grad_new).real + l2normsqhalf(xmx)/stepsize
+                    # test Lipschitz bound, don't need to backtrack if it holds
+                    if GAxmb_new <= bound:
+                        break
+                    else:
+                        # backtrack
+                        stepsize = stepsize*backtrack
+                        bts += 1
+            
+            # residual for convergence check
+            r = (x - x_new)/stepsize + grad_new - grad
+            
+            # update state variables for which we had to track previous values
+            grad = grad_new
+            x = x_new
+            Axmb = Axmb_new
+            GAxmb = GAxmb_new # used in backtracking test, and printing function value
+            
+            # norms for convergence check
+            rnorm = tolnorm(r)
+            xnorm = tolnorm(x)
+            gradnorm = tolnorm(grad)
+            
+            stopthresh = rabstol + reltol*max(xnorm/stepsize, gradnorm)
+            
+            if printrate is not None and (k % printrate) == 0:
+                val = F(x) + GAxmb
+                dkt = dict(it=k, val=val, step=stepsize, resid=rnorm, 
+                        thresh=stopthresh)
+                print(('{it}: val={val:.5}, step={step:.4}, ' + 
+                    'resid={resid:.4} ({thresh:.3})').format(**dkt))
+                if moreinfo:
+                    if xstar is not None:
+                        dkt['err'] = tolnorm(x_new - xstar)/tolnorm(xstar)
+                    else:
+                        dkt['err'] = np.nan
+                    hist[k//printrate] = tuple(dkt[key] for key in hist.dtype.names)
+            if rnorm < stopthresh:
+                break
+            
+            # expand stepsize
+            if expand is not None and backtrack is not None:
+                stepsize = stepsize*expand
+        
+        if printrate is not None:
+            if k + 1 >= maxits:
+                msg = 'Failed to converge'
+            else:
+                msg = 'Converged'
+            msg += ' after {0} iterations'.format(k + 1)
+            if backtrack is not None:
+                msg += ' (and {0} backtracks)'.format(bts)
+            print(msg)
+        
+        if moreinfo:
+            return Bunch(x=x, stepsize=stepsize, numits=k, r=r, 
+                        hist=hist[:k//printrate])
+        else:
+            return Bunch(x=x, stepsize=stepsize)
+    
+    return solve
 
 def proxgrad(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5, expand=1.25, 
              reltol=1e-6, abstol=1e-10, maxits=10000, 
