@@ -15,6 +15,32 @@ from .norms import l1norm, l2norm, l2normsqhalf, linfnorm
 
 __all__ = ['admm', 'admmlin', 'proxgrad', 'proxgradaccel']
 
+def coroutine(func):
+    def wrapper(*args,**kw):
+        gen = func(*args, **kw)
+        gen.next()
+        return gen
+    wrapper.__name__ = func.__name__
+    wrapper.__dict__ = func.__dict__
+    wrapper.__doc__  = func.__doc__
+    return wrapper
+
+class GeneratorReturn(Exception):
+    def __init__(self, value):
+        self.value = value
+        super(GeneratorReturn, self).__init__(value)
+
+class PrintSummary(Exception):
+    def __init__(self, it):
+        self.it = it
+        super(PrintSummary, self).__init__(it)
+
+class SaveHistory(Exception):
+    def __init__(self, value):
+        self.it = value[0]
+        self.hist = value[1]
+        super(SaveHistory, self).__init__(value)
+
 def ProxGradProblem(F, G, A, Astar, b, backtrack=0.5, expand=1.25, 
                     reltol=1e-6, abstol=1e-10, maxits=10000, 
                     moreinfo=False, printrate=100, xstar=None):
@@ -73,27 +99,92 @@ def ProxGradProblem(F, G, A, Astar, b, backtrack=0.5, expand=1.25,
     proxF = F.prox
     gradG = G.grad
     
-    if moreinfo:
+    tolnorm = l2norm
+    
+    def solve(*args, **kwargs):
+        optlooper = loop(*args, **kwargs)
+        
+        coroutines = []
+        if printrate is not None:
+            printlooper = printloop(optlooper)
+            coroutines.append(printlooper)
+        if printrate is not None and moreinfo is not None:
+            histlooper = histloop(optlooper)
+            coroutines.append(histlooper)
+        
+        for it in xrange(maxits):
+            try:
+                optlooper.send(it)
+            except GeneratorReturn as e:
+                result = e.value
+                break
+            
+            for cr in coroutines:
+                cr.send(it)
+        
+        for cr in coroutines:
+            try:
+                cr.close()
+            except GeneratorReturn as e:
+                res = e.value
+                if res is not None:
+                    result.update(res)
+        
+        if printrate is not None:
+            if it + 1 >= maxits:
+                msg = 'Failed to converge'
+            else:
+                msg = 'Converged'
+            msg += ' after {0} iterations'.format(it)
+            print(msg)
+        
+        return result
+    
+    @coroutine
+    def printloop(optlooper):
+        it = (yield)
+        
+        while True:
+            optlooper.throw(PrintSummary(it))
+            
+            for _ in xrange(printrate):
+                it = (yield)
+    
+    @coroutine
+    def histloop(optlooper):
         histdtype = [('it', np.int32), ('val', np.float64), 
                      ('step', np.float64), ('resid', np.float64), 
                      ('thresh', np.float64), ('err', np.float64)]
-        hist = np.zeros((maxits - 1)//printrate + 1, dtype=histdtype)
+        maxlen = (maxits - 1)//printrate + 1
+        hist = np.zeros(maxlen, dtype=histdtype)
+        
+        it = (yield)
+        
+        try:
+            for k in xrange(maxlen):
+                # want a view into a single element of the history array,
+                # so we can write into it and not create a new array
+                histview = hist[k:(k+1)]
+                optlooper.throw(SaveHistory((it, histview)))
+            
+                for _ in xrange(printrate):
+                    it = (yield)
+        except GeneratorExit:
+            raise GeneratorReturn(Bunch(hist=hist[:(k+1)]))
     
-    tolnorm = l2norm
-    
-    def solve(x, stepsize=1.0, **ignored):
+    @coroutine
+    def loop(x, stepsize=1.0, **ignored):
         stepsize = float(stepsize)
         
         Axmb = A(x) - b
         GAxmb = G(Axmb)
         grad = Astar(gradG(Axmb))
         
-        
         rabstol = abstol*tolnorm(np.ones_like(x))
         
-        bts = 0
+        it = (yield)
     
-        for k in xrange(maxits):
+        while True:
             # gradient direction
             grad_new = Astar(gradG(Axmb))
             
@@ -115,8 +206,41 @@ def ProxGradProblem(F, G, A, Astar, b, backtrack=0.5, expand=1.25,
                         break
                     else:
                         # backtrack
+                        while True:
+                            try:
+                                it = (yield)
+                            except PrintSummary as e:
+                                it = e.it
+                                val = F(x) + G(Axmb)
+                                r = (x - x_new)/stepsize + grad_new - grad
+                                rnorm = tolnorm(r)
+                                xnorm = tolnorm(x)
+                                gradnorm = tolnorm(grad)
+                                stopthresh = rabstol + reltol*max(xnorm/stepsize, gradnorm)
+                                dkt = dict(it=it, val=val, step=stepsize, resid=rnorm, 
+                                           thresh=stopthresh)
+                                print(('{it}*: val={val:.5}, step={step:.4}, ' + 
+                                       'resid={resid:.4} ({thresh:.3})').format(**dkt))
+                            except SaveHistory as e:
+                                hist = e.hist
+                                it = e.it
+                                val = F(x) + G(Axmb)
+                                r = (x - x_new)/stepsize + grad_new - grad
+                                rnorm = tolnorm(r)
+                                xnorm = tolnorm(x)
+                                gradnorm = tolnorm(grad)
+                                stopthresh = rabstol + reltol*max(xnorm/stepsize, gradnorm)
+                                dkt = dict(it=it, val=val, step=stepsize, resid=rnorm, 
+                                           thresh=stopthresh)
+                                if xstar is not None:
+                                    dkt['err'] = tolnorm(x_new - xstar)/tolnorm(xstar)
+                                else:
+                                    dkt['err'] = np.nan
+                                hist[:] = tuple(dkt[key] for key in hist.dtype.names)
+                            else:
+                                break
+                        
                         stepsize = stepsize*backtrack
-                        bts += 1
             
             # residual for convergence check
             r = (x - x_new)/stepsize + grad_new - grad
@@ -134,40 +258,39 @@ def ProxGradProblem(F, G, A, Astar, b, backtrack=0.5, expand=1.25,
             
             stopthresh = rabstol + reltol*max(xnorm/stepsize, gradnorm)
             
-            if printrate is not None and (k % printrate) == 0:
-                val = F(x) + GAxmb
-                dkt = dict(it=k, val=val, step=stepsize, resid=rnorm, 
-                        thresh=stopthresh)
-                print(('{it}: val={val:.5}, step={step:.4}, ' + 
-                    'resid={resid:.4} ({thresh:.3})').format(**dkt))
-                if moreinfo:
+            while True:
+                try:
+                    it = (yield)
+                except PrintSummary as e:
+                    it = e.it
+                    val = F(x) + G(Axmb)
+                    dkt = dict(it=it, val=val, step=stepsize, resid=rnorm, 
+                               thresh=stopthresh)
+                    print(('{it}: val={val:.5}, step={step:.4}, ' + 
+                           'resid={resid:.4} ({thresh:.3})').format(**dkt))
+                except SaveHistory as e:
+                    hist = e.hist
+                    it = e.it
+                    val = F(x) + G(Axmb)
+                    dkt = dict(it=it, val=val, step=stepsize, resid=rnorm, 
+                               thresh=stopthresh)
                     if xstar is not None:
                         dkt['err'] = tolnorm(x_new - xstar)/tolnorm(xstar)
                     else:
                         dkt['err'] = np.nan
-                    hist[k//printrate] = tuple(dkt[key] for key in hist.dtype.names)
+                    hist[:] = tuple(dkt[key] for key in hist.dtype.names)
+                else:
+                    break
+            
             if rnorm < stopthresh:
-                break
+                if moreinfo:
+                    raise GeneratorReturn(Bunch(x=x, stepsize=stepsize, numits=it, r=r))
+                else:
+                    raise GeneratorReturn(Bunch(x=x, stepsize=stepsize))
             
             # expand stepsize
             if expand is not None and backtrack is not None:
                 stepsize = stepsize*expand
-        
-        if printrate is not None:
-            if k + 1 >= maxits:
-                msg = 'Failed to converge'
-            else:
-                msg = 'Converged'
-            msg += ' after {0} iterations'.format(k + 1)
-            if backtrack is not None:
-                msg += ' (and {0} backtracks)'.format(bts)
-            print(msg)
-        
-        if moreinfo:
-            return Bunch(x=x, stepsize=stepsize, numits=k, r=r, 
-                        hist=hist[:k//printrate])
-        else:
-            return Bunch(x=x, stepsize=stepsize)
     
     return solve
 
