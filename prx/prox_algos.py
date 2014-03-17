@@ -106,10 +106,10 @@ def ProxGradProblem(F, G, A, Astar, b, backtrack=0.5, expand=1.25,
         
         coroutines = []
         if printrate is not None:
-            printlooper = printloop(optlooper)
+            printlooper = printloop(optlooper, printrate)
             coroutines.append(printlooper)
         if printrate is not None and moreinfo is not None:
-            histlooper = histloop(optlooper)
+            histlooper = histloop(optlooper, printrate)
             coroutines.append(histlooper)
         
         for it in xrange(maxits):
@@ -141,7 +141,7 @@ def ProxGradProblem(F, G, A, Astar, b, backtrack=0.5, expand=1.25,
         return result
     
     @coroutine
-    def printloop(optlooper):
+    def printloop(optlooper, printrate):
         it = (yield)
         
         while True:
@@ -151,11 +151,11 @@ def ProxGradProblem(F, G, A, Astar, b, backtrack=0.5, expand=1.25,
                 it = (yield)
     
     @coroutine
-    def histloop(optlooper):
+    def histloop(optlooper, saverate):
         histdtype = [('it', np.int32), ('val', np.float64), 
                      ('step', np.float64), ('resid', np.float64), 
                      ('thresh', np.float64), ('err', np.float64)]
-        maxlen = (maxits - 1)//printrate + 1
+        maxlen = (maxits - 1)//saverate + 1
         hist = np.zeros(maxlen, dtype=histdtype)
         
         it = (yield)
@@ -167,7 +167,7 @@ def ProxGradProblem(F, G, A, Astar, b, backtrack=0.5, expand=1.25,
                 histview = hist[k:(k+1)]
                 optlooper.throw(SaveHistory((it, histview)))
             
-                for _ in xrange(printrate):
+                for _ in xrange(saverate):
                     it = (yield)
         except GeneratorExit:
             raise GeneratorReturn(Bunch(hist=hist[:(k+1)]))
@@ -447,7 +447,7 @@ def proxgrad(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5, expand=1.25,
         return x
 
 def proxgradaccel(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5, 
-                  expand=1.25, reltol=1e-6, abstol=1e-10, 
+                  expand=1.25, restart=True, reltol=1e-6, abstol=1e-10, 
                   maxits=10000, moreinfo=False, printrate=100,
                   xstar=None):
     """Solve: argmin_x ( F(x) + G(A(x) - b) ) using accelerated prox. gradient.
@@ -481,6 +481,7 @@ def proxgradaccel(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5,
             Lipschitz condition is violated
         expand >= 1 or None, amount to increase step size after every iteration 
             so that it can adapt to decreasing local Lipschitz constant
+        restart: True/False to enable/disable adaptive restart.
     
     Update equations:
       (acceleration)
@@ -542,8 +543,8 @@ def proxgradaccel(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5,
     for k in xrange(maxits):
         # "gradient" adaptive restart: 
         # reset "momentum" when acceleration direction (x - x_old) is in 
-        # opposite direction of previous step prox gradient step (x - w)
-        if np.vdot(w - x, x - x_old).real > 0:
+        # opposite direction of previous prox gradient step (x - w)
+        if restart and np.vdot(w - x, x - x_old).real > 0:
             t_old = 1
         
         # loop for backtracking line search
