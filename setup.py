@@ -9,11 +9,19 @@
 
 from distutils.core import setup
 
-setup(name='spyalg',
+setup(name='prx',
       version='0.1-dev',
       maintainer='Ryan Volz',
       maintainer_email='ryan.volz@gmail.com',
-      url='http://sess.stanford.edu',
-      description='Sparsity-inducing Algorithms for Python',
+      url='http://github.com/ryanvolz/prx',
+      description='Optimization algorithms based on the proximal operator',
       long_description='',
-      packages=['spyalg'])
+      classifiers=['Development Status :: 3 - Alpha',
+                   'Environment :: Console',
+                   'Intended Audience :: Science/Research',
+                   'License :: OSI Approved :: BSD License',
+                   'Operating System :: OS Independent',
+                   'Programming Language :: Python',
+                   'Programming Language :: Python :: 2',
+                   'Topic :: Scientific/Engineering'],
+      packages=['prx'])
