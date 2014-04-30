@@ -1,2 +1,4 @@
 include LICENSE
+include RELEASE-VERSION
 include requirements.txt
+include version.py

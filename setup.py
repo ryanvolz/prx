@@ -9,8 +9,10 @@
 
 from distutils.core import setup
 
+import version
+
 setup(name='prx',
-      version='0.1-dev',
+      version=version.get_version(),
       maintainer='Ryan Volz',
       maintainer_email='ryan.volz@gmail.com',
       url='http://github.com/ryanvolz/prx',
