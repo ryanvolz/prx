@@ -1,6 +1,7 @@
 """
 
 """
+from ._version import __version__
 from .amp_algos import *
 from .func_classes import *
 from .grad_funcs import *

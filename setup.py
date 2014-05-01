@@ -8,9 +8,28 @@
 #-----------------------------------------------------------------------------
 
 from distutils.core import setup
+import os
+
+import version
+
+here = os.path.abspath(os.path.dirname(__file__))
+
+# get version from git tags if possible (and write it to file),
+# read version from file otherwise
+def get_version(*file_paths):
+    try:
+        # read version from git tags
+        ver = version.read_version_git()
+    except:
+        # read version from file
+        ver = version.read_version_file(here, *file_paths)
+    else:
+        # write version to file if we got it successfully from git
+        version.write_version_file(ver, here, *file_paths)
+    return ver
 
 setup(name='prx',
-      version='0.1-dev',
+      version=get_version('prx', '_version.py'),
       maintainer='Ryan Volz',
       maintainer_email='ryan.volz@gmail.com',
       url='http://github.com/ryanvolz/prx',
