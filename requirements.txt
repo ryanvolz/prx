@@ -1,3 +1,0 @@
-Bottleneck
-numpy
-scipy

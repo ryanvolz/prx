@@ -7,7 +7,8 @@
 # The full license is in the LICENSE file, distributed with this software.
 #-----------------------------------------------------------------------------
 
-from distutils.core import setup
+from setuptools import setup
+import codecs
 import os
 
 import version
@@ -28,19 +29,37 @@ def get_version(*file_paths):
         version.write_version_file(ver, here, *file_paths)
     return ver
 
-setup(name='prx',
-      version=get_version('prx', '_version.py'),
-      maintainer='Ryan Volz',
-      maintainer_email='ryan.volz@gmail.com',
-      url='http://github.com/ryanvolz/prx',
-      description='Optimization algorithms based on the proximal operator',
-      long_description='',
-      classifiers=['Development Status :: 3 - Alpha',
-                   'Environment :: Console',
-                   'Intended Audience :: Science/Research',
-                   'License :: OSI Approved :: BSD License',
-                   'Operating System :: OS Independent',
-                   'Programming Language :: Python',
-                   'Programming Language :: Python :: 2',
-                   'Topic :: Scientific/Engineering'],
-      packages=['prx'])
+# Get the long description from the relevant file
+# Use codecs.open for Python 2 compatibility
+with codecs.open('README.rst', encoding='utf-8') as f:
+    long_description = f.read()
+
+setup(
+    name='prx',
+    version=get_version('prx', '_version.py'),
+    description='Optimization algorithms based on the proximal operator',
+    long_description=long_description,
+
+    url='http://github.com/ryanvolz/prx',
+
+    author='Ryan Volz',
+    author_email='ryan.volz@gmail.com',
+
+    license='BSD 3-Clause ("BSD New")',
+
+    classifiers=[
+        'Development Status :: 3 - Alpha',
+        'Environment :: Console',
+        'Intended Audience :: Science/Research',
+        'License :: OSI Approved :: BSD License',
+        'Operating System :: OS Independent',
+        'Programming Language :: Python',
+        'Programming Language :: Python :: 2',
+        'Topic :: Scientific/Engineering',
+    ],
+
+    keywords='optimization prox proximal convex first-order',
+
+    packages=['prx'],
+    install_requires=['Bottleneck', 'numpy', 'scipy'],
+)
