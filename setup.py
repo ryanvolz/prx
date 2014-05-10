@@ -9,25 +9,14 @@
 
 from setuptools import setup
 import codecs
-import os
 
-import version
+import versioneer
 
-here = os.path.abspath(os.path.dirname(__file__))
-
-# get version from git tags if possible (and write it to file),
-# read version from file otherwise
-def get_version(*file_paths):
-    try:
-        # read version from git tags
-        ver = version.read_version_git()
-    except:
-        # read version from file
-        ver = version.read_version_file(here, *file_paths)
-    else:
-        # write version to file if we got it successfully from git
-        version.write_version_file(ver, here, *file_paths)
-    return ver
+versioneer.VCS = 'git'
+versioneer.versionfile_source = 'prx/_version.py'
+versioneer.versionfile_build = 'prx/_version.py'
+versioneer.tag_prefix = 'v' # tags are like v1.2.0
+versioneer.parentdir_prefix = 'prx-' # dirname like 'prx-1.2.0'
 
 # Get the long description from the relevant file
 # Use codecs.open for Python 2 compatibility
@@ -36,7 +25,7 @@ with codecs.open('README.rst', encoding='utf-8') as f:
 
 setup(
     name='prx',
-    version=get_version('prx', '_version.py'),
+    version=versioneer.get_version(),
     description='Optimization algorithms based on the proximal operator',
     long_description=long_description,
 
@@ -62,4 +51,6 @@ setup(
 
     packages=['prx'],
     install_requires=['Bottleneck', 'numpy', 'scipy'],
+
+    cmdclass=versioneer.get_cmdclass(),
 )
