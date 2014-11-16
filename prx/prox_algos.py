@@ -14,86 +14,86 @@ from .norms import l1norm, l2norm, l2normsqhalf, linfnorm
 
 __all__ = ['admm', 'admmlin', 'proxgrad', 'proxgradaccel']
 
-def proxgrad(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5, expand=1.25, 
-             reltol=1e-6, abstol=1e-10, maxits=10000, 
+def proxgrad(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5, expand=1.25,
+             reltol=1e-6, abstol=1e-10, maxits=10000,
              moreinfo=False, printrate=100, xstar=None):
     """Solve: argmin_x ( F(x) + G(A(x) - b) ) using the proximal gradient method.
-    
+
     F and G are callables that return the function value at x or z=A(x)-b.
-    
+
     F(x) must be "proximable", so that the callable F.prox(v, s)
     solves argmin_x ( F(x) + (1/(2s))(||x - v||_2)^2 ).
-    
+
     G(z) must be smooth with gradient function callable as G.grad(z). As a
     function of x, the gradient of the G term is then
         gradGx(x) = Astar(G.grad(A(x) - b)).
-    
+
     A is linear operator, and both the forward (A) and adjoint (Astar)
     operations must be specified.
-    
+
     b is a specified constant.
-    
-    The basic algorithm is described in section 4.2 of [1]. Expanding 
+
+    The basic algorithm is described in section 4.2 of [1]. Expanding
     backtracking line search is due to [2] and [3].
-    
+
     *********
     Algorithm
     *********
     Parameters:
         stepsize in [0, 2/L]: initial step size when backtracking is used or
-            constant step size for all iterations (where L is the Lipschitz 
+            constant step size for all iterations (where L is the Lipschitz
             constant of G.grad)
         backtrack in [0, 1] or None, amount to decrease step size when local
             Lipschitz condition is violated
-        expand >= 1 or None, amount to increase step size after every iteration 
+        expand >= 1 or None, amount to increase step size after every iteration
             so that it can adapt to decreasing local Lipschitz constant
-    
+
     Update equation:
         grad_new = Astar(G.grad(A(x) - b))
         x_new = F.prox(x - stepsize*grad_new), stepsize)
-    
+
     Residual (of 0 in subgradF(x_new) + gradGx(x_new)):
         r = (x - x_new)/stepsize + (grad - grad_new)
-    
+
     *********
     Citations
     *********
     [1] N. Parikh and S. Boyd, "Proximal Algorithms," Foundations and Trends in
     Optimization, vol. 1, no. 3, pp. 123-231, 2013.
-    
-    [2] K. Scheinberg, D. Goldfarb, and X. Bai, "Fast First-Order Methods for 
+
+    [2] K. Scheinberg, D. Goldfarb, and X. Bai, "Fast First-Order Methods for
     Composite Convex Optimization with Backtracking," pre-print, Apr. 2011
-    
+
     [3] S. R. Becker, E. J. Candes, and M. C. Grant, "Templates for convex cone
-    problems with  applications to sparse signal recovery," Mathematical 
+    problems with  applications to sparse signal recovery," Mathematical
     Programming Computation, vol. 3, no. 3, pp. 165-218, Aug. 2011.
-    
+
     """
     proxF = F.prox
     gradG = G.grad
-    
+
     stepsize = float(stepsize)
-    
+
     if moreinfo:
-        histdtype = [('it', np.int32), ('val', np.float64), 
-                     ('step', np.float64), ('resid', np.float64), 
+        histdtype = [('it', np.int32), ('val', np.float64),
+                     ('step', np.float64), ('resid', np.float64),
                      ('thresh', np.float64), ('err', np.float64)]
         hist = np.zeros((maxits - 1)//printrate + 1, dtype=histdtype)
-    
+
     x = x0
     Axmb = A(x) - b
     GAxmb = G(Axmb)
     grad = Astar(gradG(Axmb))
-    
+
     tolnorm = l2norm
     rabstol = abstol*tolnorm(np.ones_like(x0))
-    
+
     bts = 0
-    
+
     for k in xrange(maxits):
         # gradient direction
         grad_new = Astar(gradG(Axmb))
-        
+
         # loop for backtracking line search
         while True:
             # proximal gradient step
@@ -114,28 +114,28 @@ def proxgrad(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5, expand=1.25,
                     # backtrack
                     stepsize = stepsize*backtrack
                     bts += 1
-        
+
         # residual for convergence check
         r = (x - x_new)/stepsize + grad_new - grad
-        
+
         # update state variables for which we had to track previous values
         grad = grad_new
         x = x_new
         Axmb = Axmb_new
         GAxmb = G(Axmb) # used in backtracking test, and printing function value
-        
+
         # norms for convergence check
         rnorm = tolnorm(r)
         xnorm = tolnorm(x)
         gradnorm = tolnorm(grad)
-        
+
         stopthresh = rabstol + reltol*max(xnorm/stepsize, gradnorm)
-        
+
         if printrate is not None and (k % printrate) == 0:
             val = F(x) + G(Axmb)
-            dkt = dict(it=k, val=val, step=stepsize, resid=rnorm, 
+            dkt = dict(it=k, val=val, step=stepsize, resid=rnorm,
                        thresh=stopthresh)
-            print(('{it}: val={val:.5}, step={step:.4}, ' + 
+            print(('{it}: val={val:.5}, step={step:.4}, ' +
                    'resid={resid:.4} ({thresh:.3})').format(**dkt))
             if moreinfo:
                 if xstar is not None:
@@ -145,11 +145,11 @@ def proxgrad(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5, expand=1.25,
                 hist[k//printrate] = tuple(dkt[key] for key in hist.dtype.names)
         if rnorm < stopthresh:
             break
-        
+
         # expand stepsize
         if expand is not None and backtrack is not None:
             stepsize = stepsize*expand
-    
+
     if printrate is not None:
         if k + 1 >= maxits:
             msg = 'Failed to converge'
@@ -159,49 +159,49 @@ def proxgrad(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5, expand=1.25,
         if backtrack is not None:
             msg += ' (and {0} backtracks)'.format(bts)
         print(msg)
-    
+
     if moreinfo:
-        return dict(x=x, numits=k, r=r, stepsize=stepsize, 
+        return dict(x=x, numits=k, r=r, stepsize=stepsize,
                     hist=hist[:k//printrate])
     else:
         return x
 
-def proxgradaccel(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5, 
-                  expand=1.25, reltol=1e-6, abstol=1e-10, 
+def proxgradaccel(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5,
+                  expand=1.25, reltol=1e-6, abstol=1e-10,
                   maxits=10000, moreinfo=False, printrate=100,
                   xstar=None):
     """Solve: argmin_x ( F(x) + G(A(x) - b) ) using accelerated prox. gradient.
-    
+
     F and G are callables that return the function value at x or z=A(x)-b.
-    
+
     F(x) must be "proximable", so that the callable F.prox(v, s)
     solves argmin_x ( F(x) + (1/(2s))(||x - v||_2)^2 ).
-    
+
     G(z) must be smooth with gradient function callable as G.grad(z). As a
     function of x, the gradient of the G term is then
         gradGx(x) = Astar(G.grad(A(x) - b)).
-    
+
     A is linear operator, and both the forward (A) and adjoint (Astar)
     operations must be specified.
-    
+
     b is a specified constant.
-    
-    The basic algorithm is described in section 4.3 of [1]. Expanding 
-    backtracking line search is due to [2] and [3]. Adaptive restart of the 
+
+    The basic algorithm is described in section 4.3 of [1]. Expanding
+    backtracking line search is due to [2] and [3]. Adaptive restart of the
     acceleration comes from [4].
-    
+
     *********
     Algorithm
     *********
     Parameters:
         stepsize in [0, 2/L]: initial step size when backtracking is used or
-            constant step size for all iterations (where L is the Lipschitz 
+            constant step size for all iterations (where L is the Lipschitz
             constant of G.grad)
         backtrack in [0, 1] or None, amount to decrease step size when local
             Lipschitz condition is violated
-        expand >= 1 or None, amount to increase step size after every iteration 
+        expand >= 1 or None, amount to increase step size after every iteration
             so that it can adapt to decreasing local Lipschitz constant
-    
+
     Update equations:
       (acceleration)
         gamma = stepsize_old/stepsize
@@ -211,61 +211,61 @@ def proxgradaccel(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5,
       (proximal gradient descent)
         grad_new = Astar(G.grad(A(w) - b))
         x_new = F.prox(w_new - stepsize*grad_new), stepsize)
-    
+
     Residual (of 0 in subgradF(x_new) + gradGx(x_new)):
         r = (x - x_new)/stepsize + (grad - grad_new))
-    
+
     *********
     Citations
     *********
     [1] N. Parikh and S. Boyd, "Proximal Algorithms," Foundations and Trends in
     Optimization, vol. 1, no. 3, pp. 123-231, 2013.
-    
-    [2] K. Scheinberg, D. Goldfarb, and X. Bai, "Fast First-Order Methods for 
+
+    [2] K. Scheinberg, D. Goldfarb, and X. Bai, "Fast First-Order Methods for
     Composite Convex Optimization with Backtracking," pre-print, Apr. 2011
-    
+
     [3] S. R. Becker, E. J. Candes, and M. C. Grant, "Templates for convex cone
-    problems with  applications to sparse signal recovery," Mathematical 
+    problems with  applications to sparse signal recovery," Mathematical
     Programming Computation, vol. 3, no. 3, pp. 165-218, Aug. 2011.
-    
+
     [4] B. O'Donoghue and E. Candes, "Adaptive Restart for Accelerated Gradient
     Schemes," Found Comput Math, pp. 1-18.
-    
+
     """
     proxF = F.prox
     gradG = G.grad
-    
+
     stepsize = float(stepsize)
-    
+
     if moreinfo:
-        histdtype = [('it', np.int32), ('val', np.float64), 
-                     ('step', np.float64), ('resid', np.float64), 
+        histdtype = [('it', np.int32), ('val', np.float64),
+                     ('step', np.float64), ('resid', np.float64),
                      ('thresh', np.float64), ('err', np.float64)]
         hist = np.zeros((maxits - 1)//printrate + 1, dtype=histdtype)
-    
+
     t_old = 1
     stepsize_old = stepsize
     gamma = 1
-    
+
     x = x0
     Ax = A(x)
     x_old = x
     Ax_old = Ax
     grad = Astar(gradG(Ax - b))
     w = x # for adaptive restart check
-    
+
     tolnorm = l2norm
     rabstol = abstol*tolnorm(np.ones_like(x0))
-    
+
     bts = 0
-    
+
     for k in xrange(maxits):
-        # "gradient" adaptive restart: 
-        # reset "momentum" when acceleration direction (x - x_old) is in 
+        # "gradient" adaptive restart:
+        # reset "momentum" when acceleration direction (x - x_old) is in
         # opposite direction of previous step prox gradient step (x - w)
         if np.vdot(w - x, x - x_old).real > 0:
             t_old = 1
-        
+
         # loop for backtracking line search
         while True:
             # acceleration
@@ -295,10 +295,10 @@ def proxgradaccel(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5,
                     stepsize = stepsize*backtrack
                     gamma = stepsize_old/stepsize
                     bts += 1
-        
+
         # residual for convergence check
         r = (x - x_new)/stepsize + grad_new - grad
-        
+
         # update state variables for which we had to track previous values
         t_old = t
         stepsize_old = stepsize
@@ -307,19 +307,19 @@ def proxgradaccel(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5,
         Ax_old = Ax
         x = x_new
         Ax = Ax_new
-        
+
         # norms for convergence check
         rnorm = tolnorm(r)
         xnorm = tolnorm(x)
         gradnorm = tolnorm(grad)
-        
+
         stopthresh = rabstol + reltol*max(xnorm/stepsize, gradnorm)
-        
+
         if printrate is not None and (k % printrate) == 0:
             val = F(x_new) + G(Axmb)
-            dkt = dict(it=k, val=val, step=stepsize, resid=rnorm, 
+            dkt = dict(it=k, val=val, step=stepsize, resid=rnorm,
                        thresh=stopthresh)
-            print(('{it}: val={val:.5}, step={step:.4}, ' + 
+            print(('{it}: val={val:.5}, step={step:.4}, ' +
                    'resid={resid:.4} ({thresh:.3})').format(**dkt))
             if moreinfo:
                 if xstar is not None:
@@ -329,12 +329,12 @@ def proxgradaccel(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5,
                 hist[k//printrate] = tuple(dkt[key] for key in hist.dtype.names)
         if rnorm < stopthresh:
             break
-        
+
         # expand stepsize
         if expand is not None and backtrack is not None:
             stepsize = stepsize*expand
             gamma = stepsize_old/stepsize
-    
+
     if printrate is not None:
         if k + 1 >= maxits:
             msg = 'Failed to converge'
@@ -344,83 +344,83 @@ def proxgradaccel(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5,
         if backtrack is not None:
             msg += ' (and {0} backtracks)'.format(bts)
         print(msg)
-    
+
     if moreinfo:
-        return dict(x=x, numits=k, w=w, r=r, stepsize=stepsize, 
+        return dict(x=x, numits=k, w=w, r=r, stepsize=stepsize,
                     hist=hist[:k//printrate])
     else:
         return x
 
-def admm(F, G, x0, y0=None, pen=1.0, residgap=2, penfactor=1.5, reltol=1e-6, 
+def admm(F, G, x0, y0=None, pen=1.0, residgap=2, penfactor=1.5, reltol=1e-6,
          abstol=1e-10, maxits=10000, moreinfo=False, printrate=100,
          xstar=None):
     """Solve: argmin_x ( F(x) + G(x) ) using ADMM.
-    
+
     ADMM stands for Alternating Direction Method of Multipliers.
-    
+
     F and G are callables that return the function value at x.
-    
+
     F(x) and G(x) must be "proximable", with callable F.prox(v, s) that
     solves argmin_x ( F(x) + (1/(2s))(||x - v||_2)^2 ) and similar for G.
-    
-    The basic algorithm is described in section 4.4 of [1]. Varying penalty 
+
+    The basic algorithm is described in section 4.4 of [1]. Varying penalty
     parameter is suggested in [2].
-    
+
     *********
     Algorithm
     *********
     Parameters:
         pen controlled automatically by penalty parameter adjustment
             according to residgap > 1 and penfactor > 1
-    
+
     Update equations:
         x_new = F.prox(z - u, pen)
         z_new = G.prox(x_new + u, pen)
         u_new = u + x_new - z_new
-    
+
     Residuals:
       (primal feasibility)
         r = x_new - z_new
       (dual feasibility)
         s = (z - z_new)/pen
-    
+
     *********
     Citations
     *********
-    [1] N. Parikh and S. Boyd, "Proximal Algorithms," Foundations and Trends 
+    [1] N. Parikh and S. Boyd, "Proximal Algorithms," Foundations and Trends
     in Optimization, vol. 1, no. 3, pp. 123-231, 2013.
-    
-    [2] S. Boyd, N. Parikh, E. Chu, B. Peleato, and J. Eckstein, "Distributed 
+
+    [2] S. Boyd, N. Parikh, E. Chu, B. Peleato, and J. Eckstein, "Distributed
     Optimization and Statistical Learning via the Alternating Direction Method
-    of Multipliers," Found. Trends Mach. Learn., vol. 3, no. 1, pp. 1-122, 
+    of Multipliers," Found. Trends Mach. Learn., vol. 3, no. 1, pp. 1-122,
     Jan. 2011.
-    
+
     """
     proxF = F.prox
     proxG = G.prox
     if y0 is None:
         y0 = np.zeros_like(x0)
-    
+
     pen = float(pen)
-    
+
     if moreinfo:
-        histdtype = [('it', np.int32), ('val', np.float64), 
-                     ('pen', np.float64), 
+        histdtype = [('it', np.int32), ('val', np.float64),
+                     ('pen', np.float64),
                      ('resid_p', np.float64), ('thresh_p', np.float64),
                      ('resid_d', np.float64), ('thresh_d', np.float64),
                      ('err', np.float64)]
         hist = np.zeros((maxits - 1)//printrate + 1, dtype=histdtype)
-    
+
     x = x0
     u = y0*pen
     z = proxG(x + u, pen)
     r = x - z
     u = u + r
-    
+
     tolnorm = l2norm
     rabstol = abstol*tolnorm(np.ones_like(u0))
     sabstol = abstol*tolnorm(np.ones_like(x0))
-    
+
     for k in xrange(maxits):
         # primal updates
         x = proxF(z - u, pen)
@@ -430,26 +430,26 @@ def admm(F, G, x0, y0=None, pen=1.0, residgap=2, penfactor=1.5, reltol=1e-6,
         s = (z - z_new)/pen
         # dual update
         u = u + r
-        
+
         # # update state variables for which we had to track previous values
         z = z_new
-        
+
         # norms for convergence check
         rnorm = tolnorm(r)
         snorm = tolnorm(s)
         xnorm = tolnorm(x)
         znorm = tolnorm(z)
         unorm = tolnorm(u)
-        
+
         rstopthresh = rabstol + reltol*max(xnorm, znorm)
         sstopthresh = sabstol + reltol*unorm/pen
-        
+
         if printrate is not None and (k % printrate) == 0:
             val = F(x) + G(x)
-            dkt = dict(it=k, val=val, pen=pen, resid_p=rnorm, 
-                       thresh_p=rstopthresh, resid_d=snorm, 
+            dkt = dict(it=k, val=val, pen=pen, resid_p=rnorm,
+                       thresh_p=rstopthresh, resid_d=snorm,
                        thresh_d=sstopthresh)
-            print(('{it}: value={val:.5}, pen={pen:.4}, ' + 
+            print(('{it}: value={val:.5}, pen={pen:.4}, ' +
                    'resid_p={resid_p:.4} ({thresh_p:.3}), ' +
                    'resid_d={resid_d:.4} ({thresh_d:.3})').format(**dkt))
             if moreinfo:
@@ -462,7 +462,7 @@ def admm(F, G, x0, y0=None, pen=1.0, residgap=2, penfactor=1.5, reltol=1e-6,
         # is to see if primal and dual feasibility residuals are small
         if rnorm < rstopthresh and snorm < sstopthresh:
             break
-        
+
         # penalty parameter adjustment
         if k < 100:
             if rnorm > residgap*snorm:
@@ -481,116 +481,116 @@ def admm(F, G, x0, y0=None, pen=1.0, residgap=2, penfactor=1.5, reltol=1e-6,
             msg = 'Converged'
         msg += ' after {0} iterations'.format(k + 1)
         print(msg)
-    
+
     if moreinfo:
-        return dict(x=x, z=z, y=u/pen, numits=k, r=r, s=s, pen=pen, 
+        return dict(x=x, z=z, y=u/pen, numits=k, r=r, s=s, pen=pen,
                     hist=hist[:k//printrate])
     else:
         return x
 
 def admmlin(F, G, A, Astar, b, x0, y0=None, stepsize=1.0, backtrack=0.5,
-            expand=1.25, pen=1.0, residgap=2, penfactor=1.5, relax=1.0, 
-            reltol=1e-6, abstol=1e-10, maxits=10000, 
+            expand=1.25, pen=1.0, residgap=2, penfactor=1.5, relax=1.0,
+            reltol=1e-6, abstol=1e-10, maxits=10000,
             moreinfo=False, printrate=100, xstar=None):
     """Solve: argmin_x ( F(x) + G(A(x) - b) ) using linearized ADMM.
-    
-    ADMM stands for Alternating Direction Method of Multipliers. This 
+
+    ADMM stands for Alternating Direction Method of Multipliers. This
     linearized version of ADMM is sometimes called the Split Inexact Uzawa
     method.
-    
+
     F and G are callables that return the function value at x or z=A(x)-b.
-    
-    F(x) and G(x) must be "proximable", with callable F.prox(v, s) that
+
+    F(x) and G(z) must be "proximable", with callable F.prox(v, s) that
     solves argmin_x ( F(x) + (1/(2s))(||x - v||_2)^2 ) and similar for G.
-    
+
     A is linear operator, and both the forward (A) and adjoint (Astar)
     operations must be specified.
-    
+
     b is a specified constant.
-    
-    The basic algorithm is similar to the one described in section 4.5 of 
-    [1]. Varying penalty parameter and over-relaxation suggested in [2]. 
+
+    The basic algorithm is similar to the one described in section 4.5 of
+    [1]. Varying penalty parameter and over-relaxation suggested in [2].
     Interpretation of 'stepsize' parameter as a stepsize and backtracking with
-    respect to it is novel but similar to proximal gradient backtracking. See 
-    [3] for how this algorithm (there called Split Inexact Uzawa on SP_P) 
+    respect to it is novel but similar to proximal gradient backtracking. See
+    [3] for how this algorithm (there called Split Inexact Uzawa on SP_P)
     relates to similar algorithms like PDHG.
-    
+
     *********
     Algorithm
     *********
     Parameters:
         stepsize in [0, 1/(||A||_2)**2]: initial step size when backtracking is used or
-            constant step size for all iterations (where L is the Lipschitz 
+            constant step size for all iterations (where L is the Lipschitz
             constant of G.grad)
         backtrack in [0, 1] or None, amount to decrease step size when local
             Lipschitz condition is violated
-        expand >= 1 or None, amount to increase step size after every iteration 
+        expand >= 1 or None, amount to increase step size after every iteration
             so that it can adapt to decreasing local Lipschitz constant
         pen controlled automatically by penalty parameter adjustment
             according to residgap > 1 and penfactor > 1
-        relax in [0, 2] for under-relaxation ([0, 1]) or over-relaxation 
+        relax in [0, 2] for under-relaxation ([0, 1]) or over-relaxation
             ([1, 2]) when calculating A(x) = relax*A(x) + (1-relax)*(z - b)
-    
+
     Update equations:
         x_new = F.prox(x + stepsize/pen*Astar(2*u - u_old), stepsize)
         z_new = G.prox(A(x_new) - b + u, pen)
         u_new = u + A(x_new) - b - z_new
-    
+
     Residuals:
       (primal feasibility)
         r = A(x_new) - b - z_new
       (dual feasibility)
         s = Astar(u_new - u)/pen + (x - x_new)/stepsize
-    
+
     *********
     Citations
     *********
-    [1] N. Parikh and S. Boyd, "Proximal Algorithms," Foundations and Trends 
+    [1] N. Parikh and S. Boyd, "Proximal Algorithms," Foundations and Trends
     in Optimization, vol. 1, no. 3, pp. 123-231, 2013.
-    
-    [2] S. Boyd, N. Parikh, E. Chu, B. Peleato, and J. Eckstein, "Distributed 
-    Optimization and Statistical Learning via the Alternating Direction Method 
-    of Multipliers," Found. Trends Mach. Learn., vol. 3, no. 1, pp. 1-122, 
+
+    [2] S. Boyd, N. Parikh, E. Chu, B. Peleato, and J. Eckstein, "Distributed
+    Optimization and Statistical Learning via the Alternating Direction Method
+    of Multipliers," Found. Trends Mach. Learn., vol. 3, no. 1, pp. 1-122,
     Jan. 2011.
-    
-    [3] E. Esser, X. Zhang, and T. F. Chan, "A General Framework for a Class of 
-    First Order Primal-Dual Algorithms for Convex Optimization in Imaging 
-    Science," SIAM Journal on Imaging Sciences, vol. 3, no. 4, pp. 1015-1046, 
+
+    [3] E. Esser, X. Zhang, and T. F. Chan, "A General Framework for a Class of
+    First Order Primal-Dual Algorithms for Convex Optimization in Imaging
+    Science," SIAM Journal on Imaging Sciences, vol. 3, no. 4, pp. 1015-1046,
     Jan. 2010.
-    
+
     """
     proxF = F.prox
     proxG = G.prox
     if y0 is None:
         y0 = np.zeros_like(A(x0))
-    
+
     stepsize = float(stepsize)
     pen = float(pen)
-    
+
     if moreinfo:
-        histdtype = [('it', np.int32), ('val', np.float64), 
-                     ('step', np.float64), ('pen', np.float64), 
+        histdtype = [('it', np.int32), ('val', np.float64),
+                     ('step', np.float64), ('pen', np.float64),
                      ('resid_p', np.float64), ('thresh_p', np.float64),
                      ('resid_d', np.float64), ('thresh_d', np.float64),
                      ('err', np.float64)]
         hist = np.zeros((maxits - 1)//printrate + 1, dtype=histdtype)
-    
+
     one_minus_relax = 1 - relax
-    
+
     x = x0
     Ax = A(x)
     u = y0*pen
     Asu = Astar(u)
     Asu_old = Asu
     z = A(x) - b # needed for relaxation, makes Ax_relax = A(x) for first step
-    
+
     tolnorm = l2norm
     bnorm = tolnorm(b)
     rabstol = abstol*tolnorm(np.ones_like(y0))
     sabstol = abstol*tolnorm(np.ones_like(x0))
-    
+
     bts = 0
-    
+
     for k in xrange(maxits):
         # loop for backtracking line search
         while True:
@@ -611,7 +611,7 @@ def admmlin(F, G, A, Astar, b, x0, y0=None, stepsize=1.0, backtrack=0.5,
                     # backtrack
                     stepsize = stepsize*backtrack
                     bts += 1
-        
+
         # z primal update
         Axrelax = relax*Ax_new + one_minus_relax*(z + b) # need norm later
         Axmb = Axrelax - b
@@ -623,13 +623,13 @@ def admmlin(F, G, A, Astar, b, x0, y0=None, stepsize=1.0, backtrack=0.5,
         # dual residual calculation
         Asu_new = Astar(u)
         s = (Asu_new - Asu)/pen + (Asu_old - Asu)/pen + (x - x_new)/stepsize
-        
+
         # update state variables for which we had to track previous values
         x = x_new
         Ax = Ax_new
         Asu_old = Asu
         Asu = Asu_new
-        
+
         # norms for convergence check
         rnorm = tolnorm(r)
         snorm = tolnorm(s)
@@ -637,17 +637,17 @@ def admmlin(F, G, A, Astar, b, x0, y0=None, stepsize=1.0, backtrack=0.5,
         znorm = tolnorm(z)
         Asunorm = tolnorm(Asu)
         xnorm = tolnorm(x)
-        
+
         rstopthresh = rabstol + reltol*max(Axnorm, znorm, bnorm)
         sstopthresh = sabstol + reltol*max(Asunorm/pen, xnorm/stepsize)
-        
+
         if printrate is not None and (k % printrate) == 0:
             val = F(x) + G(z) + np.vdot(u/pen, Ax - b - z).real
-            dkt = dict(it=k, val=val, step=stepsize, pen=pen, 
+            dkt = dict(it=k, val=val, step=stepsize, pen=pen,
                        resid_p=rnorm, thresh_p=rstopthresh,
                        resid_d=snorm, thresh_d=sstopthresh)
-            print(('{it}: val={val:.5}, step={step:.4}, pen={pen:.4}, ' + 
-                   'resid_p={resid_p:.4} ({thresh_p:.3}), ' + 
+            print(('{it}: val={val:.5}, step={step:.4}, pen={pen:.4}, ' +
+                   'resid_p={resid_p:.4} ({thresh_p:.3}), ' +
                    'resid_d={resid_d:.4} ({thresh_d:.3})').format(**dkt))
             if moreinfo:
                 if xstar is not None:
@@ -659,7 +659,7 @@ def admmlin(F, G, A, Astar, b, x0, y0=None, stepsize=1.0, backtrack=0.5,
         # is to see if primal and dual feasibility residuals are small
         if rnorm < rstopthresh and snorm < sstopthresh:
             break
-        
+
         # penalty parameter adjustment
         if k < 100:
             if rnorm > residgap*snorm:
@@ -674,7 +674,7 @@ def admmlin(F, G, A, Astar, b, x0, y0=None, stepsize=1.0, backtrack=0.5,
                 u = u*penfactor
                 Asu = Asu*penfactor
                 Asu_old = Asu_old*penfactor
-        
+
         # expand stepsize
         if backtrack is not None and dAx > 0:
             stepsize = dx*pen/dAx
@@ -688,58 +688,58 @@ def admmlin(F, G, A, Astar, b, x0, y0=None, stepsize=1.0, backtrack=0.5,
         if backtrack is not None:
             msg += ' (and {0} backtracks)'.format(bts)
         print(msg)
-    
+
     if moreinfo:
-        return dict(x=x, z=z, y=u/pen, numits=k, r=r, s=s, stepsize=stepsize, 
+        return dict(x=x, z=z, y=u/pen, numits=k, r=r, s=s, stepsize=stepsize,
                     pen=pen, hist=hist[:k//printrate])
     else:
         return x
 
-def pdhg(F, G, A, Astar, b, x0, y0=None, step_p=1.0, step_d=1.0, 
-         reltol=1e-6, abstol=1e-10, maxits=10000, 
+def pdhg(F, G, A, Astar, b, x0, y0=None, step_p=1.0, step_d=1.0,
+         reltol=1e-6, abstol=1e-10, maxits=10000,
          moreinfo=False, printrate=100, xstar=None):
     """Solve: argmin_x ( F(x) + G(A(x) - b) ) using PDHG.
-    
+
     PDHG stands for Primal Dual Hybrid Gradient.
-    
+
     F and G are callables that return the function value at x or z=A(x)-b.
-    
-    F(x) and G(x) must be "proximable", with callable F.prox(v, s) that
+
+    F(x) and G(z) must be "proximable", with callable F.prox(v, s) that
     solves argmin_x ( F(x) + (1/(2s))(||x - v||_2)^2 ) and similar for G.
-    
+
     A is linear operator, and both the forward (A) and adjoint (Astar)
     operations must be specified.
-    
+
     b is a specified constant.
-    
-    The basic algorithm is described in [1], along with a description of how 
+
+    The basic algorithm is described in [1], along with a description of how
     this algorithm relates to similar algorithms like ADMM and linearized ADMM.
-    
+
     *********
     Algorithm
     *********
     Parameters:
         step_p, step_d: primal and dual step sizes
-    
+
     Update equations:
         x_new = F.prox(x - step_p*Astar(y), step_p)
         xbar = 2*x_new - x
         y_new = G.conjugate.prox(y + step_d*(A(x_new) - b), step_d)
-    
+
     Residuals:
       (primal)
         p = (x - x_new)/step_p - Astar(y - y_new)
       (dual)
         d = (y - y_new)/step_d - A(x - x_new)
-    
+
     *********
     Citations
     *********
-    [1] E. Esser, X. Zhang, and T. F. Chan, "A General Framework for a Class of 
-    First Order Primal-Dual Algorithms for Convex Optimization in Imaging 
-    Science," SIAM Journal on Imaging Sciences, vol. 3, no. 4, pp. 1015-1046, 
+    [1] E. Esser, X. Zhang, and T. F. Chan, "A General Framework for a Class of
+    First Order Primal-Dual Algorithms for Convex Optimization in Imaging
+    Science," SIAM Journal on Imaging Sciences, vol. 3, no. 4, pp. 1015-1046,
     Jan. 2010.
-    
+
     """
     proxF = F.prox
     Fconj = F.conjugate
@@ -747,34 +747,34 @@ def pdhg(F, G, A, Astar, b, x0, y0=None, step_p=1.0, step_d=1.0,
     dualproxG = Gconj.prox
     if y0 is None:
         y0 = np.zeros_like(A(x0))
-    
+
     pstep = float(step_p)
     dstep = float(step_d)
-    
+
     if moreinfo:
-        histdtype = [('it', np.int32), ('val', np.float64), 
-                     ('step_p', np.float64), ('step_d', np.float64), 
+        histdtype = [('it', np.int32), ('val', np.float64),
+                     ('step_p', np.float64), ('step_d', np.float64),
                      ('resid_p', np.float64), ('thresh_p', np.float64),
                      ('resid_d', np.float64), ('thresh_d', np.float64),
                      ('err', np.float64)]
         hist = np.zeros((maxits - 1)//printrate + 1, dtype=histdtype)
-    
+
     ptheta = 1
     dtheta = 0
-    
+
     x = x0
     Ax = A(x)
     y = y0
     Asy = Astar(y)
     y_old = y
     Asy_old = Asy
-    
+
     tolnorm = l2norm
     pabstol = abstol*tolnorm(np.ones_like(x0))
     dabstol = abstol*tolnorm(np.ones_like(y0))
-    
+
     bts = 0
-    
+
     for k in xrange(maxits):
         while True:
             # primal update
@@ -786,7 +786,7 @@ def pdhg(F, G, A, Astar, b, x0, y0=None, step_p=1.0, step_d=1.0,
             # prox step
             x_new = proxF(xhat, pstep)
             Ax_new = A(x_new)
-            
+
             break
             #if backtrack is None:
                 #break
@@ -800,7 +800,7 @@ def pdhg(F, G, A, Astar, b, x0, y0=None, step_p=1.0, step_d=1.0,
                     #print(plhs, prhs)
                     ## backtrack
                     #pstep = pstep*backtrack
-        
+
         while True:
             # dual update
             # acceleration
@@ -811,7 +811,7 @@ def pdhg(F, G, A, Astar, b, x0, y0=None, step_p=1.0, step_d=1.0,
             # prox step
             y_new = dualproxG(yhat, dstep)
             Asy_new = Astar(y_new)
-            
+
             break
             #if backtrack is None:
                 #break
@@ -824,11 +824,11 @@ def pdhg(F, G, A, Astar, b, x0, y0=None, step_p=1.0, step_d=1.0,
                     #print(dlhs, drhs)
                     ## backtrack
                     #dstep = dstep*backtrack
-        
+
         # calculate residuals
         p = (x - x_new)/pstep - (Asy - Asy_new) - dtheta*(Asy - Asy_old)
         d = (y - y_new)/dstep - ptheta*(Ax - Ax_new)
-        
+
         # update state variables for which we had to track previous values
         x = x_new
         Ax = Ax_new
@@ -836,7 +836,7 @@ def pdhg(F, G, A, Astar, b, x0, y0=None, step_p=1.0, step_d=1.0,
         Asy_old = Asy
         y = y_new
         Asy = Asy_new
-        
+
         # norms for convergence check
         pnorm = tolnorm(p)
         dnorm = tolnorm(d)
@@ -844,19 +844,19 @@ def pdhg(F, G, A, Astar, b, x0, y0=None, step_p=1.0, step_d=1.0,
         Asynorm = tolnorm(Asy)
         ynorm = tolnorm(y)
         Axnorm = tolnorm(Ax)
-        
+
         pstopthresh = pabstol + reltol*max(xnorm/pstep, Asynorm)
         dstopthresh = dabstol + reltol*max(ynorm/dstep, Axnorm)
-        
+
         if printrate is not None and (k % printrate) == 0:
             val = F(x) + G(Ax - b)
             dval = -Fconj(y) - Gconj(y) - np.vdot(y, b).real
-            dkt = dict(it=k, val=val, step_p=pstep, step_d=dstep, 
+            dkt = dict(it=k, val=val, step_p=pstep, step_d=dstep,
                        resid_p=pnorm, thresh_p=pstopthresh,
                        resid_d=dnorm, thresh_d=dstopthresh)
             print(('{it}: val={val:.5}, step_p={step_p:.4}, ' +
-                   'step_d={step_d:.4}, ' + 
-                   'res_p={resid_p:.4} ({thresh_p:.3}), ' + 
+                   'step_d={step_d:.4}, ' +
+                   'res_p={resid_p:.4} ({thresh_p:.3}), ' +
                    'res_d={resid_d:.4} ({thresh_d:.3})').format(**dkt))
             if moreinfo:
                 if xstar is not None:
@@ -868,7 +868,7 @@ def pdhg(F, G, A, Astar, b, x0, y0=None, step_p=1.0, step_d=1.0,
         # is to see if primal and dual residuals are small
         if pnorm < pstopthresh and dnorm < dstopthresh:
             break
-        
+
         ## penalty parameter adjustment
         #if k < 100:
             #if rnorm > residgap*snorm:
@@ -883,7 +883,7 @@ def pdhg(F, G, A, Astar, b, x0, y0=None, step_p=1.0, step_d=1.0,
                 #u = u*penfactor
                 #Asu = Asu*penfactor
                 #Asu_old = Asu_old*penfactor
-        
+
         # expand stepsize
         #if backtrack is not None and dAx > 0:
             #stepsize = dx*pen/dAx
@@ -900,9 +900,9 @@ def pdhg(F, G, A, Astar, b, x0, y0=None, step_p=1.0, step_d=1.0,
         #if backtrack is not None:
             #msg += ' (and {0} backtracks)'.format(bts)
         print(msg)
-    
+
     if moreinfo:
-        return dict(x=x, y=y, numits=k, p=p, d=d, pstep=pstep, dstep=dstep, 
+        return dict(x=x, y=y, numits=k, p=p, d=d, pstep=pstep, dstep=dstep,
                     hist=hist[:k//printrate])
     else:
         return x
