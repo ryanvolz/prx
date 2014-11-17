@@ -489,7 +489,7 @@ def admm(F, G, x0, y0=None, pen=1.0, residgap=2, penfactor=1.5, reltol=1e-6,
         return x
 
 def admmlin(F, G, A, Astar, b, x0, y0=None, stepsize=1.0, backtrack=0.5,
-            expand=1.25, pen=1.0, residgap=2, penfactor=1.5, relax=1.0,
+            expand=1.25, pen=1.0, residgap=10, penfactor=1.5, relax=1.0,
             reltol=1e-6, abstol=1e-10, maxits=10000,
             moreinfo=False, printrate=100, xstar=None):
     """Solve: argmin_x ( F(x) + G(A(x) - b) ) using linearized ADMM.
@@ -676,8 +676,8 @@ def admmlin(F, G, A, Astar, b, x0, y0=None, stepsize=1.0, backtrack=0.5,
                 Asu_old = Asu_old*penfactor
 
         # expand stepsize
-        if backtrack is not None and dAx > 0:
-            stepsize = dx*pen/dAx
+        if expand is not None and backtrack is not None and dAx > 0:
+            stepsize = dx*pen/dAx*expand
 
     if printrate is not None:
         if k + 1 >= maxits:
