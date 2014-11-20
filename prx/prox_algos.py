@@ -161,7 +161,7 @@ def proxgrad(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5, expand=1.25,
         print(msg)
 
     if moreinfo:
-        return dict(x=x, numits=k, backtracks=bts, r=r,
+        return dict(x=x, numits=k+1, backtracks=bts, r=r,
                     stepsize=stepsize, hist=hist[:k//printrate])
     else:
         return x
@@ -348,7 +348,7 @@ def proxgradaccel(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5,
         print(msg)
 
     if moreinfo:
-        return dict(x=x, numits=k, backtracks=bts, w=w, r=r,
+        return dict(x=x, numits=k+1, backtracks=bts, w=w, r=r,
                     stepsize=stepsize, hist=hist[:k//printrate])
     else:
         return x
@@ -485,7 +485,7 @@ def admm(F, G, x0, y0=None, pen=1.0, residgap=2, penfactor=1.5, reltol=1e-6,
         print(msg)
 
     if moreinfo:
-        return dict(x=x, z=z, y=u/pen, numits=k, r=r, s=s, pen=pen,
+        return dict(x=x, z=z, y=u/pen, numits=k+1, r=r, s=s, pen=pen,
                     hist=hist[:k//printrate])
     else:
         return x
@@ -692,7 +692,7 @@ def admmlin(F, G, A, Astar, b, x0, y0=None, stepsize=1.0, backtrack=0.5,
         print(msg)
 
     if moreinfo:
-        return dict(x=x, z=z, y=u/pen, numits=k, backtracks=bts, r=r, s=s,
+        return dict(x=x, z=z, y=u/pen, numits=k+1, backtracks=bts, r=r, s=s,
                     stepsize=stepsize, pen=pen, hist=hist[:k//printrate])
     else:
         return x
@@ -904,7 +904,7 @@ def pdhg(F, G, A, Astar, b, x0, y0=None, step_p=1.0, step_d=1.0,
         print(msg)
 
     if moreinfo:
-        return dict(x=x, y=y, numits=k, p=p, d=d, pstep=pstep, dstep=dstep,
+        return dict(x=x, y=y, numits=k+1, p=p, d=d, pstep=pstep, dstep=dstep,
                     hist=hist[:k//printrate])
     else:
         return x
