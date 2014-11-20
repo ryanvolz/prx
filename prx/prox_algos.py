@@ -161,13 +161,13 @@ def proxgrad(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5, expand=1.25,
         print(msg)
 
     if moreinfo:
-        return dict(x=x, numits=k, r=r, stepsize=stepsize,
-                    hist=hist[:k//printrate])
+        return dict(x=x, numits=k, backtracks=bts, r=r,
+                    stepsize=stepsize, hist=hist[:k//printrate])
     else:
         return x
 
 def proxgradaccel(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5,
-                  expand=1.25, reltol=1e-6, abstol=1e-10,
+                  expand=1.25, restart=True, reltol=1e-6, abstol=1e-10,
                   maxits=10000, moreinfo=False, printrate=100,
                   xstar=None):
     """Solve: argmin_x ( F(x) + G(A(x) - b) ) using accelerated prox. gradient.
@@ -201,6 +201,8 @@ def proxgradaccel(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5,
             Lipschitz condition is violated
         expand >= 1 or None, amount to increase step size after every iteration
             so that it can adapt to decreasing local Lipschitz constant
+        restart, True or False: whether to restart the acceleration term when
+            the acceleration direction opposes the previous step
 
     Update equations:
       (acceleration)
@@ -263,7 +265,7 @@ def proxgradaccel(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5,
         # "gradient" adaptive restart:
         # reset "momentum" when acceleration direction (x - x_old) is in
         # opposite direction of previous step prox gradient step (x - w)
-        if np.vdot(w - x, x - x_old).real > 0:
+        if restart and np.vdot(w - x, x - x_old).real > 0:
             t_old = 1
 
         # loop for backtracking line search
@@ -346,8 +348,8 @@ def proxgradaccel(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5,
         print(msg)
 
     if moreinfo:
-        return dict(x=x, numits=k, w=w, r=r, stepsize=stepsize,
-                    hist=hist[:k//printrate])
+        return dict(x=x, numits=k, backtracks=bts, w=w, r=r,
+                    stepsize=stepsize, hist=hist[:k//printrate])
     else:
         return x
 
@@ -690,8 +692,8 @@ def admmlin(F, G, A, Astar, b, x0, y0=None, stepsize=1.0, backtrack=0.5,
         print(msg)
 
     if moreinfo:
-        return dict(x=x, z=z, y=u/pen, numits=k, r=r, s=s, stepsize=stepsize,
-                    pen=pen, hist=hist[:k//printrate])
+        return dict(x=x, z=z, y=u/pen, numits=k, backtracks=bts, r=r, s=s,
+                    stepsize=stepsize, pen=pen, hist=hist[:k//printrate])
     else:
         return x
 
