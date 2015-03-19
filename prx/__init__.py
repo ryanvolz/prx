@@ -1,4 +1,14 @@
-"""
+"""Optimization algorithms based on the proximal operator.
+
+.. currentmodule:: prx
+
+Standard Problems
+-----------------
+
+.. autosummary::
+    :toctree:
+
+    standard_probs
 
 """
 from .amp_algos import *

@@ -7,6 +7,32 @@
 # The full license is in the LICENSE file, distributed with this software.
 #-----------------------------------------------------------------------------
 
+"""Standard optimization problems.
+
+.. currentmodule:: prx.standard_probs
+
+l-1 minimization
+----------------
+
+.. autosummary::
+    :toctree:
+
+    bpdn
+    dantzig
+    l1rls
+    srlasso
+
+
+Other
+-----
+
+.. autosummary::
+    :toctree:
+
+    zcls
+
+"""
+
 from __future__ import division
 import numpy as np
 

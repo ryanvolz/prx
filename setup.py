@@ -18,6 +18,24 @@ versioneer.versionfile_build = 'prx/_version.py'
 versioneer.tag_prefix = 'v' # tags are like v1.2.0
 versioneer.parentdir_prefix = 'prx-' # dirname like 'prx-1.2.0'
 
+# custom setup.py commands
+cmdclass = versioneer.get_cmdclass()
+
+# add nose and sphinx commands since we depend on them but they are not always
+# automatically available (e.g. when using conda versions of these packages)
+try:
+    from nose.commands import nosetests
+except ImportError:
+    pass
+else:
+    cmdclass['nosetests'] = nosetests
+try:
+    from sphinx.setup_command import BuildDoc
+except ImportError:
+    pass
+else:
+    cmdclass['build_sphinx'] = BuildDoc
+
 # Get the long description from the relevant file
 # Use codecs.open for Python 2 compatibility
 with codecs.open('README.rst', encoding='utf-8') as f:
@@ -51,6 +69,9 @@ setup(
 
     packages=['prx'],
     install_requires=['Bottleneck', 'numpy', 'scipy'],
+    extras_require={
+        'doc': ['numpydoc', 'sphinx'],
+    },
 
-    cmdclass=versioneer.get_cmdclass(),
+    cmdclass=cmdclass,
 )
