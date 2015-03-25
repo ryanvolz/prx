@@ -35,7 +35,7 @@ code_check:
 	flake8 $(PACKAGE) | grep -v __init__ | grep -v _version
 	pylint -E -i y -f colorized $(PACKAGE)
 
-dist: cython
+dist:
 	$(PYTHON) setup.py sdist
 
 distclean: clean_build clean_inplace clean_sphinxbuild
@@ -60,8 +60,8 @@ pdf:
 
 test: test_code
 
-test_code: cython inplace
+test_code: inplace
 	$(PYTHON) setup.py nosetests --nocapture --verbosity=2
 
-test_coverage: cython inplace clean_coverage
+test_coverage: inplace clean_coverage
 	$(PYTHON) setup.py nosetests --nocapture --verbosity=2 --with-coverage
