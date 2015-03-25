@@ -10,14 +10,13 @@
 from __future__ import division
 import numpy as np
 
-from .func_ops import *
-from .grad_funcs import grad_l2sqhalf
-from .prox_funcs import (proj_l2, proj_linf, proj_zeros, prox_l1, 
-                         prox_l1l2, prox_l2, prox_l2sqhalf)
-from .norms import l1norm, l1l2norm, l2norm, l2normsqhalf, linfnorm
-
-__all__ = ['L1Norm', 'L1L2Norm', 'L2Norm', 'L2NormSqHalf', 'L2BallInd', 
-           'LInfBallInd', 'ZerosInd']
+from .func_ops import (
+    shift_fun, shift_grad, shift_prox,
+    stretch_fun, stretch_grad, stretch_prox,
+    scale_fun, scale_grad, scale_prox,
+    addlinear_fun, addlinear_grad, addlinear_prox,
+    addconst_fun
+)
 
 def prepend_docstring(parent):
     def decorator(f):
@@ -26,32 +25,106 @@ def prepend_docstring(parent):
         else:
             f.__doc__ = parent.__doc__ + f.__doc__
         return f
-    
+
     return decorator
 
-###****************************************************************************
-### Base classes for function-prox objects ************************************
-###****************************************************************************
+###***************************************************************************
+### Base classes for function-prox objects ***********************************
+###***************************************************************************
+
 class FunctionWithGradProx(object):
     """Function with gradient and prox operator.
-    
+
+    This class holds a function and its associated gradient and prox operators,
+    with optional scaling, stretching, shifting, and linear or constant
+    terms added for initialized objects.
+
     The function is evaluated by calling obj(x) or obj.fun(x).
     Its gradient is evaluated by calling obj.grad(x).
     Its prox operator is evaluated by calling obj.prox(x, lmbda).
-    
+
+    The :meth:`fun`, :meth:`grad`, and :meth:`prox` methods must be
+    defined for a particular operator by inheriting from this class. It is
+    also necessary to override the attribute :attr:`_conjugate_class` to
+    give the class of the conjugate function, if applicable.
+
+
+    Attributes
+    ----------
+
+    conjugate : :class:`FunctionWithGradProx` object
+        The corresponding conjugate function/grad/prox.
+
+    const : float or int
+        Added constant.
+
+    linear : float or int
+        Added inner product term applied to function input.
+
+    scale : float or int
+        Function scaling.
+
+    shift : float or int
+        Input shifting.
+
+    stretch : float or int
+        Input stretching.
+
+
+    See Also
+    --------
+
+    FunctionWithGradProx : Basic function/grad/prox class.
+    LinearFunctionWithGradProx : Special case for linear functions.
+    NormFunctionWithGradProx : Special case for norms.
+    NormSqFunctionWithGradProx : Special case for squared norms.
+    IndicatorWithGradProx : Special case for indicator functions.
+    NormBallWithGradProx : Special case for norm ball indicator functions.
+
+
+    Notes
+    -----
+
     The prox operator gives the solution to the problem:
+
+    .. math::
+
         prox(v, lmbda) = argmin_x ( g(x) + 1/(2*lmbda)*(||x - v||_2)**2 ).
-    
+
     """
-    def __init__(self, scale=None, stretch=None, shift=None, linear=None, 
+    def __init__(self, scale=None, stretch=None, shift=None, linear=None,
                  const=None):
         """Create function with gradient and prox operator.
-        
-        g = FunctionWithGradProx(scale=s, stretch=a, shift=b, linear=c, const=d) 
-        for the function f(x) creates an object for evaluating 
-        the value, gradient, and prox operator of:
+
+        With the class defined for the function f(x), this returns an object
+        for evaluating the value, gradient, and prox operator of the function
+
+        .. math::
+
             g(x) = s*f(a*x + b) + <c, x> + d
-        
+
+        for `scale` :math:`s`, `stretch` :math:`a`, `shift` :math:`b`,
+        `linear` :math:`c`, and `const` :math:`d`.
+
+
+        Parameters
+        ----------
+
+        scale : float or int
+            Function scaling.
+
+        stretch : float or int
+            Input stretching.
+
+        shift : float or int
+            Input shifting.
+
+        linear : float or int
+            Added inner product term applied to function input.
+
+        const : float or int
+            Added constant.
+
         """
         # change 'None's to identities
         if scale is None:
@@ -64,7 +137,7 @@ class FunctionWithGradProx(object):
             linear = 0
         if const is None:
             const = 0
-        
+
         self._scale = scale
         self._stretch = stretch
         self._shift = shift
@@ -91,29 +164,39 @@ class FunctionWithGradProx(object):
         if const is not None and np.any(const != 0):
             self.fun = addconst_fun(self.fun, const)
             # added constant does not change grad or prox functions
-    
+
     def __call__(self, x):
         return self.fun(x)
-    
+
     @property
     def conjugate(self):
-        """Get object for the conjugate function.
+        """Object for the conjugate function.
+
+
+        Notes
+        -----
+
+        The convex conjugate of f(x) is defined as
+
+        .. math::
         
-        The convex conjugate of f(x) is defined as 
             f^*(y) = sup_x ( <y, x> - f(x) ).
-        
-        Additionally, if g(x) = s*f(a*x + b) + <c, x> + d, then
+
+        Additionally, if :math:`g(x) = s*f(a*x + b) + <c, x> + d`, then
+
+        .. math::
+
             g^*(y) = s*f^*(y/(a*s) - c/(a*s)) - <b/a, y> - d.
-        
+
         """
         Conjugate = self._conjugate_class
         return Conjugate(**self._conjugate_args)
-    
+
     @property
     def _conjugate_class(self):
         """Return the class for the conjugate function."""
         raise NotImplementedError
-        
+
     @property
     def _conjugate_args(self):
         """Return the keyword arguments for the conjugate function in a dict."""
@@ -122,35 +205,35 @@ class FunctionWithGradProx(object):
         shift = -stretch*self._linear
         linear = -self._shift/self._stretch
         const = -self._const
-        
-        return dict(scale=scale, stretch=stretch, shift=shift, linear=linear, 
+
+        return dict(scale=scale, stretch=stretch, shift=shift, linear=linear,
                     const=const)
-    
+
     def fun(self, x):
         raise NotImplementedError
-    
+
     def grad(self, x):
         raise NotImplementedError
-    
+
     def prox(self, x, lmbda=1):
         raise NotImplementedError
-    
+
     @property
     def const(self):
         return self._const
-    
+
     @property
     def linear(self):
         return self._linear
-    
+
     @property
     def scale(self):
         return self._scale
-    
+
     @property
     def shift(self):
         return self._shift
-    
+
     @property
     def stretch(self):
         return self._stretch
@@ -158,11 +241,11 @@ class FunctionWithGradProx(object):
 class LinearFunctionWithGradProx(FunctionWithGradProx):
     __doc__ = FunctionWithGradProx.__doc__
     @prepend_docstring(FunctionWithGradProx.__init__)
-    def __init__(self, scale=None, stretch=None, shift=None, linear=None, 
+    def __init__(self, scale=None, stretch=None, shift=None, linear=None,
                  const=None):
         # we can eliminate stretching and shifting:
         # s*f(a*x + b) + <c, x> + d ==> a*s*f(x) + <c, x> + (s*f(b) + d)
-        
+
         # change 'None's to identities
         if scale is None:
             scale = 1
@@ -183,19 +266,19 @@ class LinearFunctionWithGradProx(FunctionWithGradProx):
             scale = None
         if const == 0:
             const = None
-        
+
         super(LinearFunctionWithGradProx, self).__init__(
-            scale=scale, stretch=stretch, shift=shift, 
+            scale=scale, stretch=stretch, shift=shift,
             linear=linear, const=const)
 
 class NormFunctionWithGradProx(FunctionWithGradProx):
     __doc__ = FunctionWithGradProx.__doc__
     @prepend_docstring(FunctionWithGradProx.__init__)
-    def __init__(self, scale=None, stretch=None, shift=None, linear=None, 
+    def __init__(self, scale=None, stretch=None, shift=None, linear=None,
                  const=None):
         # we can eliminate stretching:
         # s*f(a*x + b) + <c, x> + d ==> a*s*f(x + b/a) + <c, x> + d
-        
+
         # absorb stretch into scale and shift
         if stretch is not None:
             if shift is not None:
@@ -205,19 +288,19 @@ class NormFunctionWithGradProx(FunctionWithGradProx):
             else:
                 scale = stretch
             stretch = None
-        
+
         super(NormFunctionWithGradProx, self).__init__(
-            scale=scale, stretch=stretch, shift=shift, 
+            scale=scale, stretch=stretch, shift=shift,
             linear=linear, const=const)
 
 class NormSqFunctionWithGradProx(FunctionWithGradProx):
     __doc__ = FunctionWithGradProx.__doc__
     @prepend_docstring(FunctionWithGradProx.__init__)
-    def __init__(self, scale=None, stretch=None, shift=None, linear=None, 
+    def __init__(self, scale=None, stretch=None, shift=None, linear=None,
                  const=None):
         # we can eliminate stretching:
         # s*f(a*x + b) + <c, x> + d ==> (a**2)*s*f(x + b/a) + <c, x> + d
-        
+
         # absorb stretch into scale and shift
         if stretch is not None:
             if shift is not None:
@@ -227,273 +310,56 @@ class NormSqFunctionWithGradProx(FunctionWithGradProx):
             else:
                 scale = stretch**2
             stretch = None
-        
+
         super(NormSqFunctionWithGradProx, self).__init__(
-            scale=scale, stretch=stretch, shift=shift, 
+            scale=scale, stretch=stretch, shift=shift,
             linear=linear, const=const)
 
 class IndicatorWithGradProx(FunctionWithGradProx):
     __doc__ = FunctionWithGradProx.__doc__
     @prepend_docstring(FunctionWithGradProx.__init__)
-    def __init__(self, radius=1, scale=None, stretch=None, shift=None, 
+    def __init__(self, radius=1, scale=None, stretch=None, shift=None,
                  linear=None, const=None):
         # we can eliminate scaling:
         # s*f(a*x + b) + <c, x> + d ==> f(a*x + b) + <c, x> + d
-        
+
         # eliminate scale
         if scale is not None:
             scale = None
-        
+
         super(IndicatorWithGradProx, self).__init__(
-            scale=scale, stretch=stretch, shift=shift, 
+            scale=scale, stretch=stretch, shift=shift,
             linear=linear, const=const)
 
 class NormBallWithGradProx(IndicatorWithGradProx):
     __doc__ = FunctionWithGradProx.__doc__
     @prepend_docstring(IndicatorWithGradProx.__init__)
-    def __init__(self, radius=1, scale=None, stretch=None, shift=None, 
+    def __init__(self, radius=1, scale=None, stretch=None, shift=None,
                  linear=None, const=None):
-        """The parameter 'radius' sets the radius of the norm ball indicator.
-        
+        """
+        radius : float or int
+            Radius of the norm ball indicator.
+
         """
         # we can eliminate stretching:
         # s*f_r(a*x + b) + <c, x> + d ==> s*f_(r/a)(x + b/a) + <c, x> + d
-        
+
         # absorb stretch into radius and shift
         if stretch is not None:
             radius = radius/stretch
             if shift is not None:
                 shift = shift/stretch
             stretch = None
-        
+
         # set radius parameter
         self._radius = radius
-        
-        # we can also eliminate scaling, 
+
+        # we can also eliminate scaling,
         # but this is taken care of by parent class
         super(NormBallWithGradProx, self).__init__(
-            scale=scale, stretch=stretch, shift=shift, 
+            scale=scale, stretch=stretch, shift=shift,
             linear=linear, const=const)
-    
+
     @property
     def radius(self):
         return self._radius
-
-
-###****************************************************************************
-### Useful classes for function-prox objects **********************************
-###****************************************************************************
-class L1Norm(NormFunctionWithGradProx):
-    __doc__ = NormFunctionWithGradProx.__doc__ + \
-    """
-    Function and prox operator for the l1-norm, sum(abs(x)).
-    
-    fun(x) = sum(abs(x))
-    
-    The prox operator is soft thresholding:
-        st(x[k], lmbda) = { (1 - lmbda/|x[k]|)*x[k]  if |x[k]| > lmbda
-                          {           0              otherwise
-    
-    """
-    @property
-    def _conjugate_class(self):
-        return LInfBallInd
-    fun = staticmethod(l1norm)
-    prox = staticmethod(prox_l1)
-    
-class L1L2Norm(NormFunctionWithGradProx):
-    __doc__ = NormFunctionWithGradProx.__doc__ + \
-    """
-    Function and prox operator for the combined l1- and l2-norm.
-    
-    The axis argument defines the axes over which to take the l2-norm
-    (axis=None specifies all axes and is equivalent to L2Norm).
-    
-    fun(x) = l1norm(l2norm(x, axis))
-    
-    The prox operator is block soft thresholding (for 'k' NOT along axis):
-      bst(x[k, :], lmbda) = {(1 - lmbda/||x[k]||_2)*x[k]  if ||x[k]||_2 > lmbda
-                            {          0                  otherwise
-    
-    """
-    @prepend_docstring(NormFunctionWithGradProx.__init__)
-    def __init__(self, axis=-1, scale=None, stretch=None, shift=None, 
-                 linear=None, const=None):
-        """The axis argument defines the axes over which to take the l2-norm
-        (axis=None specifies all axes and is equivalent to L2Norm).
-        
-        """
-        self._axis = axis
-        
-        super(L1L2Norm, self).__init__(
-            scale=scale, stretch=stretch, shift=shift, 
-            linear=linear, const=const)
-    
-    @property
-    def axis(self):
-        return self._axis
-    
-    def fun(self, x):
-        """Combined l1- and l2-norm with l2-norm taken over axis=self.axis."""
-        return l1l2norm(x, self._axis)
-        
-    def prox(self, x, lmbda=1):
-        """Prox operator of combined l1- and l2-norm (l2 over axis=self.axis)."""
-        return prox_l1l2(x, lmbda=lmbda, axis=self._axis)
-
-class L2Norm(NormFunctionWithGradProx):
-    __doc__ = NormFunctionWithGradProx.__doc__ + \
-    """
-    Function and prox operator for the l2-norm, sqrt(sum(abs(x)**2)).
-    
-    fun(x) = sqrt(sum(abs(x)**2))
-    
-    The prox operator is the block thresholding function for block=(all of x):
-        bst(x, lmbda) = { (1 - lmbda/||x||_2)*x  if ||x||_2 > lmbda
-                        {           0            otherwise
-    
-    """
-    @property
-    def _conjugate_class(self):
-        return L2BallInd
-    fun = staticmethod(l2norm)
-    prox = staticmethod(prox_l2)
-
-class L2NormSqHalf(NormSqFunctionWithGradProx):
-    __doc__ = NormSqFunctionWithGradProx.__doc__ + \
-    """
-    Function with gradient and prox operator for half the squared l2-norm.
-    
-    fun(x) = 0.5*sum(abs(x)**2))
-    
-    The prox operator is the shrinkage function:
-        shrink(x, lmbda) = x/(1 + lmbda)
-    
-    """
-    @property
-    def _conjugate_class(self):
-        return L2NormSqHalf
-    fun = staticmethod(l2normsqhalf)
-    grad = staticmethod(grad_l2sqhalf)
-    prox = staticmethod(prox_l2sqhalf)
-
-class L2BallInd(NormBallWithGradProx):
-    __doc__ = NormBallWithGradProx.__doc__ + \
-    """
-    Function and prox operator for the indicator of the l2-ball.
-    
-    The indicator function is zero for vectors inside the ball, infinity for 
-    vectors outside the ball.
-    
-    The prox operator is Euclidean projection onto the l2-ball.
-    
-    """
-    @property
-    def _conjugate_class(self):
-        return L2Norm
-    
-    def fun(self, x):
-        """Indicator function for the l2-ball with radius=self.radius."""
-        nrm = l2norm(x)
-        eps = np.finfo(nrm.dtype).eps
-        rad = self.radius
-        if nrm <= rad*(1 + 10*eps):
-            return 0
-        else:
-            return np.inf
-    
-    def prox(self, x, lmbda=1):
-        """Projection onto the l2-ball with radius=self.radius."""
-        return proj_l2(x, radius=self.radius)
-
-class LInfBallInd(NormBallWithGradProx):
-    __doc__ = NormBallWithGradProx.__doc__ + \
-    """
-    Function and prox operator for the indicator of the linf-ball.
-    
-    The indicator function is zero for vectors inside the ball, infinity for 
-    vectors outside the ball.
-    
-    The prox operator is Euclidean projection onto the linf-ball.
-    
-    """
-    @property
-    def _conjugate_class(self):
-        return L1Norm
-    
-    def fun(self, x):
-        """Indicator function for the linf-ball with radius=self.radius."""
-        nrm = linfnorm(x)
-        eps = np.finfo(nrm.dtype).eps
-        rad = self.radius
-        if nrm <= rad*(1 + 10*eps):
-            return 0
-        else:
-            return np.inf
-    
-    def prox(self, x, lmbda=1):
-        """Projection onto the linf-ball with radius=self.radius."""
-        return proj_linf(x, radius=self.radius)
-
-class ZerosInd(IndicatorWithGradProx):
-    __doc__ = IndicatorWithGradProx.__doc__ + \
-    """
-    Function and prox operator for the indicator of zero elements.
-    
-    The indicator function is zero for vectors with only zeros in the 
-    specified places, infinity if any of the required zero entries are nonzero.
-    
-    The prox operator is Euclidean projection onto the set with 
-    specified zeros (x[z] is set to 0).
-    
-    """
-    @prepend_docstring(IndicatorWithGradProx.__init__)
-    def __init__(self, z=None, scale=None, stretch=None, shift=None, 
-                 linear=None, const=None):
-        """The parameter 'z' must be a boolean array giving the zero locations.
-        
-        """
-        if z is None:
-            raise ValueError('Must specify zero locations (z)!')
-        
-        # stretch can be eliminated by bringing into shift
-        # (since multiplying does not change zero locations)
-        if stretch is not None and shift is not None:
-            shift = shift/stretch
-        stretch = None
-        
-        self._z = z
-        
-        # we can also eliminate scaling, 
-        # but this is taken care of by parent class
-        super(ZerosInd, self).__init__(
-            scale=scale, stretch=stretch, shift=shift, 
-            linear=linear, const=const)
-    
-    @property
-    def _conjugate_class(self):
-        return ZerosInd
-    
-    @property
-    def _conjugate_args(self):
-        # The conjugate of the zero indicator is the indicator for the
-        # complimentary set of zeros.
-        z = ~self._z
-        kwargs = super(ZerosInd, self)._conjugate_args
-        kwargs.update(z=z)
-        return kwargs
-    
-    @property
-    def z(self):
-        return self._z
-    
-    def fun(self, x):
-        """Indicator function for zero elements z."""
-        if np.any(x[self._z] != 0):
-            return np.inf
-        else:
-            return 0
-        
-    def prox(self, x, lmbda=1):
-        """Projection onto the set with specified zeros (x[z] is set to 0)"""
-        return proj_zeros(x, z=self._z)

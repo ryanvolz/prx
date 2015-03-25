@@ -10,8 +10,8 @@
 from __future__ import division
 import numpy as np
 
-from .func_classes import L1Norm, L2NormSqHalf
-from .norms import l1norm, l2norm, linfnorm
+from .standard_funcs import L1Norm, L2NormSqHalf
+from .norms import linfnorm
 from .prox_algos import proxgrad, proxgradaccel
 from .thresholding import softthresh
 
