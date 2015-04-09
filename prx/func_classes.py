@@ -179,7 +179,7 @@ class FunctionWithGradProx(object):
         The convex conjugate of f(x) is defined as
 
         .. math::
-        
+
             f^*(y) = sup_x ( <y, x> - f(x) ).
 
         Additionally, if :math:`g(x) = s*f(a*x + b) + <c, x> + d`, then
@@ -330,6 +330,29 @@ class IndicatorWithGradProx(FunctionWithGradProx):
         super(IndicatorWithGradProx, self).__init__(
             scale=scale, stretch=stretch, shift=shift,
             linear=linear, const=const)
+
+    def __add__(self, other):
+        """Return the function object for the sum of two functions.
+
+        Indicator functions can be summed with any other function and the
+        result still has a well-defined prox operator: the composition
+        of the two functions' prox operators.
+
+        """
+        summed = FunctionWithGradProx()
+
+        def summed_fun(x):
+            return self.fun(x) + other.fun(x)
+
+        def summed_prox(x, lmbda=1):
+            return other.prox(self.prox(x, lmbda), lmbda)
+
+        summed.fun = summed_fun
+        summed.prox = summed_prox
+
+        return summed
+
+    __radd__ = __add__
 
 class NormBallWithGradProx(IndicatorWithGradProx):
     __doc__ = FunctionWithGradProx.__doc__
