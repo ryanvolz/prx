@@ -1,11 +1,23 @@
-#-----------------------------------------------------------------------------
-# Copyright (c) 2014, Ryan Volz
+# ----------------------------------------------------------------------------
+# Copyright (c) 2015, Ryan Volz
 # All rights reserved.
 #
 # Distributed under the terms of the BSD 3-Clause ("BSD New") license.
 #
 # The full license is in the LICENSE file, distributed with this software.
-#-----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
+
+"""Operator utilities.
+
+.. currentmodule:: prx.operator_utils
+
+.. autosummary::
+    :toctree:
+
+    adjointness_error
+    opnorm
+
+"""
 
 import numpy as np
 
@@ -24,21 +36,43 @@ def get_random_normal(shape, dtype):
 
 def adjointness_error(A, Astar, inshape, indtype, its=100):
     """Check adjointness of A and Astar for 'its' instances of random data.
-    
-    For random unit-normed x and y, this finds the error in the adjoint 
+
+    For random unit-normed x and y, this finds the error in the adjoint
     identity <Ax, y> == <x, A*y>:
-        err = abs( vdot(A(x), y) - vdot(x, Astar(y)) ).
-    
-    The type and shape of the input to A are specified by inshape and indtype.
-    
-    Returns a vector of the error magnitudes.
-    
+        ``err = abs( vdot(A(x), y) - vdot(x, Astar(y)) )``.
+
+
+    Parameters
+    ----------
+
+    A : function
+        Forward operator.
+
+    Astar : function
+        Adjoint operator.
+
+    inshape : tuple
+        Shape of the input to A.
+
+    indtype : tuple
+        Array dtype of the input to A.
+
+    its : int
+        Number of random instances for which to check the adjointness.
+
+
+    Returns
+    -------
+
+    out : ndarray of length `its`
+        A vector of the adjointness error magnitudes for each random instance.
+
     """
     x = get_random_normal(inshape, indtype)
     y = A(x)
     outshape = y.shape
     outdtype = y.dtype
-    
+
     errs = np.zeros(its)
     for k in xrange(its):
         x = get_random_normal(inshape, indtype)
@@ -48,18 +82,53 @@ def adjointness_error(A, Astar, inshape, indtype, its=100):
         ip_A = np.vdot(A(x), y)
         ip_Astar = np.vdot(x, Astar(y))
         errs[k] = np.abs(ip_A - ip_Astar)
-    
+
     return errs
 
-def opnorm(A, Astar, inshape, indtype, reltol=1e-8, abstol=1e-6, maxits=100, printrate=None):
+def opnorm(A, Astar, inshape, indtype, reltol=1e-8, abstol=1e-6, maxits=100,
+           printrate=None):
     """Estimate the l2-induced operator norm: sup_v ||A(v)||/||v|| for v != 0.
-    
+
     Uses the power iteration method to estimate the operator norm of
     A and Astar.
-    
-    The type and shape of the input to A are specified by inshape and indtype.
-    
-    Returns a tuple: (norm of A, norm of Astar, vector inducing maximum scaling).
+
+    Parameters
+    ----------
+
+    A : function
+        Forward operator.
+
+    Astar : function
+        Adjoint operator.
+
+    inshape : tuple
+        Shape of the input to A.
+
+    indtype : tuple
+        Array dtype of the input to A.
+
+    reltol : float
+        Relative tolerance for judging convergence of the operator norms.
+
+    abstol : float
+        Absolute tolerance for judging convergence of the operator norms.
+
+    maxits : int
+        Maximum number of iterations to try to reach convergence to the
+        operator norms.
+
+    printrate : int or None
+        Printing interval for displaying the current iteration count and
+        operator norms. If None, do not print.
+
+
+    Returns
+    -------
+
+    out : tuple
+        Tuple containing, in order: norm of A, norm of Astar, vector inducing
+        maximum scaling.
+
     """
     v0 = get_random_normal(inshape, indtype)
     v = v0/l2norm(v0)
@@ -72,17 +141,18 @@ def opnorm(A, Astar, inshape, indtype, reltol=1e-8, abstol=1e-6, maxits=100, pri
         Asw = Astar(w)
         norm_a = l2norm(Asw)
         v = Asw/norm_a
-        
+
         delta_f = abs(norm_f - norm_f0)
         delta_a = abs(norm_a - norm_a0)
-        
+
         if printrate is not None and (k % printrate) == 0:
-            print('Iteration {0}, forward norm: {1}, adjoint norm: {2}'.format(k, norm_f, norm_a))
+            print('Iteration {0}, forward norm: {1},'
+                  + ' adjoint norm: {2}'.format(k, norm_f, norm_a))
         if (delta_f < abstol + reltol*max(norm_f, norm_f0)
             and delta_a < abstol + reltol*max(norm_a, norm_a0)):
             break
-        
+
         norm_f0 = norm_f
         norm_a0 = norm_a
-    
+
     return norm_f, norm_a, v
