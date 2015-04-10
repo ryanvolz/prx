@@ -22,6 +22,7 @@ __all__ = [
     'FunctionWithGradProx', 'LinearFunctionWithGradProx',
     'NormFunctionWithGradProx', 'NormSqFunctionWithGradProx',
     'IndicatorWithGradProx', 'NormBallWithGradProx',
+    'SeparableFunction',
 ]
 
 def prepend_docstring(parent):
@@ -408,10 +409,10 @@ class SeparableFunction(FunctionWithGradProx):
 
     A separable function is one that can be divided into summed component
     functions that each operate on mutually exclusive partitions of the input.
-    For a separable function F(X), we assume that the input X is a tuple that
-    gives the individual input components, ``X = (x1, x2, ..., xn)``. Then
-    F is desribed by its components ``(f1, f2, ..., fn)`` so that
-    ``F(X) = f1(x1) + f2(x2) + ... + fn(xn)``.
+    For a separable function F(X), we assume that the input X is an array of
+    arrays that gives the individual input components,
+    ``X = (x1, x2, ..., xn)``. Then F is desribed by its components
+    ``(f1, f2, ..., fn)`` so that ``F(X) = f1(x1) + f2(x2) + ... + fn(xn)``.
 
     .. automethod:: __init__
 
@@ -492,13 +493,13 @@ class SeparableFunction(FunctionWithGradProx):
         return SeparableFunction(*conj_comps)
 
     def fun(self, X):
-        """Evaluate the separable function at the tuple X.
+        """Evaluate the separable function at X.
 
 
         Parameters
         ----------
 
-        X : tuple with ``len(X) == len(self.components)``
+        X : iterable of ndarrays with ``len(X) == len(self.components)``
             Partition of the input into separate values. Each component
             function operates on only its portion of the input.
 
@@ -522,13 +523,13 @@ class SeparableFunction(FunctionWithGradProx):
         return y
 
     def grad(self, X):
-        """Evaluate gradient of the separable function at the tuple X.
+        """Evaluate gradient of the separable function at X.
 
 
         Parameters
         ----------
 
-        X : tuple with ``len(X) == len(self.components)``
+        X : iterable of ndarrays with ``len(X) == len(self.components)``
             Partition of the input into separate values. Each component
             function operates on only its portion of the input.
 
@@ -536,7 +537,7 @@ class SeparableFunction(FunctionWithGradProx):
         Returns
         -------
 
-        grad_F(X) : tuple like X
+        grad_F(X) : ndarray of ndarrays like X
             Gradient at X, which is the combination of the gradients of the
             individual components:
             ``grad_F(X) = ( grad_f1(x1), grad_f2(x2), ..., grad_fn(xn) )``.
@@ -544,16 +545,16 @@ class SeparableFunction(FunctionWithGradProx):
         """
         compx = self._component_arg_gen(X)
 
-        return tuple(comp.grad(x) for comp, x in compx)
+        return np.asarray(tuple(comp.grad(x) for comp, x in compx))
 
     def prox(self, X):
-        """Evaluate prox operator of the separable function at the tuple X.
+        """Evaluate prox operator of the separable function at X.
 
 
         Parameters
         ----------
 
-        X : tuple with ``len(X) == len(self.components)``
+        X : iterable of ndarrays with ``len(X) == len(self.components)``
             Partition of the input into separate values. Each component
             function operates on only its portion of the input.
 
@@ -561,7 +562,7 @@ class SeparableFunction(FunctionWithGradProx):
         Returns
         -------
 
-        prox_F(X) : tuple like X
+        prox_F(X) : ndarray of ndarrays like X
             Prox operator at X, which is the combination of the prox operators
             of the individual components:
             ``prox_F(X) = ( prox_f1(x1), prox_f2(x2), ..., prox_fn(xn) )``.
@@ -569,6 +570,6 @@ class SeparableFunction(FunctionWithGradProx):
         """
         compx = self._component_arg_gen(X)
 
-        return tuple(comp.prox(x) for comp, x in compx)
+        return np.asarray(tuple(comp.prox(x) for comp, x in compx))
 
     __call__ = fun
