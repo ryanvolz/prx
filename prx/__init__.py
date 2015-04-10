@@ -14,6 +14,7 @@ Standard Problems
 from .amp_algos import *
 from .grad_funcs import *
 from .ist_algos import *
+from .func_classes import *
 from .norms import *
 from .operator_utils import *
 from .prox_algos import *
