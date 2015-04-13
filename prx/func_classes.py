@@ -550,7 +550,7 @@ class SeparableFunction(FunctionWithGradProx):
 
         return separray(*(comp.grad(x) for comp, x in compx))
 
-    def prox(self, X):
+    def prox(self, X, lmbda=1):
         """Evaluate prox operator of the separable function at X.
 
 
@@ -574,6 +574,6 @@ class SeparableFunction(FunctionWithGradProx):
         """
         compx = self._component_arg_gen(X)
 
-        return separray(*(comp.prox(x) for comp, x in compx))
+        return separray(*(comp.prox(x, lmbda) for comp, x in compx))
 
     __call__ = fun
