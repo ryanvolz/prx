@@ -19,6 +19,7 @@ from .norms import *
 from .operator_utils import *
 from .prox_algos import *
 from .prox_funcs import *
+from .separable_array import *
 from .standard_funcs import *
 from .standard_probs import *
 from .thresholding import *
