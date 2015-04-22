@@ -17,13 +17,13 @@ from .func_classes import (
 )
 from .grad_funcs import grad_l2sqhalf
 from .prox_funcs import (
-    proj_l2, proj_linf, proj_zeros, prox_l1, prox_l1l2, prox_l2,
-    prox_l2sqhalf,
+    proj_l1, proj_l2, proj_linf, proj_zeros,
+    prox_l1, prox_l1l2, prox_l2, prox_l2sqhalf, prox_linf,
 )
 from .norms import l1norm, l1l2norm, l2norm, l2normsqhalf, linfnorm
 
-__all__ = ['L1Norm', 'L1L2Norm', 'L2Norm', 'L2NormSqHalf', 'L2BallInd',
-           'LInfBallInd', 'ZerosInd']
+__all__ = ['L1Norm', 'L1L2Norm', 'L2Norm', 'L2NormSqHalf', 'LInfNorm',
+           'L1BallInd', 'L2BallInd', 'LInfBallInd', 'ZerosInd']
 
 ###***************************************************************************
 ### Useful function classes for function-prox objects ************************
@@ -161,6 +161,68 @@ class L2NormSqHalf(NormSqFunctionWithGradProx):
     fun = staticmethod(l2normsqhalf)
     grad = staticmethod(grad_l2sqhalf)
     prox = staticmethod(prox_l2sqhalf)
+
+class LInfNorm(NormFunctionWithGradProx):
+    """Function and prox operator for the linf-norm, max(abs(x)).
+
+
+    See Also
+    --------
+
+    NormFunctionWithGradProx : Parent class.
+
+
+    Notes
+    -----
+
+    fun(x) = max(abs(x))
+
+    The prox operator is the peak shrinkage function, which minimizes the
+    maximum value for a reduction of lmbda in the l1-norm.
+
+    """
+    @property
+    def _conjugate_class(self):
+        return L1BallInd
+    fun = staticmethod(linfnorm)
+    prox = staticmethod(prox_linf)
+
+class L1BallInd(NormBallWithGradProx):
+    """Function and prox operator for the indicator of the l1-ball.
+
+
+    See Also
+    --------
+
+    NormBallWithGradProx : Parent class.
+
+
+    Notes
+    -----
+
+    The indicator function is zero for vectors inside the ball, infinity for
+    vectors outside the ball.
+
+    The prox operator is Euclidean projection onto the l1-ball.
+
+    """
+    @property
+    def _conjugate_class(self):
+        return LInfNorm
+
+    def fun(self, x):
+        """Indicator function for the l1-ball with radius=self.radius."""
+        nrm = l1norm(x)
+        eps = np.finfo(nrm.dtype).eps
+        rad = self.radius
+        if nrm <= rad*(1 + 10*eps):
+            return 0
+        else:
+            return np.inf
+
+    def prox(self, x, lmbda=1):
+        """Projection onto the linf-ball with radius=self.radius."""
+        return proj_l1(x, radius=self.radius)
 
 class L2BallInd(NormBallWithGradProx):
     """Function and prox operator for the indicator of the l2-ball.

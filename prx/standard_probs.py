@@ -1,11 +1,11 @@
-#-----------------------------------------------------------------------------
-# Copyright (c) 2014, Ryan Volz
+# ----------------------------------------------------------------------------
+# Copyright (c) 2015, Ryan Volz
 # All rights reserved.
 #
 # Distributed under the terms of the BSD 3-Clause ("BSD New") license.
 #
 # The full license is in the LICENSE file, distributed with this software.
-#-----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 
 """Standard optimization problems.
 
@@ -20,6 +20,7 @@ l-1 minimization
     bpdn
     dantzig
     l1rls
+    lasso
     srlasso
 
 
@@ -42,7 +43,7 @@ from .standard_funcs import (
 )
 from .prox_algos import proxgrad, proxgradaccel, admm, admmlin, pdhg
 
-__all__ = ['bpdn', 'dantzig', 'l1rls', 'srlasso', 'zcls']
+__all__ = ['bpdn', 'dantzig', 'l1rls', 'lasso', 'srlasso', 'zcls']
 
 def bpdn(A, Astar, b, eps, x0, **kwargs):
     """Solves the basis pursuit denoising problem using linearized ADMM.
@@ -226,47 +227,47 @@ def l1rls_proxgrad(A, Astar, b, lmbda, x0, **kwargs):
 
 l1rls = l1rls_proxgradaccel
 
-#def lasso_admmlin(A, Astar, b, tau, x0, **kwargs):
-    #"""Solves the LASSO problem using linearized ADMM.
+def lasso_admmlin(A, Astar, b, tau, x0, **kwargs):
+    """Solves the LASSO problem using linearized ADMM.
 
-    #argmin_x 0.5*(||A(x) - b||_2)**2
-      #s.t.   ||x||_1 <= tau
+    argmin_x 0.5*(||A(x) - b||_2)**2
+      s.t.   ||x||_1 <= tau
 
-    #This definition follows Tibshirani's original formulation.
-    #The l1-regularized least squares problem
-        #argmin_x 0.5*(||A(x) - b||_2)**2 + lmbda*||x||_1
-    #is sometimes called the LASSO since they are equivalent for appropriate
-    #selection of lmbda(tau).
+    This definition follows Tibshirani's original formulation.
+    The l1-regularized least squares problem
+        argmin_x 0.5*(||A(x) - b||_2)**2 + lmbda*||x||_1
+    is sometimes called the LASSO since they are equivalent for appropriate
+    selection of lmbda(tau).
 
-    #Additional keyword arguments are passed to admmlin.
+    Additional keyword arguments are passed to admmlin.
 
-    #"""
-    #F = L1BallInd(radius=tau)
-    #G = L2NormSqHalf()
+    """
+    F = L1BallInd(radius=tau)
+    G = L2NormSqHalf()
 
-    #return admmlin(F, G, A, Astar, b, x0, **kwargs)
+    return admmlin(F, G, A, Astar, b, x0, **kwargs)
 
-#def lasso_proxgradaccel(A, Astar, b, tau, x0, **kwargs):
-    #"""Solves the LASSO problem using the accelerated proximal gradient method.
+def lasso_proxgradaccel(A, Astar, b, tau, x0, **kwargs):
+    """Solves the LASSO problem using the accelerated proximal gradient method.
 
-    #argmin_x 0.5*(||A(x) - b||_2)**2
-      #s.t.   ||x||_1 <= tau
+    argmin_x 0.5*(||A(x) - b||_2)**2
+      s.t.   ||x||_1 <= tau
 
-    #This definition follows Tibshirani's original formulation.
-    #The l1-regularized least squares problem
-        #argmin_x 0.5*(||A(x) - b||_2)**2 + lmbda*||x||_1
-    #is sometimes called the LASSO since they are equivalent for appropriate
-    #selection of lmbda(tau).
+    This definition follows Tibshirani's original formulation.
+    The l1-regularized least squares problem
+        argmin_x 0.5*(||A(x) - b||_2)**2 + lmbda*||x||_1
+    is sometimes called the LASSO since they are equivalent for appropriate
+    selection of lmbda(tau).
 
-    #Additional keyword arguments are passed to proxgradaccel.
+    Additional keyword arguments are passed to proxgradaccel.
 
-    #"""
-    #F = L1BallInd(radius=tau)
-    #G = L2NormSqHalf()
+    """
+    F = L1BallInd(radius=tau)
+    G = L2NormSqHalf()
 
-    #return proxgradaccel(F, G, A, Astar, b, x0, **kwargs)
+    return proxgradaccel(F, G, A, Astar, b, x0, **kwargs)
 
-#lasso = lasso_proxgradaccel
+lasso = lasso_proxgradaccel
 
 def srlasso(A, Astar, b, lmbda, x0, **kwargs):
     """Solves the square root LASSO problem (like L1RLS) using linearized ADMM.
