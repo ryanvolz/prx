@@ -178,6 +178,33 @@ class FunctionWithGradProx(object):
     def __call__(self, x):
         return self.fun(x)
 
+    def __add__(self, other):
+        """Return the function object for the sum of two functions.
+
+        The summed function's value and gradient are defined when both of the
+        component functions have a value and gradient, respectively. The prox
+        operator is undefined except in special circumstances (one function
+        is an indicator function).
+
+        """
+        if not isinstance(other, FunctionWithGradProx):
+            return NotImplemented
+
+        summed = FunctionWithGradProx()
+
+        def summed_fun(x):
+            return self.fun(x) + other.fun(x)
+
+        def summed_grad(x):
+            return self.grad(x) + other.grad(x)
+
+        summed.fun = summed_fun
+        summed.grad = summed_grad
+
+        return summed
+
+    __radd__ = __add__
+
     @property
     def conjugate(self):
         """Object for the conjugate function.
@@ -344,23 +371,19 @@ class IndicatorWithGradProx(FunctionWithGradProx):
     def __add__(self, other):
         """Return the function object for the sum of two functions.
 
-        Indicator functions can be summed with any other function and the
+        Indicator functions can be summed with another indicator and the
         result still has a well-defined prox operator: the composition
         of the two functions' prox operators.
 
         """
-        if not isinstance(other, FunctionWithGradProx):
+        if not isinstance(other, IndicatorWithGradProx):
             return NotImplemented
 
-        summed = FunctionWithGradProx()
-
-        def summed_fun(x):
-            return self.fun(x) + other.fun(x)
+        summed = super(IndicatorWithGradProx, self).__add__(other)
 
         def summed_prox(x, lmbda=1):
             return other.prox(self.prox(x, lmbda), lmbda)
 
-        summed.fun = summed_fun
         summed.prox = summed_prox
 
         return summed
