@@ -23,7 +23,7 @@ __all__ = [
     'FunctionWithGradProx', 'LinearFunctionWithGradProx',
     'NormFunctionWithGradProx', 'NormSqFunctionWithGradProx',
     'IndicatorWithGradProx', 'NormBallWithGradProx',
-    'SeparableFunction',
+    'CustomFunction', 'SeparableFunction',
 ]
 
 def prepend_docstring(parent):
@@ -368,28 +368,6 @@ class IndicatorWithGradProx(FunctionWithGradProx):
             scale=scale, stretch=stretch, shift=shift,
             linear=linear, const=const)
 
-    def __add__(self, other):
-        """Return the function object for the sum of two functions.
-
-        Indicator functions can be summed with another indicator and the
-        result still has a well-defined prox operator: the composition
-        of the two functions' prox operators.
-
-        """
-        if not isinstance(other, IndicatorWithGradProx):
-            return NotImplemented
-
-        summed = super(IndicatorWithGradProx, self).__add__(other)
-
-        def summed_prox(x, lmbda=1):
-            return other.prox(self.prox(x, lmbda), lmbda)
-
-        summed.prox = summed_prox
-
-        return summed
-
-    __radd__ = __add__
-
 class NormBallWithGradProx(IndicatorWithGradProx):
     __doc__ = FunctionWithGradProx.__doc__
     @prepend_docstring(IndicatorWithGradProx.__init__)
@@ -425,8 +403,64 @@ class NormBallWithGradProx(IndicatorWithGradProx):
 
 
 ###***************************************************************************
-### Combination classes for function-prox objects ****************************
+### User-facing classes/factories for function-prox objects ******************
 ###***************************************************************************
+
+def CustomFunction(cls=FunctionWithGradProx, fun=None, grad=None, prox=None,
+                   Conjugate=None):
+    """Custom function with gradient and prox operator.
+
+    Create a class for representing a function, gradient, and prox defined
+    by the supplied functions.
+
+
+    Parameters
+    ----------
+
+    cls : class
+        FunctionWithGradProx class or a subclass that the custom function
+        belongs to.
+
+    fun : function
+        ``f(x)``, which returns the value at a given point `x`.
+
+    grad : function
+        ``grad_f(x)``, which returns the gradient at a given point `x`.
+
+    prox : function
+        ``prox_f(x, lmbda=1)``, which evaluates the prox operator at `x` with
+        scaling `lmbda`.
+
+    Conjugate : class
+        Class for the corresponding conjugate function, if any.
+
+
+    Returns
+    -------
+
+    Custom : class
+        Class inheriting from cls that contains the custom function/grad/prox.
+
+    """
+    f = fun
+    g = grad
+    p = prox
+    del fun, grad, prox
+    class Custom(cls):
+        __doc__ = cls.__doc__
+        if Conjugate is not None:
+            @property
+            def _conjugate_class(self):
+                return Conjugate
+
+        if f is not None:
+            fun = staticmethod(f)
+        if g is not None:
+            grad = staticmethod(g)
+        if p is not None:
+            prox = staticmethod(p)
+
+    return Custom
 
 class SeparableFunction(FunctionWithGradProx):
     """Separable function with gradient and prox operator.
