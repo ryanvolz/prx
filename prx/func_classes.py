@@ -1,5 +1,5 @@
 # ----------------------------------------------------------------------------
-# Copyright (c) 2015, Ryan Volz
+# Copyright (c) 2015, 'prx' developers (see AUTHORS file)
 # All rights reserved.
 #
 # Distributed under the terms of the BSD 3-Clause ("BSD New") license.
@@ -111,7 +111,7 @@ class FunctionWithGradProx(object):
 
         .. math::
 
-            g(x) = s*f(a*x + b) + <c, x> + d
+            g(x) = s*f(a*x + b) + Re(<c, x>) + d
 
         for `scale` :math:`s`, `stretch` :math:`a`, `shift` :math:`b`,
         `linear` :math:`c`, and `const` :math:`d`.
@@ -120,19 +120,19 @@ class FunctionWithGradProx(object):
         Parameters
         ----------
 
-        scale : float or int
+        scale : float or int, optional
             Function scaling.
 
-        stretch : float or int
+        stretch : float or int, optional
             Input stretching.
 
-        shift : float or int
+        shift : float or int, optional
             Input shifting.
 
-        linear : float or int
+        linear : float or int, optional
             Added inner product term applied to function input.
 
-        const : float or int
+        const : float or int, optional
             Added constant.
 
         """
