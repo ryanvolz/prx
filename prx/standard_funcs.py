@@ -11,7 +11,7 @@ from __future__ import division
 import numpy as np
 
 from .func_classes import (
-    prepend_docstring,
+    prepend_docstring, FunctionWithGradProx,
     NormFunctionWithGradProx, NormSqFunctionWithGradProx,
     NormBallWithGradProx, IndicatorWithGradProx,
 )
@@ -21,9 +21,14 @@ from .prox_funcs import (
     prox_l1, prox_l1l2, prox_l2, prox_l2sqhalf, prox_linf,
 )
 from .norms import l1norm, l1l2norm, l2norm, l2normsqhalf, linfnorm
+from .operator_class import DiagLinop
 
-__all__ = ['L1Norm', 'L1L2Norm', 'L2Norm', 'L2NormSqHalf', 'LInfNorm',
-           'L1BallInd', 'L2BallInd', 'LInfBallInd', 'ZerosInd']
+__all__ = [
+    'L1Norm', 'L1L2Norm', 'L2Norm', 'L2NormSqHalf', 'LInfNorm',
+    'L1BallInd', 'L2BallInd', 'LInfBallInd',
+    'Quadratic', 'Affine', 'Const', 'PointInd',
+    'ZerosInd'
+]
 
 ###***************************************************************************
 ### Useful function classes for function-prox objects ************************
@@ -298,8 +303,319 @@ class LInfBallInd(NormBallWithGradProx):
         """Projection onto the linf-ball with radius=self.radius."""
         return proj_linf(x, radius=self.radius)
 
+class Quadratic(FunctionWithGradProx):
+    """Function and prox operator for a quadratic function.
+
+    This function is defined as
+
+    .. math::
+
+        f(x) = 0.5*s*(||Ax||_2)^2 + Re(<b, x>) + c,
+
+    where `A` is a linear operator or matrix, `b` is an array specifying the
+    linear term, `c` is a scalar constant, and `s` is a scaling constant.
+
+    .. automethod:: __init__
+
+
+    Attributes
+    ----------
+
+    A : matrix or function
+        Linear operator defining the quadratic term.
+
+    b : ndarray
+        Linear term.
+
+    c : float or int
+        Constant term.
+
+    s : float or int
+        Scaling of quadratic term.
+
+
+    See Also
+    --------
+
+    Affine : Subtype with a zero quadratic term.
+    Const : Subtype with zero quadratic and linear terms.
+    LinearFunctionWithGradProx : Parent class.
+
+    """
+    def __new__(cls, A=None, b=None, c=None, s=1, scale=None, stretch=None,
+                shift=None, linear=None, const=None):
+        # if quadratic term is None, want to define an Affine or Const
+        if A is None:
+            # if linear terms are None, want to define a Const function
+            if b is None and linear is None:
+                obj = super(Quadratic, cls).__new__(
+                    Const, scale=scale, stretch=stretch, shift=shift,
+                    linear=linear, const=const,
+                )
+                return obj
+            # otherwise we do want an Affine function
+            # must specify explicitly since this is also called from Const
+            else:
+                obj = super(Quadratic, cls).__new__(
+                    Affine, scale=scale, stretch=stretch, shift=shift,
+                    linear=linear, const=const,
+                )
+                return obj
+        # otherwise we do want a Quadratic function
+        # must specify explicitly since this is also called from subtypes
+        else:
+            obj = super(Quadratic, cls).__new__(
+                Quadratic, scale=scale, stretch=stretch, shift=shift,
+                linear=linear, const=const,
+            )
+            return obj
+
+    @prepend_docstring(FunctionWithGradProx.__init__)
+    def __init__(self, A=None, b=None, c=None, s=1, scale=None, stretch=None,
+                 shift=None, linear=None, const=None):
+        """A : LinearOperator
+            Linear operator defining the quadratic term: 0.5*(||Ax||_2)^2.
+
+        b : ndarray
+            Vector defining the linear term: Re(<b, x>).
+
+        c : float or int
+            Constant term.
+
+        s : float or int
+            Scaling of quadratic term.
+
+        """
+        # change 'None's to identities
+        if A is None:
+            A = DiagLinop(0)
+        if b is None:
+            b = 0
+        if c is None:
+            c = 0
+        if scale is None:
+            scale = 1
+        if stretch is None:
+            stretch = 1
+        if shift is None:
+            shift = 0
+        if linear is None:
+            linear = 0
+        if const is None:
+            const = 0
+
+        # NOTE: can't do anything to simplify or combine shift term
+        # since we don't know what size input the LinearOperator accepts
+
+        # combine constant terms
+        # TODO replace multiply/sum with inner1d when it is available in numpy
+        c = scale*c + const
+        const = None
+
+        # combine linear terms
+        b = scale*np.conj(stretch)*b + linear
+        linear = None
+
+        # combine scale and stretch into quadratic coefficient
+        s = s*scale*np.abs(stretch)**2
+        scale = None
+        stretch = None
+
+        self._A = A
+        self._b = b
+        self._bconj = np.conj(b)
+        self._c = c
+        self._s = s
+
+        super(Quadratic, self).__init__(
+            scale=scale, stretch=stretch, shift=shift,
+            linear=linear, const=const,
+        )
+
+    #@property
+    #def _conjugate_class(self):
+        #return Quadratic
+
+    #@property
+    #def _conjugate_args(self):
+        ## The conjugate of the point indicator is the affine function with
+        ## the point as the linear term.
+        #kwargs = super(PointInd, self)._conjugate_args
+        #kwargs.update(linear, self._p)
+        #return kwargs
+
+    @property
+    def A(self):
+        return self._A
+
+    @property
+    def b(self):
+        return self._b
+
+    @property
+    def c(self):
+        return self._c
+
+    @property
+    def s(self):
+        return self._s
+
+    def fun(self, x):
+        """Quadratic function."""
+        q = self._s*l2normsqhalf(self._A(x))
+        # TODO replace multiply/sum with inner1d when it is available in numpy
+        l = np.multiply(self._bconj, x).sum().real
+        return q + l + self._c
+
+    def grad(self, x):
+        """Gradient of quadratic function."""
+        return self._s*self._A.H(self._A(x)) + self._b.real
+
+    #def prox(self, x, lmbda=1):
+        #"""Prox of an quadratic function."""
+        #return self._A.ideninv(x - lmbda*self._b, lmbda*self._s)
+
+class Affine(Quadratic):
+    #@property
+    #def _conjugate_class(self):
+        #return PointInd
+
+    #@property
+    #def _conjugate_args(self):
+        ## The conjugate of the point indicator is the affine function with
+        ## the point as the linear term.
+        #kwargs = super(PointInd, self)._conjugate_args
+        #kwargs.update(linear, self._p)
+        #return kwargs
+
+    def fun(self, x):
+        """Affine function."""
+        # TODO replace multiply/sum with inner1d when it is available in numpy
+        return np.multiply(self._bconj, x).sum().real + self._c
+
+    def grad(self, x):
+        """Gradient of affine function."""
+        return self._b.real
+
+    def prox(self, x, lmbda=1):
+        """Prox of an affine function."""
+        return x - lmbda*self._b
+
+class Const(Affine):
+    #@property
+    #def _conjugate_class(self):
+        #return Infinity
+
+    def fun(self, x):
+        """Constant function."""
+        return self._c
+
+    @staticmethod
+    def grad(x):
+        """Zero vector, the gradient of a constant."""
+        return np.zeros_like(x)
+
+    @staticmethod
+    def prox(x, lmbda=1):
+        """Identity function, the prox operator of a constant function."""
+        return x
+
+class PointInd(IndicatorWithGradProx):
+    """Function and prox operator for the indicator of a point.
+
+
+    See Also
+    --------
+
+    IndicatorWithGradProx : Parent class.
+
+
+    Attributes
+    ----------
+
+    p : ndarray
+        The point at which this function is defined.
+
+
+    Notes
+    -----
+
+    The indicator function is zero at the given point p and infinity
+    everywhere else. Its gradient is undefined.
+
+    The prox operator returns the defining point.
+
+    """
+    @prepend_docstring(IndicatorWithGradProx.__init__)
+    def __init__(self, p, scale=None, stretch=None, shift=None,
+                 linear=None, const=None):
+        """p : ndarray
+            The point at which this function is defined.
+
+        """
+        # linear can be eliminated by evaluating at point and bringing into
+        # const
+        if linear is not None:
+            linconst = np.vdot(linear, p)
+            if const is not None:
+                const = const + linconst
+            else:
+                const = linconst
+        linear = None
+
+        # stretch and shift can be eliminated by absorbing into point
+        if shift is not None:
+            p = p - shift
+        shift = None
+        if stretch is not None:
+            p = p/stretch
+        stretch = None
+
+        self._p = p
+
+        # we can also eliminate scaling,
+        # but this is taken care of by parent class
+        super(PointInd, self).__init__(
+            scale=scale, stretch=stretch, shift=shift,
+            linear=linear, const=const,
+        )
+
+    @property
+    def _conjugate_class(self):
+        return Affine
+
+    @property
+    def _conjugate_args(self):
+        # The conjugate of the point indicator is the affine function with
+        # the point as the linear term.
+        kwargs = super(PointInd, self)._conjugate_args
+        kwargs.update(b, self._p)
+        return kwargs
+
+    @property
+    def p(self):
+        return self._p
+
+    def fun(self, x):
+        """Indicator function for the point p."""
+        if np.allclose(x, self._p):
+            return 0
+        else:
+            return np.inf
+
+    def prox(self, x, lmbda=1):
+        """Projection onto the point p. (Always returns p.)"""
+        return self._p
+
 class ZerosInd(IndicatorWithGradProx):
     """Function and prox operator for the indicator of zero elements.
+
+
+    Attributes
+    ----------
+
+    z : boolean ndarray
+        Array specifying the zero locations at True entries.
 
 
     See Also
@@ -319,14 +635,12 @@ class ZerosInd(IndicatorWithGradProx):
 
     """
     @prepend_docstring(IndicatorWithGradProx.__init__)
-    def __init__(self, z=None, scale=None, stretch=None, shift=None,
+    def __init__(self, z, scale=None, stretch=None, shift=None,
                  linear=None, const=None):
-        """The parameter 'z' must be a boolean array giving the zero locations.
+        """z : boolean ndarray
+            Array specifying the zero locations at True entries.
 
         """
-        if z is None:
-            raise ValueError('Must specify zero locations (z)!')
-
         # stretch can be eliminated by bringing into shift
         # (since multiplying does not change zero locations)
         if stretch is not None and shift is not None:
@@ -339,7 +653,8 @@ class ZerosInd(IndicatorWithGradProx):
         # but this is taken care of by parent class
         super(ZerosInd, self).__init__(
             scale=scale, stretch=stretch, shift=shift,
-            linear=linear, const=const)
+            linear=linear, const=const,
+        )
 
     @property
     def _conjugate_class(self):
