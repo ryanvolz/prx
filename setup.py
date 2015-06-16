@@ -12,12 +12,6 @@ import codecs
 
 import versioneer
 
-versioneer.VCS = 'git'
-versioneer.versionfile_source = 'prx/_version.py'
-versioneer.versionfile_build = 'prx/_version.py'
-versioneer.tag_prefix = 'v' # tags are like v1.2.0
-versioneer.parentdir_prefix = 'prx-' # dirname like 'prx-1.2.0'
-
 # custom setup.py commands
 cmdclass = versioneer.get_cmdclass()
 
