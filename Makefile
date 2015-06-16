@@ -14,11 +14,14 @@ clean:
 	-$(PYTHON) setup.py clean
 	make -C doc clean
 
-clean_build:
+clean_build: clean_egginfo
 	-$(PYTHON) setup.py clean --all
 
 clean_coverage:
 	-rm -rf coverage .coverage
+
+clean_egginfo:
+	-rm -rf "$(PACKAGE).egg-info"
 
 clean_inplace:
 	-find . -name '*.py[cdo]' -exec rm {} \;
@@ -35,7 +38,7 @@ code_check:
 	flake8 $(PACKAGE) | grep -v __init__ | grep -v _version
 	pylint --errors-only --output-format colorized --extension-pkg-whitelist=numpy $(PACKAGE)
 
-dist:
+dist: clean_egginfo
 	$(PYTHON) setup.py sdist
 
 distclean: clean_build clean_inplace clean_sphinxbuild
@@ -66,5 +69,5 @@ test_code: inplace
 test_coverage: inplace clean_coverage
 	$(PYTHON) setup.py nosetests --nocapture --verbosity=2 --with-coverage
 
-wheel:
+wheel: clean_egginfo
 	$(PYTHON) setup.py bdist_wheel
