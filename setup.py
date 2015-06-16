@@ -56,6 +56,7 @@ setup(
         'Operating System :: OS Independent',
         'Programming Language :: Python',
         'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 2.7',
         'Topic :: Scientific/Engineering',
     ],
 
@@ -64,6 +65,7 @@ setup(
     packages=['prx'],
     install_requires=['Bottleneck', 'numpy', 'scipy'],
     extras_require={
+        'develop' : ['flake8', 'nose', 'pylint'],
         'doc': ['numpydoc', 'sphinx'],
     },
 
