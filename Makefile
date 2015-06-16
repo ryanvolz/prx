@@ -65,3 +65,6 @@ test_code: inplace
 
 test_coverage: inplace clean_coverage
 	$(PYTHON) setup.py nosetests --nocapture --verbosity=2 --with-coverage
+
+wheel:
+	$(PYTHON) setup.py bdist_wheel

@@ -8,7 +8,9 @@
 #-----------------------------------------------------------------------------
 
 from setuptools import setup
-import codecs
+# to use a consistent encoding
+from codecs import open
+from os import path
 
 import versioneer
 
@@ -30,9 +32,10 @@ except ImportError:
 else:
     cmdclass['build_sphinx'] = BuildDoc
 
+here = path.abspath(path.dirname(__file__))
+
 # Get the long description from the relevant file
-# Use codecs.open for Python 2 compatibility
-with codecs.open('README.rst', encoding='utf-8') as f:
+with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
@@ -65,7 +68,7 @@ setup(
     packages=['prx'],
     install_requires=['Bottleneck', 'numpy', 'scipy'],
     extras_require={
-        'develop' : ['flake8', 'nose', 'pylint'],
+        'develop' : ['flake8', 'nose', 'pylint', 'twine', 'wheel'],
         'doc': ['numpydoc', 'sphinx'],
     },
 
