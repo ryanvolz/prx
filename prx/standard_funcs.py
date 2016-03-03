@@ -1,5 +1,5 @@
 #-----------------------------------------------------------------------------
-# Copyright (c) 2014, 'prx' developers (see AUTHORS file)
+# Copyright (c) 2014-2016, 'prx' developers (see AUTHORS file)
 # All rights reserved.
 #
 # Distributed under the terms of the BSD 3-Clause ("BSD New") license.
