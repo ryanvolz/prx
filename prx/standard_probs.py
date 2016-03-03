@@ -30,6 +30,7 @@ Other
 .. autosummary::
     :toctree:
 
+    nnls
     zcls
 
 """
@@ -39,11 +40,11 @@ import numpy as np
 
 from .standard_funcs import (
     L1Norm, L1L2Norm, L2Norm, L2NormSqHalf,
-    L2BallInd, LInfBallInd, ZerosInd,
+    L2BallInd, LInfBallInd, NNegInd, ZerosInd,
 )
 from .prox_algos import proxgrad, proxgradaccel, admm, admmlin, pdhg
 
-__all__ = ['bpdn', 'dantzig', 'l1rls', 'lasso', 'srlasso', 'zcls']
+__all__ = ['bpdn', 'dantzig', 'l1rls', 'lasso', 'nnls', 'srlasso', 'zcls']
 
 def bpdn(A, Astar, b, eps, x0, **kwargs):
     """Solves the basis pursuit denoising problem using linearized ADMM.
@@ -268,6 +269,20 @@ def lasso_proxgradaccel(A, Astar, b, tau, x0, **kwargs):
     return proxgradaccel(F, G, A, Astar, b, x0, **kwargs)
 
 lasso = lasso_proxgradaccel
+
+def nnls(A, Astar, b, x0, solver=proxgradaccel, **kwargs):
+    """Solves the non-negative least squares problem.
+
+    argmin_x 0.5*(||A(x) - b||_2)**2
+      s.t.   x >= 0
+
+    Additional keyword arguments are passed to the solver.
+
+    """
+    F = NNegInd()
+    G = L2NormSqHalf()
+
+    return solver(F, G, A, Astar, b, x0, **kwargs)
 
 def srlasso(A, Astar, b, lmbda, x0, **kwargs):
     """Solves the square root LASSO problem (like L1RLS) using linearized ADMM.

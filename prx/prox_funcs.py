@@ -12,7 +12,8 @@ import numpy as np
 
 from .norms import l2norm
 
-__all__ = ['proj_l1', 'proj_l2', 'proj_linf', 'proj_zeros',
+__all__ = ['proj_l1', 'proj_l2', 'proj_linf',
+           'proj_nneg', 'proj_npos', 'proj_zeros',
            'prox_l1', 'prox_l2', 'prox_l2sqhalf', 'prox_linf']
 
 ###***************************************************************************
@@ -52,6 +53,14 @@ def proj_linf(x, radius=1):
     xmod = np.abs(x)
     projmult = np.minimum(radius/xmod, 1)
     return projmult*x
+
+def proj_nneg(x):
+    """Projection onto the non-negative reals (negatives set to zero)."""
+    return np.maximum(x, 0)
+
+def proj_npos(x):
+    """Projection onto the non-positive reals (positives set to zero)."""
+    return np.minimum(x, 0)
 
 def proj_zeros(x, z):
     """Project x onto set with specified zeros z (set x[z] = 0)."""

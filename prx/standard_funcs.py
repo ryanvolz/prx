@@ -17,7 +17,8 @@ from .func_classes import (
 )
 from .grad_funcs import grad_l2sqhalf
 from .prox_funcs import (
-    proj_l1, proj_l2, proj_linf, proj_zeros,
+    proj_l1, proj_l2, proj_linf,
+    proj_nneg, proj_npos, proj_zeros,
     prox_l1, prox_l1l2, prox_l2, prox_l2sqhalf, prox_linf,
 )
 from .norms import l1norm, l1l2norm, l2norm, l2normsqhalf, linfnorm
@@ -27,7 +28,7 @@ __all__ = [
     'L1Norm', 'L1L2Norm', 'L2Norm', 'L2NormSqHalf', 'LInfNorm',
     'L1BallInd', 'L2BallInd', 'LInfBallInd',
     'Quadratic', 'Affine', 'Const', 'PointInd',
-    'ZerosInd'
+    'NNegInd', 'NPosInd', 'ZerosInd',
 ]
 
 ###***************************************************************************
@@ -524,17 +525,17 @@ class PointInd(IndicatorWithGradProx):
     """Function and prox operator for the indicator of a point.
 
 
-    See Also
-    --------
-
-    IndicatorWithGradProx : Parent class.
-
-
     Attributes
     ----------
 
     p : ndarray
         The point at which this function is defined.
+
+
+    See Also
+    --------
+
+    IndicatorWithGradProx : Parent class.
 
 
     Notes
@@ -606,6 +607,77 @@ class PointInd(IndicatorWithGradProx):
     def prox(self, x, lmbda=1):
         """Projection onto the point p. (Always returns p.)"""
         return self._p
+
+class NNegInd(IndicatorWithGradProx):
+    """Function and prox operator for the non-negative indicator.
+
+
+    See Also
+    --------
+
+    IndicatorWithGradProx : Parent class.
+
+
+    Notes
+    -----
+
+    The indicator function is zero for vectors with only non-negative entries
+    and infinity if any of the entries are negative.
+
+    The prox operator is Euclidean projection onto the non-negative halfspace,
+    i.e. the negative entries are set to zero.
+
+    """
+    @property
+    def _conjugate_class(self):
+        return NPosInd
+
+    def fun(self, x):
+        """Indicator function for non-negative values."""
+        if np.any(x < 0):
+            return np.inf
+        else:
+            return 0
+
+    def prox(self, x, lmbda=1):
+        """Projection onto the non-negative reals (negatives set to zero)."""
+        return proj_nneg(x)
+
+class NPosInd(IndicatorWithGradProx):
+    """Function and prox operator for the non-positive indicator.
+
+
+    See Also
+    --------
+
+    IndicatorWithGradProx : Parent class.
+
+
+    Notes
+    -----
+
+    The indicator function is zero for vectors with only non-positive entries
+    and infinity if any of the entries are positive.
+
+    The prox operator is Euclidean projection onto the non-positive halfspace,
+    i.e. the positive entries are set to zero.
+
+    """
+    @property
+    def _conjugate_class(self):
+        return NNegInd
+
+    def fun(self, x):
+        """Indicator function for non-positive values."""
+        if np.any(x > 0):
+            return np.inf
+        else:
+            return 0
+
+    prox = staticmethod(proj_npos)
+    def prox(self, x, lmbda=1):
+        """Projection onto the non-positive reals (positives set to zero)."""
+        return proj_npos(x)
 
 class ZerosInd(IndicatorWithGradProx):
     """Function and prox operator for the indicator of zero elements.
