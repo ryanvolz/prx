@@ -183,8 +183,7 @@ class FunctionWithGradProx(object):
 
         The summed function's value and gradient are defined when both of the
         component functions have a value and gradient, respectively. The prox
-        operator is undefined except in special circumstances (one function
-        is an indicator function).
+        operator is undefined.
 
         """
         if not isinstance(other, FunctionWithGradProx):
