@@ -36,7 +36,7 @@ __all__ = [
 ###***************************************************************************
 
 class L1Norm(NormFunctionWithGradProx):
-    """Function and prox operator for the l1-norm, sum(abs(x)).
+    """Function and prox operator for the l1-norm, ``sum(abs(x))``.
 
 
     See Also
@@ -114,7 +114,7 @@ class L1L2Norm(NormFunctionWithGradProx):
         return prox_l1l2(x, lmbda=lmbda, axis=self._axis)
 
 class L2Norm(NormFunctionWithGradProx):
-    """Function and prox operator for the l2-norm, sqrt(sum(abs(x)**2)).
+    """Function and prox operator for the l2-norm, ``sqrt(sum(abs(x)**2))``.
 
 
     See Also
@@ -169,7 +169,7 @@ class L2NormSqHalf(NormSqFunctionWithGradProx):
     prox = staticmethod(prox_l2sqhalf)
 
 class LInfNorm(NormFunctionWithGradProx):
-    """Function and prox operator for the linf-norm, max(abs(x)).
+    """Function and prox operator for the linf-norm, ``max(abs(x))``.
 
 
     See Also
@@ -325,7 +325,7 @@ class Quadratic(FunctionWithGradProx):
     A : matrix or function
         Linear operator defining the quadratic term.
 
-    b : ndarray
+    b : array
         Linear term.
 
     c : float or int
@@ -377,7 +377,7 @@ class Quadratic(FunctionWithGradProx):
         """A : LinearOperator
             Linear operator defining the quadratic term: 0.5*(||Ax||_2)^2.
 
-        b : ndarray
+        b : array
             Vector defining the linear term: Re(<b, x>).
 
         c : float or int
@@ -528,7 +528,7 @@ class PointInd(IndicatorWithGradProx):
     Attributes
     ----------
 
-    p : ndarray
+    p : array
         The point at which this function is defined.
 
 
@@ -550,7 +550,7 @@ class PointInd(IndicatorWithGradProx):
     @prepend_docstring(IndicatorWithGradProx.__init__)
     def __init__(self, p, scale=None, stretch=None, shift=None,
                  linear=None, const=None):
-        """p : ndarray
+        """p : array
             The point at which this function is defined.
 
         """
@@ -686,7 +686,7 @@ class ZerosInd(IndicatorWithGradProx):
     Attributes
     ----------
 
-    z : boolean ndarray
+    z : boolean array
         Array specifying the zero locations at True entries.
 
 
@@ -709,7 +709,7 @@ class ZerosInd(IndicatorWithGradProx):
     @prepend_docstring(IndicatorWithGradProx.__init__)
     def __init__(self, z, scale=None, stretch=None, shift=None,
                  linear=None, const=None):
-        """z : boolean ndarray
+        """z : boolean array
             Array specifying the zero locations at True entries.
 
         """

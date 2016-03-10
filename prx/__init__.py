@@ -10,6 +10,15 @@ Standard Problems
 
     standard_probs
 
+
+Algorithms
+----------
+
+.. autosummary::
+    :toctree:
+
+    prox_algos
+
 """
 from .amp_algos import *
 from .grad_funcs import *
