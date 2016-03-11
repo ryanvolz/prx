@@ -291,7 +291,7 @@ def proxgrad(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5, expand=1.25,
         stopthresh = rabstol + reltol*max(xnorm/stepsize, gradnorm)
 
         if printrate is not None and (k % printrate) == 0:
-            val = F(x) + G(Axmb)
+            val = float(F(x) + G(Axmb))
             dkt = dict(it=k, val=val, step=stepsize, resid=rnorm,
                        thresh=stopthresh)
             print(('{it}: val={val:.5}, step={step:.4}, ' +
@@ -582,7 +582,7 @@ def proxgradaccel(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5,
         stopthresh = rabstol + reltol*max(xnorm/stepsize, gradnorm)
 
         if printrate is not None and (k % printrate) == 0:
-            val = F(x_new) + G(Axmb)
+            val = float(F(x_new) + G(Axmb))
             dkt = dict(it=k, val=val, step=stepsize, resid=rnorm,
                        thresh=stopthresh)
             print(('{it}: val={val:.5}, step={step:.4}, ' +
@@ -796,7 +796,7 @@ def admm(F, G, x0, y0=None, pen=1.0, residgap=2, penfactor=1.5, reltol=1e-6,
     u = u + r
 
     tolnorm = l2norm
-    rabstol = abstol*tolnorm(np.ones_like(u0))
+    rabstol = abstol*tolnorm(np.ones_like(y0))
     sabstol = abstol*tolnorm(np.ones_like(x0))
 
     for k in xrange(maxits):
@@ -823,7 +823,7 @@ def admm(F, G, x0, y0=None, pen=1.0, residgap=2, penfactor=1.5, reltol=1e-6,
         sstopthresh = sabstol + reltol*unorm/pen
 
         if printrate is not None and (k % printrate) == 0:
-            val = F(x) + G(x)
+            val = float(F(x) + G(x))
             dkt = dict(it=k, val=val, pen=pen, resid_p=rnorm,
                        thresh_p=rstopthresh, resid_d=snorm,
                        thresh_d=sstopthresh)
@@ -1158,7 +1158,7 @@ def admmlin(F, G, A, Astar, b, x0, y0=None, stepsize=1.0, backtrack=0.5,
         sstopthresh = sabstol + reltol*max(Asunorm/pen, xnorm/stepsize)
 
         if printrate is not None and (k % printrate) == 0:
-            val = F(x) + G(z) + np.vdot(u/pen, Ax - b - z).real
+            val = float(F(x) + G(z) + np.vdot(u/pen, Ax - b - z).real)
             dkt = dict(it=k, val=val, step=stepsize, pen=pen,
                        resid_p=rnorm, thresh_p=rstopthresh,
                        resid_d=snorm, thresh_d=sstopthresh)
@@ -1344,7 +1344,7 @@ def pdhg(F, G, A, Astar, b, x0, y0=None, step_p=1.0, step_d=1.0,
         dstopthresh = dabstol + reltol*max(ynorm/dstep, Axnorm)
 
         if printrate is not None and (k % printrate) == 0:
-            val = F(x) + G(Ax - b)
+            val = float(F(x) + G(Ax - b))
             dval = -Fconj(y) - Gconj(y) - np.vdot(y, b).real
             dkt = dict(it=k, val=val, step_p=pstep, step_d=dstep,
                        resid_p=pnorm, thresh_p=pstopthresh,

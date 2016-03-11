@@ -18,6 +18,7 @@ from .func_ops import (
     addconst_fun
 )
 from .separable_array import separray
+from .prox_algos import admm
 
 __all__ = [
     'FunctionWithGradProx', 'LinearFunctionWithGradProx',
@@ -120,60 +121,58 @@ class FunctionWithGradProx(object):
         Parameters
         ----------
 
-        scale : float or int, optional
+        scale : float | int, optional
             Function scaling.
 
-        stretch : float or int, optional
+        stretch : float | int | array, optional
             Input stretching.
 
-        shift : float or int, optional
+        shift : float | int | array, optional
             Input shifting.
 
-        linear : float or int, optional
+        linear : float | int | array, optional
             Added inner product term applied to function input.
 
-        const : float or int, optional
+        const : float | int, optional
             Added constant.
 
         """
-        # change 'None's to identities
-        if scale is None:
-            scale = 1
-        if stretch is None:
-            stretch = 1
-        if shift is None:
-            shift = 0
-        if linear is None:
-            linear = 0
-        if const is None:
-            const = 0
-
-        self._scale = scale
-        self._stretch = stretch
-        self._shift = shift
-        self._linear = linear
-        self._const = const
         # modify functions to apply parameters
         # (order of operations is important!)
         if shift is not None and np.any(shift != 0):
             self.fun = shift_fun(self.fun, shift)
             self.grad = shift_grad(self.grad, shift)
             self.prox = shift_prox(self.prox, shift)
-        if stretch is not None and stretch != 1:
+            self._shift = shift
+        else:
+            self._shift = 0
+        if stretch is not None and np.any(stretch != 1):
             self.fun = stretch_fun(self.fun, stretch)
             self.grad = stretch_grad(self.grad, stretch)
             self.prox = stretch_prox(self.prox, stretch)
+            self._stretch = stretch
+        else:
+            self._stretch = 1
         if scale is not None and scale != 1:
             self.fun = scale_fun(self.fun, scale)
             self.grad = scale_grad(self.grad, scale)
             self.prox = scale_prox(self.prox, scale)
+            self._scale = scale
+        else:
+            self._scale = 1
         if linear is not None and np.any(linear != 0):
             self.fun = addlinear_fun(self.fun, linear)
             self.grad = addlinear_grad(self.grad, linear)
             self.prox = addlinear_prox(self.prox, linear)
-        if const is not None and np.any(const != 0):
+            self._linear = linear
+        else:
+            self._linear = 0
+        if const is not None and const != 0:
             self.fun = addconst_fun(self.fun, const)
             # added constant does not change grad or prox functions
+            self._const = const
+        else:
+            self._const = 0
 
     def __call__(self, x):
         return self.fun(x)
@@ -181,9 +180,14 @@ class FunctionWithGradProx(object):
     def __add__(self, other):
         """Return the function object for the sum of two functions.
 
-        The summed function's value and gradient are defined when both of the
-        component functions have a value and gradient, respectively. The prox
-        operator is undefined.
+        The summed function's value, gradient, and prox are defined when both
+        of the component functions have a value, gradient, or prox,
+        respectively.
+
+        Since the prox operator requires the solution of an optimization
+        problem in general, the summed prox operator is evaluated using
+        :func:`.admm`. Accordingly, the order of the addition may effect
+        the speed and accuracy of the prox operator solution.
 
         """
         if not isinstance(other, FunctionWithGradProx):
@@ -197,8 +201,22 @@ class FunctionWithGradProx(object):
         def summed_grad(x):
             return self.grad(x) + other.grad(x)
 
+        # summed prox(v, lmbda) solves:
+        # argmin_x ( self(x) + other(x) + ( ||x - v||_2 )^2 / (2*lmbda) )
+        # so use ADMM to get general solution with
+        #   F = other + ( ||x - v||_2 )^2 / (2*lmbda) )
+        #   G = self
+        # and then the prox of G is defined in terms of other.prox as below
+        def summed_prox(x, lmbda=1):
+            def proxF(u, s):
+                return other.prox((s*x + lmbda*u)/(s + lmbda),
+                                  lmbda*s/(s + lmbda))
+            F = CustomFunction(fun=other.fun, prox=proxF)()
+            return admm(F, self, x0=x, pen=lmbda, maxits=100, printrate=None)
+
         summed.fun = summed_fun
         summed.grad = summed_grad
+        summed.prox = summed_prox
 
         return summed
 
