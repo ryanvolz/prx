@@ -227,7 +227,7 @@ class L1BallInd(NormBallWithGradProx):
             return np.inf
 
     def prox(self, x, lmbda=1):
-        """Projection onto the linf-ball with radius=self.radius."""
+        """Projection onto the l1-ball with radius=self.radius."""
         return proj_l1(x, radius=self.radius)
 
 class L2BallInd(NormBallWithGradProx):
