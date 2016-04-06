@@ -17,21 +17,6 @@ import versioneer
 # custom setup.py commands
 cmdclass = versioneer.get_cmdclass()
 
-# add nose and sphinx commands since we depend on them but they are not always
-# automatically available (e.g. when using conda versions of these packages)
-try:
-    from nose.commands import nosetests
-except ImportError:
-    pass
-else:
-    cmdclass['nosetests'] = nosetests
-try:
-    from sphinx.setup_command import BuildDoc
-except ImportError:
-    pass
-else:
-    cmdclass['build_sphinx'] = BuildDoc
-
 here = path.abspath(path.dirname(__file__))
 
 # Get the long description from the relevant file
@@ -58,8 +43,6 @@ setup(
         'License :: OSI Approved :: BSD License',
         'Operating System :: OS Independent',
         'Programming Language :: Python',
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.7',
         'Topic :: Scientific/Engineering',
     ],
 
