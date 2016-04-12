@@ -47,7 +47,7 @@ def l2normsqhalf(x, axis=None, keepdims=False):
     Otherwise, take norm over all axes.
     
     """
-    return 0.5*(x.real**2 + x.imag**2).sum(axis=axis, keepdims=False)
+    return 0.5*(x.real**2 + x.imag**2).sum(axis=axis, keepdims=keepdims)
 
 def linfnorm(x, axis=None, keepdims=False):
     """linf-norm: max(abs(x))
@@ -56,4 +56,4 @@ def linfnorm(x, axis=None, keepdims=False):
     Otherwise, take norm over all axes.
     
     """
-    return np.abs(x).max(axis=axis, keepdims=False)
+    return np.abs(x).max(axis=axis, keepdims=keepdims)
