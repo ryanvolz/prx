@@ -6,14 +6,60 @@
 #
 # The full license is in the LICENSE file, distributed with this software.
 # ----------------------------------------------------------------------------
+"""Function factories for simple operations on functions, grads, and proxes.
+
+.. currentmodule:: prx.objectives.transform_operations
+
+
+Apply function transform to function
+------------------------------------
+
+.. autosummary::
+    :toctree:
+
+    addconst_fun
+    addlinear_fun
+    scale_fun
+    shift_fun
+    stretch_fun
+
+
+Apply function transform to gradient
+------------------------------------
+
+.. autosummary::
+    :toctree:
+
+    addlinear_grad
+    scale_grad
+    shift_grad
+    stretch_grad
+
+
+Apply function transform to prox operator
+-----------------------------------------
+
+.. autosummary::
+    :toctree:
+
+    addlinear_prox
+    scale_prox
+    shift_prox
+    stretch_prox
+
+"""
 
 from __future__ import division
 import numpy as np
 from functools import wraps
 
-###****************************************************************************
-### Function factories for simple operations on functions, grads, and proxes **
-###****************************************************************************
+__all__ = [
+    'addconst_fun',
+    'addlinear_fun', 'addlinear_grad', 'addlinear_prox',
+    'scale_fun', 'scale_grad', 'scale_prox',
+    'shift_fun', 'shift_grad', 'shift_prox',
+    'stretch_fun', 'stretch_grad', 'stretch_prox',
+]
 
 def addconst_fun(f, c):
     """For given function f(x), returns g(x) = f(x) + c."""

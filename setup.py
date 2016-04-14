@@ -7,7 +7,7 @@
 # The full license is in the LICENSE file, distributed with this software.
 #-----------------------------------------------------------------------------
 
-from setuptools import setup
+from setuptools import setup, find_packages
 # to use a consistent encoding
 from codecs import open
 from os import path
@@ -48,7 +48,7 @@ setup(
 
     keywords='optimization prox proximal convex first-order',
 
-    packages=['prx'],
+    packages=find_packages(),
     install_requires=['Bottleneck', 'numpy', 'scipy'],
     extras_require={
         'develop' : ['flake8', 'nose', 'pylint', 'twine', 'wheel'],

@@ -10,7 +10,6 @@
 from __future__ import division
 import numpy as np
 from scipy import stats
-import bottleneck as bn
 
 __all__ = ['block_softthresh', 'block_softthresh_d', 'medestnoise', 'softthresh', 'softthresh_d']
 
@@ -18,7 +17,7 @@ complex_variance_est_factor = stats.chi2(2).mean()/stats.chi2(2).ppf(0.5)
 complex_std_est_factor = np.sqrt(complex_variance_est_factor)
 
 def medestnoise(x):
-    return bn.median(np.abs(x))*complex_std_est_factor
+    return np.median(np.abs(x))*complex_std_est_factor
 
 def _block_softthresh(x, theta, axis=-1):
     xsq = x.real**2 + x.imag**2

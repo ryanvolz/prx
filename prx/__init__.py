@@ -8,31 +8,51 @@ Standard Problems
 .. autosummary::
     :toctree:
 
-    standard_probs
+    problems
 
 
-Algorithms
-----------
+Specifying Linear Operators
+---------------------------
 
 .. autosummary::
     :toctree:
 
-    prox_algos
+    operator_class
+    operator_utils
+
+
+Solving Custom Problems
+-----------------------
+
+.. autosummary::
+    :toctree:
+
+    algorithms
+    objectives
+    separable_array
+
+
+Functions, Gradients, and Prox Operators
+----------------------------------------
+
+.. autosummary::
+    :toctree:
+
+    fun
+    grad
+    prox
 
 """
-from .amp_algos import *
-from .grad_funcs import *
-from .ist_algos import *
-from .func_classes import *
-from .norms import *
+from . import algorithms
+from . import fun
+from . import grad
+from . import objectives
+from . import problems
+from .problems import *
+from . import prox
 from .operator_class import *
 from .operator_utils import *
-from .prox_algos import *
-from .prox_funcs import *
 from .separable_array import *
-from .standard_funcs import *
-from .standard_probs import *
-from .thresholding import *
 
 from ._version import get_versions
 __version__ = get_versions()['version']

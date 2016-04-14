@@ -10,24 +10,24 @@
 from __future__ import division
 import numpy as np
 
-from .standard_funcs import L1Norm, L2NormSqHalf
-from .norms import linfnorm
-from .prox_algos import proxgrad, proxgradaccel
+from ..objectives import L1Norm, L2NormSqHalf
+from ..fun.norms import linfnorm
+from ..algorithms import proxgrad, proxgradaccel
 from .thresholding import softthresh
 
-__all__ = ['fista', 'fista_cfar', 
+__all__ = ['fista', 'fista_cfar',
            'ist', 'ist_cfar']
 
 def ist(A, Astar, b, lmbda, x0, **kwargs):
     F = L1Norm(scale=lmbda)
     G = L2NormSqHalf()
-    
+
     return proxgrad(F, G, A, Astar, b, x0, **kwargs)
 
 def fista(A, Astar, b, lmbda, x0, **kwargs):
     F = L1Norm(scale=lmbda)
     G = L2NormSqHalf()
-    
+
     return proxgradaccel(F, G, A, Astar, b, x0, **kwargs)
 
 # iterative soft thresholding with threshold set by constant false alarm rate
@@ -37,14 +37,14 @@ def ist_cfar(A, Astar, y, x0, sigmamult=3, relax=1, reltol=1e-4, abstol=1e-6,
     x = x0
     delta = np.inf
     sigma_est = medestnoise(Astar(z))
-    
+
     tolnorm = linfnorm
     rabstol = abstol*tolnorm(np.ones_like(x0))
 
     for k in xrange(maxits):
         z = y - A(x)
         Asz = Astar(z)
-        
+
         # estimate the noise level
         sigma_med = medestnoise(Asz)
         # need to smooth noise estimate in order to allow convergence
@@ -63,19 +63,19 @@ def ist_cfar(A, Astar, y, x0, sigmamult=3, relax=1, reltol=1e-4, abstol=1e-6,
         #weight = 2*stats.norm.sf(np.abs(sigma_med - sigma_est)/np.sqrt(delta))
         weight = np.exp(-((sigma_med - sigma_est)/delta)**2)
         sigma_est = weight*sigma_est + (1 - weight)*sigma_med
-        
+
         # apply soft thresholding to get new sparse estimate
         thresh = sigmamult*sigma_est
         xnew = threshfun(x + relax*Asz, thresh)
-        
+
         delta = tolnorm(xnew - x)
         stopthresh = rabstol + reltol*tolnorm(xnew)
-        
+
         if printrate is not None and (k % printrate) == 0:
             print('Iteration {0}, delta={1} ({2:0.3}), thresh={3}'.format(k, delta, stopthresh, thresh))
         if delta < stopthresh:
             break
-        
+
         x = xnew
 
     if moreinfo:
@@ -91,17 +91,17 @@ def fista_cfar(A, Astar, y, x0, sigmamult=3, relax=1, reltol=1e-4, abstol=1e-6,
     xold = x0
     delta = np.inf
     sigma_est = medestnoise(Astar(z))
-    
+
     tolnorm = linfnorm
     rabstol = abstol*tolnorm(np.ones_like(x0))
-    
+
     for k in xrange(maxits):
         # FISTA secret sauce
         w = x + (k - 1)/(k + 2)*(x - xold)
-        
+
         z = y - A(w)
         Asz = Astar(z)
-        
+
         # estimate the noise level
         sigma_med = medestnoise(Asz)
         # need to smooth noise estimate in order to allow convergence
@@ -120,22 +120,22 @@ def fista_cfar(A, Astar, y, x0, sigmamult=3, relax=1, reltol=1e-4, abstol=1e-6,
         #weight = 2*stats.norm.sf(np.abs(sigma_med - sigma_est)/np.sqrt(delta))
         weight = np.exp(-((sigma_med - sigma_est)/delta)**2)
         sigma_est = weight*sigma_est + (1 - weight)*sigma_med
-        
+
         # apply soft thresholding to get new iterate
         thresh = sigmamult*sigma_est
         xnew = threshfun(w + relax*Asz, thresh)
-        
+
         delta = tolnorm(xnew - x)
         stopthresh = rabstol + reltol*tolnorm(xnew)
-        
+
         if printrate is not None and (k % printrate) == 0:
             print('Iteration {0}, delta={1} ({2:0.3}), thresh={3}'.format(k, delta, stopthresh, thresh))
         if delta < stopthresh:
             break
-        
+
         xold = x
         x = xnew
-    
+
     if moreinfo:
         return dict(x=x, numits=k, w=w, delta=delta, sigma_est=sigma_est)
     else:

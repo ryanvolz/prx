@@ -27,7 +27,7 @@ def amp_cfar(A, Astar, y, x0, lmbda, err=1e-3, maxits=10000, moreinfo=False):
     for it in xrange(maxits):
         Asz = Astar(z)
         xprethresh = x + Asz
-        
+
         ## estimate the noise level
         #sigma_med = medestnoise(Asz)
         ## need to smooth noise estimate in order to allow convergence
@@ -47,19 +47,19 @@ def amp_cfar(A, Astar, y, x0, lmbda, err=1e-3, maxits=10000, moreinfo=False):
         ##weight = np.exp(-((sigma_med - sigma_est)/delta)**2)
         ##sigma_est = weight*sigma_est + (1 - weight)*sigma_med
         #sigma_est = sigma_med
-        
+
         #thresh = lmbda*sigma_est
         thresh = 1.75
         # apply soft thresholding to get new sparse estimate
         xnew, w = softthresh_d(xprethresh, thresh)
         znew = y - A(xnew) + z/M*np.sum(w)
-        
+
         delta = np.max(np.abs(xnew - x))
         if (it % 100) == 0:
             print('Iteration {0}, error={1}, delta={2}, thresh={3}'.format(it, np.linalg.norm(z), delta, thresh))
         if delta < err:
             break
-        
+
         x = xnew
         z = znew
 
@@ -80,13 +80,13 @@ def amp_fdr(A, Astar, y, x0, lmbda, err=1e-3, maxits=10000, moreinfo=False):
         # apply soft thresholding to get new sparse estimate
         xnew, w = softthresh_d(xprethresh, thresh)
         znew = y - A(xnew) + z/M*np.sum(w)
-        
+
         delta = np.max(np.abs(xnew - x))
         if (it % 100) == 0:
             print('Iteration {0}, error={1}, delta={2}'.format(it, np.linalg.norm(z), delta))
         if delta < err:
             break
-        
+
         x = xnew
         z = znew
 

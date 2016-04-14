@@ -44,7 +44,7 @@ class LinearOperator(object):
     Attributes
     ----------
 
-    Adjoint : LinearOperator
+    H : LinearOperator
         Object corresponding to the adjoint operator (i.e., the forward and
         adjoint functions are swapped).
 
@@ -157,10 +157,9 @@ class LinearOperator(object):
     # short aliases
     A = forward
     As = adjoint
-    H = adjoint
 
     @property
-    def Adjoint(self):
+    def H(self):
         return LinearOperator(self._adjoint, self._forward)
 
 class DiagLinop(LinearOperator):
@@ -324,3 +323,7 @@ class FixedSizeLinop(LinearOperator):
         if out is None:
             out = np.empty(self.inshape, self.indtype)
         return self._adjoint(y, out)
+
+    # short aliases
+    A = forward
+    As = adjoint

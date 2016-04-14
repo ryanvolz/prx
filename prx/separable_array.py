@@ -9,7 +9,7 @@
 
 """Separable array class.
 
-.. currentmodule:: prx.separated_array
+.. currentmodule:: prx.separable_array
 
 .. autosummary::
     :toctree:

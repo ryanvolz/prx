@@ -7,12 +7,9 @@
 # The full license is in the LICENSE file, distributed with this software.
 # ----------------------------------------------------------------------------
 
-"""Standard optimization problems.
+"""Optimization problems minimizing the l1-norm.
 
-.. currentmodule:: prx.standard_probs
-
-l-1 minimization
-----------------
+.. currentmodule:: prx.problems.l1_minimization
 
 .. autosummary::
     :toctree:
@@ -20,66 +17,18 @@ l-1 minimization
     bpdn
     dantzig
     l1rls
-    lasso
     srlasso
-
-
-Other
------
-
-.. autosummary::
-    :toctree:
-
-    nnls
-    zcls
 
 """
 
-from __future__ import division
-from functools import wraps
-import numpy as np
+from .. import objectives as _obj
+from .. import algorithms as _alg
+from ._common import backends
 
-from .standard_funcs import (
-    L1Norm, L1L2Norm, L2Norm, L2NormSqHalf,
-    L2BallInd, LInfBallInd, NNegInd, ZerosInd,
-)
-from .prox_algos import proxgrad, proxgradaccel, admm, admmlin, pdhg
-
-__all__ = ['bpdn', 'dantzig', 'l1rls', 'lasso', 'nnls', 'srlasso', 'zcls']
-
-def backends(*algorithms):
-    algnames = [a.__name__ for a in algorithms]
-    algos = dict(zip(algnames, algorithms))
-    def problem_decorator(f):
-        @wraps(f)
-        def algorithm(*args, **kwargs):
-            # match solver kwarg to available algorithms
-            solvername = kwargs.pop('solver', None)
-            if solvername is None:
-                solvername = algorithms[0].__name__
-            try:
-                solver = algos[solvername]
-            except KeyError:
-                s = '{0} is not an available solver for {1}'
-                s.format(solvername, f.__name__)
-                raise ValueError(s)
-
-            # get algorithm arguments from problem function
-            algargs, algkwargs = f(*args, **kwargs)
-
-            return solver(*algargs, **algkwargs)
-
-        solvers = '``\'' + '\'`` | ``\''.join(algnames) + '\'``'
-        seealso = '.' + ', .'.join(algnames)
-        algorithm.__doc__ = algorithm.__doc__.format(
-            solvers=solvers, seealso=seealso,
-        )
-        algorithm.algorithms = algos
-        return algorithm
-    return problem_decorator
+__all__ = ['bpdn', 'dantzig', 'l1rls', 'srlasso']
 
 
-@backends(admmlin, pdhg)
+@backends(_alg.admmlin, _alg.pdhg)
 def bpdn(A, Astar, b, eps, x0, **kwargs):
     """Solves the basis pursuit denoising problem.
 
@@ -140,16 +89,16 @@ def bpdn(A, Astar, b, eps, x0, **kwargs):
     try:
         axis = kwargs.pop('axis')
     except KeyError:
-        F = L1Norm()
+        F = _obj.L1Norm()
     else:
-        F = L1L2Norm(axis=axis)
-    G = L2BallInd(radius=eps)
+        F = _obj.L1L2Norm(axis=axis)
+    G = _obj.L2BallInd(radius=eps)
 
     args = (F, G, A, Astar, b, x0)
 
     return args, kwargs
 
-@backends(admmlin, pdhg)
+@backends(_alg.admmlin, _alg.pdhg)
 def dantzig(A, Astar, b, delta, x0, **kwargs):
     """Solves the Dantzig selector problem.
 
@@ -219,10 +168,10 @@ def dantzig(A, Astar, b, delta, x0, **kwargs):
     try:
         axis = kwargs.pop('axis')
     except KeyError:
-        F = L1Norm()
+        F = _obj.L1Norm()
     else:
-        F = L1L2Norm(axis=axis)
-    G = LInfBallInd(radius=delta)
+        F = _obj.L1L2Norm(axis=axis)
+    G = _obj.LInfBallInd(radius=delta)
 
     # "A" and "Astar" in admmlin notation
     AsA = lambda x: Astar(A(x))
@@ -233,7 +182,7 @@ def dantzig(A, Astar, b, delta, x0, **kwargs):
 
     return args, kwargs
 
-@backends(proxgradaccel, admmlin, pdhg, proxgrad)
+@backends(_alg.proxgradaccel, _alg.admmlin, _alg.pdhg, _alg.proxgrad)
 def l1rls(A, Astar, b, lmbda, x0, **kwargs):
     """Solves the l1-regularized least squares problem.
 
@@ -305,144 +254,16 @@ def l1rls(A, Astar, b, lmbda, x0, **kwargs):
     try:
         axis = kwargs.pop('axis')
     except KeyError:
-        F = L1Norm(scale=lmbda)
+        F = _obj.L1Norm(scale=lmbda)
     else:
-        F = L1L2Norm(axis=axis, scale=lmbda)
-    G = L2NormSqHalf()
+        F = _obj.L1L2Norm(axis=axis, scale=lmbda)
+    G = _obj.L2NormSqHalf()
 
     args = (F, G, A, Astar, b, x0)
 
     return args, kwargs
 
-@backends(proxgradaccel, admmlin, pdhg, proxgrad)
-def lasso(A, Astar, b, tau, x0, **kwargs):
-    """Solves the LASSO problem.
-
-    Given A, b, and tau, solve for x::
-
-        minimize    0.5*l2norm(A(x) - b)**2
-        subject to  l1norm(x) <= tau
-
-    This definition follows Tibshirani's original formulation from [1]_.
-    The :func:`l1rls` problem is sometimes called the LASSO since they are
-    equivalent for appropriate selection of `lmbda` as a function of `tau`.
-
-
-    Parameters
-    ----------
-
-    A : callable
-        Linear operator that would accept `x0` as input.
-
-    Astar : callable
-        Linear operator that is the adjoint of `A`, would accept `b` as input.
-
-    b : array
-        Constant vector used in l2-norm expression.
-
-    tau : float
-        A positive number describing the l1-norm constraint.
-
-    x0 : array
-        Initial iterate for x.
-
-
-    Returns
-    -------
-
-    x : array
-        Solution to the optimization problem.
-
-
-    Other Parameters
-    ----------------
-
-    solver : {{{solvers}}}, optional
-        Algorithm to use.
-
-    **kwargs
-        Additional keyword arguments passed to the solver.
-
-
-    See Also
-    --------
-
-    bpdn, dantzig, l1rls, srlasso, {seealso}
-
-
-    References
-    ----------
-
-    .. [1] R. Tibshirani, "Regression Shrinkage and Selection via the Lasso,"
-       Journal of the Royal Statistical Society. Series B (Methodological),
-       vol. 58, no. 1, pp. 267-288, Jan. 1996.
-
-
-    """
-    F = L1BallInd(radius=tau)
-    G = L2NormSqHalf()
-
-    args = (F, G, A, Astar, b, x0)
-
-    return args, kwargs
-
-@backends(proxgradaccel, admmlin, pdhg, proxgrad)
-def nnls(A, Astar, b, x0, **kwargs):
-    """Solves the non-negative least squares problem.
-
-    Given A and b, solve for x::
-
-        minimize    l2norm(A(x) - b)
-        subject to  x >= 0
-
-
-    Parameters
-    ----------
-
-    A : callable
-        Linear operator that would accept `x0` as input.
-
-    Astar : callable
-        Linear operator that is the adjoint of `A`, would accept `b` as input.
-
-    b : array
-        Constant vector used in l2-norm expression.
-
-    x0 : array
-        Initial iterate for x.
-
-
-    Returns
-    -------
-
-    x : array
-        Solution to the optimization problem.
-
-
-    Other Parameters
-    ----------------
-
-    solver : {solvers}, optional
-        Algorithm to use.
-
-    **kwargs
-        Additional keyword arguments passed to the solver.
-
-
-    See Also
-    --------
-
-    zcls, {seealso}
-
-    """
-    F = NNegInd()
-    G = L2NormSqHalf()
-
-    args = (F, G, A, Astar, b, x0)
-
-    return args, kwargs
-
-@backends(admmlin, pdhg)
+@backends(_alg.admmlin, _alg.pdhg)
 def srlasso(A, Astar, b, lmbda, x0, **kwargs):
     """Solves the square root LASSO problem.
 
@@ -516,69 +337,10 @@ def srlasso(A, Astar, b, lmbda, x0, **kwargs):
     try:
         axis = kwargs.pop('axis')
     except KeyError:
-        F = L1Norm(scale=lmbda)
+        F = _obj.L1Norm(scale=lmbda)
     else:
-        F = L1L2Norm(axis=axis, scale=lmbda)
-    G = L2Norm()
-
-    args = (F, G, A, Astar, b, x0)
-
-    return args, kwargs
-
-@backends(proxgradaccel, admmlin, pdhg, proxgrad)
-def zcls(A, Astar, b, zeros, x0, **kwargs):
-    """Solves the zero-constrained least squares problem.
-
-    Given A, b, and zeros, solve for x::
-
-        minimize    l2norm(A(x) - b)
-        subject to  x[zeros] == 0
-
-
-    Parameters
-    ----------
-
-    A : callable
-        Linear operator that would accept `x0` as input.
-
-    Astar : callable
-        Linear operator that is the adjoint of `A`, would accept `b` as input.
-
-    b : array
-        Constant vector used in l2-norm expression.
-
-    zeros : boolean array
-        Where True, requires that corresponding entries in x be zero.
-
-    x0 : array
-        Initial iterate for x.
-
-
-    Returns
-    -------
-
-    x : array
-        Solution to the optimization problem.
-
-
-    Other Parameters
-    ----------------
-
-    solver : {solvers}, optional
-        Algorithm to use.
-
-    **kwargs
-        Additional keyword arguments passed to the solver.
-
-
-    See Also
-    --------
-
-    nnls, {seealso}
-
-    """
-    F = ZerosInd(z=zeros)
-    G = L2NormSqHalf()
+        F = _obj.L1L2Norm(axis=axis, scale=lmbda)
+    G = _obj.L2Norm()
 
     args = (F, G, A, Astar, b, x0)
 

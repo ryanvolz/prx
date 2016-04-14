@@ -21,7 +21,7 @@
 
 import numpy as np
 
-from .norms import l2norm
+from .fun.norms import l2norm
 
 __all__ = ['adjointness_error', 'opnorm']
 
@@ -38,8 +38,9 @@ def adjointness_error(A, Astar, inshape, indtype, its=100):
     """Check adjointness of A and Astar for 'its' instances of random data.
 
     For random unit-normed x and y, this finds the error in the adjoint
-    identity <Ax, y> == <x, A*y>:
-        ``err = abs( vdot(A(x), y) - vdot(x, Astar(y)) )``.
+    identity <Ax, y> == <x, A*y>::
+
+        err = abs( vdot(A(x), y) - vdot(x, Astar(y)) )
 
 
     Parameters
