@@ -88,7 +88,7 @@ def _class_docstring_wrapper(cls_docstring):
     shift : float | int | array
         Input shifting.
 
-    stretch : float | int | array
+    stretch : float | int
         Input stretching."""
 
     notes = """The prox operator of a function g(x) gives the solution x to the problem::
@@ -113,7 +113,7 @@ def _init_docstring_wrapper(init):
     params = """scale : float | int, optional
             Function scaling.
 
-        stretch : float | int | array, optional
+        stretch : float | int, optional
             Input stretching.
 
         shift : float | int | array, optional
