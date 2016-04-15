@@ -247,7 +247,7 @@ class BaseObjective(object):
             def proxF(u, s):
                 return other.prox((s*x + lmbda*u)/(s + lmbda),
                                   lmbda*s/(s + lmbda))
-            F = CustomObjective(fun=other.fun, prox=proxF)()
+            F = Objective(fun=other.fun, prox=proxF)
             return _admm(F, self, x0=x, pen=lmbda, maxits=100, printrate=None)
 
         summed.fun = summed_fun
