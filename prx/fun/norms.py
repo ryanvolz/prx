@@ -160,6 +160,7 @@ def l2normsqhalf(x, axis=None, keepdims=False):
     """
     return 0.5*(x.real**2 + x.imag**2).sum(axis=axis, keepdims=keepdims)
 
+
 def linfnorm(x, axis=None, keepdims=False):
     """linf-norm: ``max(abs(x))``
 

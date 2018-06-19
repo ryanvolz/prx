@@ -8,6 +8,7 @@
 #-----------------------------------------------------------------------------
 
 from __future__ import division
+
 import numpy as np
 
 from .thresholding import medestnoise, softthresh_d
@@ -24,7 +25,7 @@ def amp_cfar(A, Astar, y, x0, lmbda, err=1e-3, maxits=10000, moreinfo=False):
     delta = np.inf
     sigma_est = medestnoise(Astar(z))
 
-    for it in xrange(maxits):
+    for it in range(maxits):
         Asz = Astar(z)
         xprethresh = x + Asz
 
@@ -73,7 +74,7 @@ def amp_fdr(A, Astar, y, x0, lmbda, err=1e-3, maxits=10000, moreinfo=False):
     x = x0
     z = y - A(x)
 
-    for it in xrange(maxits):
+    for it in range(maxits):
         xprethresh = x + Astar(z)
         # find the mth largest entry of xprethresh to set threshold
         thresh = lmbda + fdrthresh(xprethresh, M)

@@ -8,12 +8,13 @@
 #-----------------------------------------------------------------------------
 
 from __future__ import division
+
 import numpy as np
 
-from ..objectives import L1Norm, L2NormSqHalf
-from ..fun.norms import linfnorm
+from .thresholding import softthresh, medestnoise
 from ..algorithms import proxgrad, proxgradaccel
-from .thresholding import softthresh
+from ..fun.norms import linfnorm
+from ..objectives import L1Norm, L2NormSqHalf
 
 __all__ = ['fista', 'fista_cfar',
            'ist', 'ist_cfar']
@@ -41,7 +42,7 @@ def ist_cfar(A, Astar, y, x0, sigmamult=3, relax=1, reltol=1e-4, abstol=1e-6,
     tolnorm = linfnorm
     rabstol = abstol*tolnorm(np.ones_like(x0))
 
-    for k in xrange(maxits):
+    for k in range(maxits):
         z = y - A(x)
         Asz = Astar(z)
 
@@ -95,7 +96,7 @@ def fista_cfar(A, Astar, y, x0, sigmamult=3, relax=1, reltol=1e-4, abstol=1e-6,
     tolnorm = linfnorm
     rabstol = abstol*tolnorm(np.ones_like(x0))
 
-    for k in xrange(maxits):
+    for k in range(maxits):
         # FISTA secret sauce
         w = x + (k - 1)/(k + 2)*(x - xold)
 

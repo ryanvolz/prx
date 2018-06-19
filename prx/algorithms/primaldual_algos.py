@@ -18,10 +18,11 @@
 """
 
 from __future__ import division
+
 import numpy as np
 
-from ..fun.norms import l2norm
 from ._common import docstring_wrapper as _docstring_wrapper
+from ..fun.norms import l2norm
 
 __all__ = ['pdhg']
 
@@ -84,7 +85,7 @@ def pdhg(F, G, A, Astar, b, x0, y0=None, step_p=1.0, step_d=1.0,
 
     bts = 0
 
-    for k in xrange(maxits):
+    for k in range(maxits):
         while True:
             # primal update
             # acceleration

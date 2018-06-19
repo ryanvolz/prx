@@ -19,10 +19,11 @@
 """
 
 from __future__ import division
+
 import numpy as np
 
-from ..fun.norms import l2norm
 from ._common import docstring_wrapper as _docstring_wrapper
+from ..fun.norms import l2norm, l2normsqhalf
 
 __all__ = ['admm', 'admmlin']
 
@@ -208,7 +209,7 @@ def admm(F, G, x0, y0=None, pen=1.0, residgap=2, penfactor=1.5, reltol=1e-6,
     rabstol = abstol*tolnorm(np.ones_like(y0))
     sabstol = abstol*tolnorm(np.ones_like(x0))
 
-    for k in xrange(maxits):
+    for k in range(maxits):
         # primal updates
         x = proxF(z - u, pen)
         z_new = proxG(x + u, pen)
@@ -516,7 +517,7 @@ def admmlin(F, G, A, Astar, b, x0, y0=None, stepsize=1.0, backtrack=0.5,
 
     bts = 0
 
-    for k in xrange(maxits):
+    for k in range(maxits):
         # loop for backtracking line search
         while True:
             # x primal update

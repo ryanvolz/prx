@@ -19,10 +19,11 @@
 """
 
 from __future__ import division
+
 import numpy as np
 
-from ..fun.norms import l2norm
 from ._common import docstring_wrapper as _docstring_wrapper
+from ..fun.norms import l2norm, linfnorm, l2normsqhalf
 
 __all__ = ['proxgrad', 'proxgradaccel']
 
@@ -199,7 +200,7 @@ def proxgrad(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5, expand=1.25,
 
     bts = 0
 
-    for k in xrange(maxits):
+    for k in range(maxits):
         # gradient direction
         grad_new = Astar(gradG(Axmb))
 
@@ -326,7 +327,7 @@ def proxgradaccel(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5,
         represented multiplication by a matrix M, `Astar` would then represent
         multiplcation by the complex conjugate transpose of M.
 
-    b : array
+    b : np.ndarray
         Constant used in the G term of the objective function.
 
     x0 : array
@@ -468,18 +469,18 @@ def proxgradaccel(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5,
     x_old = x
     Ax_old = Ax
     grad = Astar(gradG(Ax - b))
-    w = x # for adaptive restart check
+    w = x  # for adaptive restart check
 
-    tolnorm = l2norm
+    tolnorm = linfnorm
     rabstol = abstol*tolnorm(np.ones_like(x0))
 
     bts = 0
 
-    for k in xrange(maxits):
+    for k in range(maxits):
         # "gradient" adaptive restart:
         # reset "momentum" when acceleration direction (x - x_old) is in
         # opposite direction of previous step prox gradient step (x - w)
-        if restart and np.vdot(w - x, x - x_old).real > 0:
+        if restart and np.real(np.vdot(x - w, x - x_old)) < 0:
             t_old = 1
 
         # loop for backtracking line search
@@ -487,22 +488,26 @@ def proxgradaccel(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5,
             # acceleration
             t = 0.5 + 0.5*np.sqrt(1 + 4*gamma*t_old**2)
             theta = (t_old - 1)/t
-            w = x + theta*(x - x_old)
-            Aw = Ax + theta*(Ax - Ax_old) # limit A evals by exploiting linearity
-            Awmb = Aw - b # re-use in backtracking test
+            # restart acceleration if theta gets too small (e.g. from big step size change)
+            if theta < 0.1:
+                theta, t_old = 0, 1
+            w = (1 + theta) * x - theta * x_old
+            Aw = (1 + theta) * Ax - theta * Ax_old # limit A evals by exploiting linearity
+            Awmb = Aw - b  # re-use in backtracking test
+
             # proximal gradient step
             grad_new = Astar(gradG(Awmb))
             x_new = proxF(w - stepsize*grad_new, stepsize)
-            Ax_new = A(x_new) # needed to limit A evals as above
-            Axmb = Ax_new - b # need in backtracking test and printing
+            Ax_new = A(x_new)  # needed to limit A evals as above
+            Axmb = Ax_new - b  # need in backtracking test and printing
+            xmw = x_new - w
 
             if backtrack is None:
                 # no backtracking specified
                 break
             else:
-                xmw = x_new - w
                 gval = G(Axmb)
-                bound = G(Awmb) + np.vdot(xmw, grad_new).real + l2normsqhalf(xmw)/stepsize
+                bound = G(Awmb) + np.real(np.vdot(xmw, grad_new)) + l2normsqhalf(xmw)/stepsize
                 # test Lipschitz bound, don't need to backtrack if it holds
                 if gval <= bound:
                     break
@@ -513,7 +518,7 @@ def proxgradaccel(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5,
                     bts += 1
 
         # residual for convergence check
-        r = (x - x_new)/stepsize + grad_new - grad
+        r = xmw - stepsize*(grad_new - grad)
 
         # update state variables for which we had to track previous values
         t_old = t
@@ -527,9 +532,9 @@ def proxgradaccel(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5,
         # norms for convergence check
         rnorm = tolnorm(r)
         xnorm = tolnorm(x)
-        gradnorm = tolnorm(grad)
+        gradnorm = tolnorm(stepsize * grad)
 
-        stopthresh = rabstol + reltol*max(xnorm/stepsize, gradnorm)
+        stopthresh = rabstol + reltol*min(xnorm, gradnorm)
 
         if printrate is not None and (k % printrate) == 0:
             val = float(F(x_new) + G(Axmb))

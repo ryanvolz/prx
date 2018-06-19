@@ -23,12 +23,13 @@
 """
 
 from __future__ import division
+
 import numpy as np
 
 from ..fun.norms import l2norm
 
 __all__ = ['proj_l1', 'proj_l2', 'proj_linf',
-           'proj_nneg', 'proj_npos', 'proj_zeros']
+           'proj_nneg', 'proj_npos', 'proj_zeros', 'proj_psd_stokes']
 
 def proj_l1(v, radius=1):
     """Project v onto l1-ball with specified radius.
@@ -262,3 +263,22 @@ def proj_zeros(v, z):
     """
     v[z] = 0
     return v
+
+
+def proj_psd_stokes(x, epsilon=0):
+    # TODO, docstring
+    i, q, u, v = x
+
+    i_pol = np.sqrt(q ** 2 + u ** 2 + v ** 2)
+    scale = i_pol > i
+    i_psd = (i[scale] + i_pol[scale]) / 2
+    i_psd = np.maximum(i_psd, epsilon)
+    pol_scale = i_psd / i_pol[scale]
+    pol_scale[np.isnan(pol_scale)] = 0
+    i[scale] = i_psd
+    q[scale] = q[scale] * pol_scale
+    u[scale] = u[scale] * pol_scale
+    v[scale] = v[scale] * pol_scale
+
+    # Note here x is modified in the above operations as i q u v are just views into x and affect the same arrays
+    return x

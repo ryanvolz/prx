@@ -75,7 +75,7 @@ def adjointness_error(A, Astar, inshape, indtype, its=100):
     outdtype = y.dtype
 
     errs = np.zeros(its)
-    for k in xrange(its):
+    for k in range(its):
         x = get_random_normal(inshape, indtype)
         x = x/l2norm(x)
         y = get_random_normal(outshape, outdtype)
@@ -135,7 +135,7 @@ def opnorm(A, Astar, inshape, indtype, reltol=1e-8, abstol=1e-6, maxits=100,
     v = v0/l2norm(v0)
     norm_f0 = 1
     norm_a0 = 1
-    for k in xrange(maxits):
+    for k in range(maxits):
         Av = A(v)
         norm_f = l2norm(Av)
         w = Av/norm_f
