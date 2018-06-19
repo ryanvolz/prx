@@ -9,10 +9,12 @@
 
 from functools import wraps
 
+
 def backends(*algorithms):
     """Decorator for specifying algorithms used for an optimization problem."""
     algnames = [a.__name__ for a in algorithms]
     algos = dict(zip(algnames, algorithms))
+
     def problem_decorator(f):
         @wraps(f)
         def algorithm(*args, **kwargs):

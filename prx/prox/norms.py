@@ -22,11 +22,13 @@
 """
 
 from __future__ import division
+
 import numpy as np
 
 from ..fun.norms import l2norm
 
-__all__ = ['prox_l1', 'prox_l1l2', 'prox_l2', 'prox_l2sqhalf', 'prox_linf']
+__all__ = ('prox_l1', 'prox_l1l2', 'prox_l2', 'prox_l2sqhalf', 'prox_linf')
+
 
 def prox_l1(v, lmbda=1):
     """l1-norm prox operator (soft thresholding).
@@ -71,6 +73,7 @@ def prox_l1(v, lmbda=1):
     vmod = np.abs(v)
     thresh_mult = np.maximum(1 - lmbda/vmod, 0)
     return thresh_mult*v
+
 
 def prox_l1l2(v, lmbda=1, axis=-1):
     """Combined l1- and l2-norm prox operator (block soft thresholding).
@@ -121,6 +124,7 @@ def prox_l1l2(v, lmbda=1, axis=-1):
     thresh_mult = np.maximum(1 - lmbda/blknorm, 0)
     return thresh_mult*v
 
+
 def prox_l2(v, lmbda=1):
     """l2-norm prox operator (block soft thresholding with block of entire v).
 
@@ -165,6 +169,7 @@ def prox_l2(v, lmbda=1):
     thresh_mult = np.maximum(1 - lmbda/l2nrm, 0)
     return thresh_mult*v
 
+
 def prox_l2sqhalf(v, lmbda=1):
     """Prox operator for half the squared l2-norm (shrinkage function).
 
@@ -202,6 +207,7 @@ def prox_l2sqhalf(v, lmbda=1):
     """
     return v/(1 + lmbda)
 
+
 def prox_linf(v, lmbda=1):
     """linf-norm prox operator (peak shrinkage).
 
@@ -238,7 +244,7 @@ def prox_linf(v, lmbda=1):
     """
     vmod = np.abs(v)
     nz = vmod[vmod.nonzero()]
-    s = np.sort(nz, axis=None)[::-1] # sorted in descending order
+    s = np.sort(nz, axis=None)[::-1]  # sorted in descending order
     cs = s.cumsum()
 
     if cs[-1] <= lmbda:

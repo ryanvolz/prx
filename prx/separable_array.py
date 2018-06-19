@@ -20,7 +20,8 @@
 
 import numpy as np
 
-__all__ = ['separray']
+__all__ = ('separray')
+
 
 class separray(np.ndarray):
     """Separable array, for iterating over parts of an array.
@@ -43,6 +44,7 @@ class separray(np.ndarray):
         Views to the separate parts of the array.
 
     """
+
     def __new__(cls, *arrays):
         """Create combined array with views to separate arrays.
 

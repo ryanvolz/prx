@@ -28,8 +28,11 @@ import numpy as np
 
 from ..fun.norms import l2norm
 
-__all__ = ['proj_l1', 'proj_l2', 'proj_linf',
-           'proj_nneg', 'proj_npos', 'proj_zeros', 'proj_psd_stokes']
+__all__ = (
+    'proj_l1', 'proj_l2', 'proj_linf', 'proj_nneg', 'proj_npos', 'proj_zeros',
+    'proj_psd_stokes',
+)
+
 
 def proj_l1(v, radius=1):
     """Project v onto l1-ball with specified radius.
@@ -67,7 +70,7 @@ def proj_l1(v, radius=1):
     """
     vmod = np.abs(v)
     nz = vmod[vmod.nonzero()]
-    s = np.sort(nz, axis=None)[::-1] # sorted in descending order
+    s = np.sort(nz, axis=None)[::-1]  # sorted in descending order
     cs = s.cumsum()
 
     if cs[-1] <= radius:
@@ -81,6 +84,7 @@ def proj_l1(v, radius=1):
     # now perform the soft thresholding to complete the projection
     thresh_mult = np.maximum(1 - lmbda/vmod, 0)
     return thresh_mult*v
+
 
 def proj_l2(v, radius=1):
     """Project v onto l2-ball with specified radius.
@@ -123,6 +127,7 @@ def proj_l2(v, radius=1):
     else:
         return v
 
+
 def proj_linf(v, radius=1):
     """Project v onto linf-ball with specified radius.
 
@@ -161,6 +166,7 @@ def proj_linf(v, radius=1):
     projmult = np.minimum(radius/vmod, 1)
     return projmult*v
 
+
 def proj_nneg(v):
     """Project v onto the non-negative reals (negatives set to zero).
 
@@ -194,6 +200,7 @@ def proj_nneg(v):
     """
     return np.maximum(v, 0)
 
+
 def proj_npos(v):
     """Project v onto the non-positive reals (positives set to zero).
 
@@ -226,6 +233,7 @@ def proj_npos(v):
 
     """
     return np.minimum(v, 0)
+
 
 def proj_zeros(v, z):
     """Project v onto set with specified zeros z (set v[z] = 0).
@@ -280,5 +288,6 @@ def proj_psd_stokes(x, epsilon=0):
     u[scale] = u[scale] * pol_scale
     v[scale] = v[scale] * pol_scale
 
-    # Note here x is modified in the above operations as i q u v are just views into x and affect the same arrays
+    # Note here x is modified in the above operations as i q u v are just views
+    # into x and affect the same arrays
     return x

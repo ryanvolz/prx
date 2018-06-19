@@ -23,7 +23,8 @@ import numpy as np
 
 from .fun.norms import l2norm
 
-__all__ = ['adjointness_error', 'opnorm']
+__all__ = ('adjointness_error', 'opnorm')
+
 
 def get_random_normal(shape, dtype):
     x = np.empty(shape, dtype)
@@ -33,6 +34,7 @@ def get_random_normal(shape, dtype):
     except TypeError:
         pass
     return x
+
 
 def adjointness_error(A, Astar, inshape, indtype, its=100):
     """Check adjointness of A and Astar for 'its' instances of random data.
@@ -85,6 +87,7 @@ def adjointness_error(A, Astar, inshape, indtype, its=100):
         errs[k] = np.abs(ip_A - ip_Astar)
 
     return errs
+
 
 def opnorm(A, Astar, inshape, indtype, reltol=1e-8, abstol=1e-6, maxits=100,
            printrate=None):
@@ -151,7 +154,7 @@ def opnorm(A, Astar, inshape, indtype, reltol=1e-8, abstol=1e-6, maxits=100,
             s = s.format(k, norm_f, norm_a)
             print(s)
         if (delta_f < abstol + reltol*max(norm_f, norm_f0)
-            and delta_a < abstol + reltol*max(norm_a, norm_a0)):
+                and delta_a < abstol + reltol*max(norm_a, norm_a0)):
             break
 
         norm_f0 = norm_f

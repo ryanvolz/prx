@@ -1,11 +1,11 @@
-#-----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 # Copyright (c) 2014-2016, 'prx' developers (see AUTHORS file)
 # All rights reserved.
 #
 # Distributed under the terms of the MIT license.
 #
 # The full license is in the LICENSE file, distributed with this software.
-#-----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 """Primal-dual algorithms.
 
 .. currentmodule:: prx.algorithms.primaldual_algos
@@ -21,10 +21,11 @@ from __future__ import division
 
 import numpy as np
 
-from ._common import docstring_wrapper as _docstring_wrapper
 from ..fun.norms import l2norm
+from ._common import docstring_wrapper as _docstring_wrapper
 
-__all__ = ['pdhg']
+__all__ = ('pdhg')
+
 
 @_docstring_wrapper
 def pdhg(F, G, A, Astar, b, x0, y0=None, step_p=1.0, step_d=1.0,
@@ -98,18 +99,18 @@ def pdhg(F, G, A, Astar, b, x0, y0=None, step_p=1.0, step_d=1.0,
             Ax_new = A(x_new)
 
             break
-            #if backtrack is None:
-                #break
-            #else:
-                #Axmb = Ax_new - b
-                #plhs = G(Axmb) + Gconj(ybar) - np.vdot(ybar, Axmb).real
-                #prhs = l2normsqhalf(x_new - x)/pstep
-                #if plhs <= prhs:
-                    #break
-                #else:
-                    #print(plhs, prhs)
-                    ## backtrack
-                    #pstep = pstep*backtrack
+            # if backtrack is None:
+            #     break
+            # else:
+            #     Axmb = Ax_new - b
+            #     plhs = G(Axmb) + Gconj(ybar) - np.vdot(ybar, Axmb).real
+            #     prhs = l2normsqhalf(x_new - x)/pstep
+            #     if plhs <= prhs:
+            #         break
+            #     else:
+            #         print(plhs, prhs)
+            #         # backtrack
+            #         pstep = pstep*backtrack
 
         while True:
             # dual update
@@ -123,17 +124,17 @@ def pdhg(F, G, A, Astar, b, x0, y0=None, step_p=1.0, step_d=1.0,
             Asy_new = Astar(y_new)
 
             break
-            #if backtrack is None:
-                #break
-            #else:
-                #dlhs = Fconj(-Asy_new) + F(xbar) - np.vdot(xbar, -Asy_new).real
-                #drhs = l2normsqhalf(y_new - y)/dstep
-                #if dlhs <= drhs:
-                    #break
-                #else:
-                    #print(dlhs, drhs)
-                    ## backtrack
-                    #dstep = dstep*backtrack
+            # if backtrack is None:
+            #     break
+            # else:
+            #     dlhs = Fconj(-Asy_new) + F(xbar) - np.vdot(xbar, -Asy_new).real
+            #     drhs = l2normsqhalf(y_new - y)/dstep
+            #     if dlhs <= drhs:
+            #         break
+            #     else:
+            #         print(dlhs, drhs)
+            #         # backtrack
+            #         dstep = dstep*backtrack
 
         # calculate residuals
         p = (x - x_new)/pstep - (Asy - Asy_new) - dtheta*(Asy - Asy_old)
@@ -173,33 +174,33 @@ def pdhg(F, G, A, Astar, b, x0, y0=None, step_p=1.0, step_d=1.0,
                     dkt['err'] = tolnorm(x_new - xstar)/tolnorm(xstar)
                 else:
                     dkt['err'] = np.nan
-                hist[k//printrate] = tuple(dkt[key] for key in hist.dtype.names)
+                hist[k//printrate] = tuple(dkt[ky] for ky in hist.dtype.names)
         # can't calculate dual function value, so best stopping criterion
         # is to see if primal and dual residuals are small
         if pnorm < pstopthresh and dnorm < dstopthresh:
             break
 
-        ## penalty parameter adjustment
-        #if k < 100:
-            #if rnorm > residgap*snorm:
-                #pen = pen/penfactor
-                ## scaled dual variable u=y*pen, so update u with y constant
-                #u = u/penfactor
-                #Asu = Asu/penfactor
-                #Asu_old = Asu_old/penfactor
-            #elif snorm > residgap*rnorm:
-                #pen = pen*penfactor
-                ## scaled dual variable u=y*pen, so update u with y constant
-                #u = u*penfactor
-                #Asu = Asu*penfactor
-                #Asu_old = Asu_old*penfactor
-
+        # # penalty parameter adjustment
+        # if k < 100:
+        #     if rnorm > residgap*snorm:
+        #         pen = pen/penfactor
+        #         # scaled dual variable u=y*pen, so update u with y constant
+        #         u = u/penfactor
+        #         Asu = Asu/penfactor
+        #         Asu_old = Asu_old/penfactor
+        #     elif snorm > residgap*rnorm:
+        #         pen = pen*penfactor
+        #         # scaled dual variable u=y*pen, so update u with y constant
+        #         u = u*penfactor
+        #         Asu = Asu*penfactor
+        #         Asu_old = Asu_old*penfactor
+        #
         # expand stepsize
-        #if backtrack is not None and dAx > 0:
-            #stepsize = dx*pen/dAx
-        #if expand is not None and backtrack is not None:
-            #pstep = pstep*expand
-            #dstep = dstep*expand
+        # if backtrack is not None and dAx > 0:
+        #     stepsize = dx*pen/dAx
+        # if expand is not None and backtrack is not None:
+        #     pstep = pstep*expand
+        #     dstep = dstep*expand
 
     if printrate is not None:
         if k + 1 >= maxits:
@@ -207,8 +208,8 @@ def pdhg(F, G, A, Astar, b, x0, y0=None, step_p=1.0, step_d=1.0,
         else:
             msg = 'Converged'
         msg += ' after {0} iterations'.format(k + 1)
-        #if backtrack is not None:
-            #msg += ' (and {0} backtracks)'.format(bts)
+        # if backtrack is not None:
+        #     msg += ' (and {0} backtracks)'.format(bts)
         print(msg)
 
     if moreinfo:

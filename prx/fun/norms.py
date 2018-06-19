@@ -1,11 +1,11 @@
-#-----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 # Copyright (c) 2014, 'prx' developers (see AUTHORS file)
 # All rights reserved.
 #
 # Distributed under the terms of the MIT license.
 #
 # The full license is in the LICENSE file, distributed with this software.
-#-----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 """Norm functions.
 
 .. currentmodule:: prx.fun.norms
@@ -23,11 +23,11 @@
 
 import numpy as np
 
-__all__ = ['l1norm', 'l1l2norm', 'l2norm', 'l2normsqhalf', 'linfnorm']
+__all__ = ('l1norm', 'l1l2norm', 'l2norm', 'l2normsqhalf', 'linfnorm')
+
 
 def l1norm(x, axis=None, keepdims=False):
-    """l1-norm: ``sum(abs(x))``
-
+    """l1-norm: ``sum(abs(x))``.
 
     Parameters
     ----------
@@ -60,9 +60,9 @@ def l1norm(x, axis=None, keepdims=False):
     """
     return np.abs(x).sum(axis=axis, keepdims=keepdims)
 
-def l1l2norm(x, axis=-1):
-    """Combined l1- and l2-norm: ``l1norm(l2norm(x, axis))``
 
+def l1l2norm(x, axis=-1):
+    """Combined l1- and l2-norm: ``l1norm(l2norm(x, axis))``.
 
     Parameters
     ----------
@@ -90,9 +90,9 @@ def l1l2norm(x, axis=-1):
     """
     return np.sqrt((x.real**2 + x.imag**2).sum(axis=axis)).sum()
 
-def l2norm(x, axis=None, keepdims=False):
-    """l2-norm: ``sqrt(sum(abs(x)**2))``
 
+def l2norm(x, axis=None, keepdims=False):
+    """l2-norm: ``sqrt(sum(abs(x)**2))``.
 
     Parameters
     ----------
@@ -125,9 +125,9 @@ def l2norm(x, axis=None, keepdims=False):
     """
     return np.sqrt((x.real**2 + x.imag**2).sum(axis=axis, keepdims=keepdims))
 
-def l2normsqhalf(x, axis=None, keepdims=False):
-    """Half the square of the l2-norm: ``0.5*sum(abs(x)**2)``
 
+def l2normsqhalf(x, axis=None, keepdims=False):
+    """Half the square of the l2-norm: ``0.5*sum(abs(x)**2)``.
 
     Parameters
     ----------
@@ -162,8 +162,7 @@ def l2normsqhalf(x, axis=None, keepdims=False):
 
 
 def linfnorm(x, axis=None, keepdims=False):
-    """linf-norm: ``max(abs(x))``
-
+    """linf-norm: ``max(abs(x))``.
 
     Parameters
     ----------

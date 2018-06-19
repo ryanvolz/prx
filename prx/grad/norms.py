@@ -19,9 +19,9 @@
 """
 
 from __future__ import division
-import numpy as np
 
-__all__ = ['grad_l2sqhalf']
+__all__ = ('grad_l2sqhalf')
+
 
 def grad_l2sqhalf(x):
     """Gradient of half the squared l2-norm: ``0.5*(||x||_2)**2``.

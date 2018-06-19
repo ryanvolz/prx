@@ -31,42 +31,45 @@ from __future__ import division
 
 import numpy as np
 
-from .objective_classes import (
-    _class_docstring_wrapper, _init_docstring_wrapper,
-    BaseObjective,
-)
+from .objective_classes import (BaseObjective, _class_docstring_wrapper,
+                                _init_docstring_wrapper)
 
-__all__ = [
-    'NegNormCovarianceLogLikelihood'
-]
+__all__ = (
+    'NegNormCovarianceLogLikelihood',
+)
 
 
 class NegNormCovarianceLogLikelihood(BaseObjective):
-    # TODO, consider building this up from more basic logdet and trace functions
+    # TODO, consider building this up from more basic logdet and trace fcns
     # TODO, consider adding getter and setter functions for S
     __doc__ = _class_docstring_wrapper(
-        """Objective class for the negative logarithmic likelihood normal covariance.
-    
+        """Objective class for the negative log-likelihood normal covariance.
+
         {common_summary}
-    
-    
+
+
         Attributes
         ----------
-    
-        S : an M x N x N or N x N sample covariance matrix
-    
-    
+
+        S : array with shape (N, N) or (M, N, N)
+            Sample covariance matrix or matrices. Must be Hermitian, with
+            ``S == S.conj().transpose()``.
+
+        {common_attributes}
+
+
         See Also
         --------
-    
+
         .IndicatorObjective : Parent class.
-    
-    
+
+
         Notes
         -----
-    
-    
-        """)
+
+
+        """
+    )
 
     @_init_docstring_wrapper
     def __init__(self, S, scale=None, stretch=None, shift=None,
@@ -83,13 +86,18 @@ class NegNormCovarianceLogLikelihood(BaseObjective):
         Parameters
         ----------
 
-        S : a sample complex Hermetian covariance matrix. Must be shaped N x N or M x N x N for M samples
+        S : array with shape (N, N) or (M, N, N)
+            Sample covariance matrix or matrices. Must be Hermitian, with
+            ``S == S.conj().transpose()``.
+
+        {common_params}
 
         """
-
         self._S = S
-        assert len(self._S.shape) in {2, 3}, "Error, S must be an N x N matrix or a stack of M N x N matrices"
-        # Reshape S to be compatible with for loop over matrix stack if S only has 1 matrix
+        assert len(self._S.shape) in {2, 3}, \
+            "Error, S must be an N x N matrix or a stack of M N x N matrices"
+        # Reshape S to be compatible with for loop over matrix stack if S only
+        # has 1 matrix
         if len(self._S) == 2:
             self._S = self._S.reshape((1, -1))
         # eliminate scale
@@ -106,17 +114,27 @@ class NegNormCovarianceLogLikelihood(BaseObjective):
 
     def fun(self, x):
         # TODO docstring
-        assert len(x.shape) in {2, 3}, "Error, input matrix x must be an N x N matrix or a stack of M N x N matrices"
-        # Reshape x to be compatible with for loop over matrix stack if x only has 1 matrix
+        assert len(x.shape) in {2, 3}, (
+            "Error, input matrix x must be an N x N matrix or a stack of M"
+            " N x N matrices"
+        )
+        # Reshape x to be compatible with for loop over matrix stack if x only
+        # has 1 matrix
         if len(x.shape) == 2:
             x = x.reshape((1, -1))
-        assert x.shape == self._S.shape, "Error, dimensionality of x and sample covariance matrix S must match"
+        assert x.shape == self._S.shape, (
+            "Error, dimensionality of x and sample covariance matrix S must"
+            " match"
+        )
         m = self._S.shape[0]
         val = 0
         for k in range(m):
             s_k = self._S[k]
             x_k = x[k]
-            val = val - np.real(np.log(np.linalg.det(x_k)) + np.trace(np.linalg.solve(x_k, s_k)))
+            val = val - np.real(
+                np.log(np.linalg.det(x_k))
+                + np.trace(np.linalg.solve(x_k, s_k))
+            )
 
         return -val
 
@@ -126,8 +144,12 @@ class NegNormCovarianceLogLikelihood(BaseObjective):
         m = self._S.shape[0]
         g = np.zeros((m, length, length), dtype=np.complex)
 
-        assert len(x.shape) in {2, 3}, "Error, input matrix x must be an N x N matrix or a stack of M N x N matrices"
-        # Reshape x to be compatible with for loop over matrix stack if x only has 1 matrix
+        assert len(x.shape) in {2, 3}, (
+            "Error, input matrix x must be an N x N matrix or a stack of M"
+            " N x N matrices"
+        )
+        # Reshape x to be compatible with for loop over matrix stack if x only
+        # has 1 matrix
         if len(x.shape) == 2:
             x = x.reshape((1, -1))
 

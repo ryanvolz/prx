@@ -1,11 +1,11 @@
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # Copyright (c) 2014-2016, 'prx' developers (see AUTHORS file)
 # All rights reserved.
 #
 # Distributed under the terms of the MIT license.
 #
 # The full license is in the LICENSE file, distributed with this software.
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 """Proximal gradient algorithms.
 
 .. currentmodule:: prx.algorithms.proxgrad_algos
@@ -22,10 +22,11 @@ from __future__ import division
 
 import numpy as np
 
+from ..fun.norms import l2norm, l2normsqhalf, linfnorm
 from ._common import docstring_wrapper as _docstring_wrapper
-from ..fun.norms import l2norm, linfnorm, l2normsqhalf
 
-__all__ = ['proxgrad', 'proxgradaccel']
+__all__ = ('proxgrad', 'proxgradaccel')
+
 
 @_docstring_wrapper
 def proxgrad(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5, expand=1.25,
@@ -208,7 +209,8 @@ def proxgrad(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5, expand=1.25,
         while True:
             # proximal gradient step
             x_new = proxF(x - stepsize*grad_new, stepsize)
-            Axmb_new = A(x_new) - b # need in backtracking test and re-use for gradient
+            # need in backtracking test and re-use for gradient
+            Axmb_new = A(x_new) - b
 
             if backtrack is None:
                 # no backtracking specified
@@ -216,7 +218,10 @@ def proxgrad(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5, expand=1.25,
             else:
                 xmx = x_new - x
                 gval = G(Axmb_new)
-                bound = GAxmb + np.vdot(xmx, grad_new).real + l2normsqhalf(xmx)/stepsize
+                bound = (
+                    GAxmb + np.vdot(xmx, grad_new).real
+                    + l2normsqhalf(xmx)/stepsize
+                )
                 # test Lipschitz bound, don't need to backtrack if it holds
                 if gval <= bound:
                     break
@@ -232,7 +237,7 @@ def proxgrad(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5, expand=1.25,
         grad = grad_new
         x = x_new
         Axmb = Axmb_new
-        GAxmb = G(Axmb) # used in backtracking test, and printing function value
+        GAxmb = G(Axmb)  # used in backtracking test + printing function value
 
         # norms for convergence check
         rnorm = tolnorm(r)
@@ -252,7 +257,7 @@ def proxgrad(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5, expand=1.25,
                     dkt['err'] = tolnorm(x_new - xstar)/tolnorm(xstar)
                 else:
                     dkt['err'] = np.nan
-                hist[k//printrate] = tuple(dkt[key] for key in hist.dtype.names)
+                hist[k//printrate] = tuple(dkt[ky] for ky in hist.dtype.names)
         if rnorm < stopthresh:
             break
 
@@ -275,6 +280,7 @@ def proxgrad(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5, expand=1.25,
                     stepsize=stepsize, hist=hist[:k//printrate])
     else:
         return x
+
 
 @_docstring_wrapper
 def proxgradaccel(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5,
@@ -488,11 +494,13 @@ def proxgradaccel(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5,
             # acceleration
             t = 0.5 + 0.5*np.sqrt(1 + 4*gamma*t_old**2)
             theta = (t_old - 1)/t
-            # restart acceleration if theta gets too small (e.g. from big step size change)
+            # restart acceleration if theta gets too small
+            # (e.g. from big step size change)
             if theta < 0.1:
                 theta, t_old = 0, 1
             w = (1 + theta) * x - theta * x_old
-            Aw = (1 + theta) * Ax - theta * Ax_old # limit A evals by exploiting linearity
+            # limit A evals by exploiting linearity
+            Aw = (1 + theta) * Ax - theta * Ax_old
             Awmb = Aw - b  # re-use in backtracking test
 
             # proximal gradient step
@@ -507,7 +515,10 @@ def proxgradaccel(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5,
                 break
             else:
                 gval = G(Axmb)
-                bound = G(Awmb) + np.real(np.vdot(xmw, grad_new)) + l2normsqhalf(xmw)/stepsize
+                bound = (
+                    G(Awmb) + np.real(np.vdot(xmw, grad_new))
+                    + l2normsqhalf(xmw)/stepsize
+                )
                 # test Lipschitz bound, don't need to backtrack if it holds
                 if gval <= bound:
                     break
@@ -547,7 +558,7 @@ def proxgradaccel(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5,
                     dkt['err'] = tolnorm(x_new - xstar)/tolnorm(xstar)
                 else:
                     dkt['err'] = np.nan
-                hist[k//printrate] = tuple(dkt[key] for key in hist.dtype.names)
+                hist[k//printrate] = tuple(dkt[ky] for ky in hist.dtype.names)
         if rnorm < stopthresh:
             break
 

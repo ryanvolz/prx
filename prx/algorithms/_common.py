@@ -1,13 +1,14 @@
-#-----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 # Copyright (c) 2016, 'prx' developers (see AUTHORS file)
 # All rights reserved.
 #
 # Distributed under the terms of the MIT license.
 #
 # The full license is in the LICENSE file, distributed with this software.
-#-----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 
-__all__ = ['docstring_wrapper']
+__all__ = ('docstring_wrapper')
+
 
 def docstring_wrapper(fun):
     common = """reltol : float, optional

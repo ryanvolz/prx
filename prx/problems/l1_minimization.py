@@ -21,16 +21,16 @@
 
 """
 
-from .. import objectives as _obj
 from .. import algorithms as _alg
+from .. import objectives as _obj
 from ._common import backends
 
-__all__ = ['bpdn', 'dantzig', 'l1rls', 'srlasso']
+__all__ = ('bpdn', 'dantzig', 'l1rls', 'srlasso')
 
 
 @backends(_alg.admmlin, _alg.pdhg)
 def bpdn(A, Astar, b, eps, x0, **kwargs):
-    """Solves the basis pursuit denoising problem.
+    """Solve the basis pursuit denoising problem.
 
     Given A, b, and eps, solve for x::
 
@@ -98,9 +98,10 @@ def bpdn(A, Astar, b, eps, x0, **kwargs):
 
     return args, kwargs
 
+
 @backends(_alg.admmlin, _alg.pdhg)
 def dantzig(A, Astar, b, delta, x0, **kwargs):
-    """Solves the Dantzig selector problem.
+    """Solve the Dantzig selector problem.
 
     Given A, b, and delta, solve for x::
 
@@ -174,7 +175,9 @@ def dantzig(A, Astar, b, delta, x0, **kwargs):
     G = _obj.LInfBallInd(radius=delta)
 
     # "A" and "Astar" in admmlin notation
-    AsA = lambda x: Astar(A(x))
+    def AsA(x):
+        return Astar(A(x))
+
     # "b" in admmlin notation
     Asb = Astar(b)
 
@@ -182,9 +185,10 @@ def dantzig(A, Astar, b, delta, x0, **kwargs):
 
     return args, kwargs
 
+
 @backends(_alg.proxgradaccel, _alg.admmlin, _alg.pdhg, _alg.proxgrad)
 def l1rls(A, Astar, b, lmbda, x0, **kwargs):
-    """Solves the l1-regularized least squares problem.
+    """Solve the l1-regularized least squares problem.
 
     Given A, b, and lmbda, solve for x::
 
@@ -263,9 +267,10 @@ def l1rls(A, Astar, b, lmbda, x0, **kwargs):
 
     return args, kwargs
 
+
 @backends(_alg.admmlin, _alg.pdhg)
 def srlasso(A, Astar, b, lmbda, x0, **kwargs):
-    """Solves the square root LASSO problem.
+    """Solve the square root LASSO problem.
 
     Given A, b, and lmbda, solve for x::
 

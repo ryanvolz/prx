@@ -20,16 +20,16 @@
 
 """
 
-from .. import objectives as _obj
 from .. import algorithms as _alg
+from .. import objectives as _obj
 from ._common import backends
 
-__all__ = ['lasso', 'nnls', 'zcls']
+__all__ = ('lasso', 'nnls', 'zcls')
 
 
 @backends(_alg.proxgradaccel, _alg.admmlin, _alg.pdhg, _alg.proxgrad)
 def lasso(A, Astar, b, tau, x0, **kwargs):
-    """Solves the LASSO problem.
+    """Solve the LASSO problem.
 
     Given A, b, and tau, solve for x::
 
@@ -99,9 +99,10 @@ def lasso(A, Astar, b, tau, x0, **kwargs):
 
     return args, kwargs
 
+
 @backends(_alg.proxgradaccel, _alg.admmlin, _alg.pdhg, _alg.proxgrad)
 def nnls(A, Astar, b, x0, **kwargs):
-    """Solves the non-negative least squares problem.
+    """Solve the non-negative least squares problem.
 
     Given A and b, solve for x::
 
@@ -155,9 +156,10 @@ def nnls(A, Astar, b, x0, **kwargs):
 
     return args, kwargs
 
+
 @backends(_alg.proxgradaccel, _alg.admmlin, _alg.pdhg, _alg.proxgrad)
 def zcls(A, Astar, b, zeros, x0, **kwargs):
-    """Solves the zero-constrained least squares problem.
+    """Solve the zero-constrained least squares problem.
 
     Given A, b, and zeros, solve for x::
 

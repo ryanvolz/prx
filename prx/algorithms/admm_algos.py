@@ -1,11 +1,11 @@
-#-----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 # Copyright (c) 2014-2016, 'prx' developers (see AUTHORS file)
 # All rights reserved.
 #
 # Distributed under the terms of the MIT license.
 #
 # The full license is in the LICENSE file, distributed with this software.
-#-----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 """Alternating direction method of multipliers algorithms.
 
 .. currentmodule:: prx.algorithms.admm_algos
@@ -22,10 +22,11 @@ from __future__ import division
 
 import numpy as np
 
-from ._common import docstring_wrapper as _docstring_wrapper
 from ..fun.norms import l2norm, l2normsqhalf
+from ._common import docstring_wrapper as _docstring_wrapper
 
-__all__ = ['admm', 'admmlin']
+__all__ = ('admm', 'admmlin')
+
 
 @_docstring_wrapper
 def admm(F, G, x0, y0=None, pen=1.0, residgap=2, penfactor=1.5, reltol=1e-6,
@@ -242,10 +243,10 @@ def admm(F, G, x0, y0=None, pen=1.0, residgap=2, penfactor=1.5, reltol=1e-6,
                    'resid_d={resid_d:.4} ({thresh_d:.3})').format(**dkt))
             if moreinfo:
                 if xstar is not None:
-                    dkt['err'] = tolnorm(x_new - xstar)/tolnorm(xstar)
+                    dkt['err'] = tolnorm(x - xstar)/tolnorm(xstar)
                 else:
                     dkt['err'] = np.nan
-                hist[k//printrate] = tuple(dkt[key] for key in hist.dtype.names)
+                hist[k//printrate] = tuple(dkt[ky] for ky in hist.dtype.names)
         # can't calculate dual function value, so best stopping criterion
         # is to see if primal and dual feasibility residuals are small
         if rnorm < rstopthresh and snorm < sstopthresh:
@@ -275,6 +276,7 @@ def admm(F, G, x0, y0=None, pen=1.0, residgap=2, penfactor=1.5, reltol=1e-6,
                     hist=hist[:k//printrate])
     else:
         return x
+
 
 @_docstring_wrapper
 def admmlin(F, G, A, Astar, b, x0, y0=None, stepsize=1.0, backtrack=0.5,
@@ -508,7 +510,7 @@ def admmlin(F, G, A, Astar, b, x0, y0=None, stepsize=1.0, backtrack=0.5,
     u = y0*pen
     Asu = Astar(u)
     Asu_old = Asu
-    z = A(x) - b # needed for relaxation, makes Ax_relax = A(x) for first step
+    z = A(x) - b  # needed for relaxation, makes Ax_relax = A(x) for first step
 
     tolnorm = l2norm
     bnorm = tolnorm(b)
@@ -539,7 +541,7 @@ def admmlin(F, G, A, Astar, b, x0, y0=None, stepsize=1.0, backtrack=0.5,
                     bts += 1
 
         # z primal update
-        Axrelax = relax*Ax_new + one_minus_relax*(z + b) # need norm later
+        Axrelax = relax*Ax_new + one_minus_relax*(z + b)  # need norm later
         Axmb = Axrelax - b
         z = proxG(Axmb + u, pen)
         # primal residual calculation
@@ -580,7 +582,7 @@ def admmlin(F, G, A, Astar, b, x0, y0=None, stepsize=1.0, backtrack=0.5,
                     dkt['err'] = tolnorm(x_new - xstar)/tolnorm(xstar)
                 else:
                     dkt['err'] = np.nan
-                hist[k//printrate] = tuple(dkt[key] for key in hist.dtype.names)
+                hist[k//printrate] = tuple(dkt[ky] for ky in hist.dtype.names)
         # can't calculate dual function value, so best stopping criterion
         # is to see if primal and dual feasibility residuals are small
         if rnorm < rstopthresh and snorm < sstopthresh:

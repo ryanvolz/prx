@@ -23,9 +23,10 @@
 
 import numpy as np
 
-__all__ = [
+__all__ = (
     'LinearOperator', 'DiagLinop', 'MatrixLinop', 'FixedSizeLinop'
-]
+)
+
 
 class LinearOperator(object):
     """Linear operator A.
@@ -49,9 +50,9 @@ class LinearOperator(object):
         adjoint functions are swapped).
 
     """
+
     def __init__(self, forward=None, adjoint=None):
         """Create a linear operator with the given forward/adjoint functions.
-
 
         Parameters
         ----------
@@ -80,7 +81,6 @@ class LinearOperator(object):
 
     def forward(self, x, out=None):
         """Calculate the forward operation, A(x).
-
 
         Parameters
         ----------
@@ -119,7 +119,6 @@ class LinearOperator(object):
 
     def adjoint(self, y, out=None):
         """Calculate the adjoint operation, A*(y).
-
 
         Parameters
         ----------
@@ -162,15 +161,16 @@ class LinearOperator(object):
     def H(self):
         return LinearOperator(self._adjoint, self._forward)
 
+
 class DiagLinop(LinearOperator):
     """Diagonal linear operator A(x) = s*x (element-wise multiplication).
 
     .. automethod:: __init__
 
     """
+
     def __init__(self, s):
         """Create a diagonal linear operator A(x) = s*x.
-
 
         Parameters
         ----------
@@ -190,15 +190,16 @@ class DiagLinop(LinearOperator):
     def _adjoint(self, y, out=None):
         return np.multiply(self._sconj, y, out)
 
+
 class MatrixLinop(LinearOperator):
     """Matrix linear operator A(x) = np.dot(M, x).
 
     .. automethod:: __init__
 
     """
+
     def __init__(self, M):
         """Create a matrix linear operator A(x) = np.dot(M, x).
-
 
         Parameters
         ----------
@@ -217,6 +218,7 @@ class MatrixLinop(LinearOperator):
 
     def _adjoint(self, y, out=None):
         return np.dot(self._Ms, y, out)
+
 
 class FixedSizeLinop(LinearOperator):
     """Fixed size linear operator A.
@@ -244,9 +246,9 @@ class FixedSizeLinop(LinearOperator):
         (output and input arrays of the adjoint operation), respectively.
 
     """
+
     def __init__(self, inshape, indtype, outshape, outdtype):
         """Create a linear operator for the given input and output specs.
-
 
         Parameters
         ----------
@@ -277,7 +279,6 @@ class FixedSizeLinop(LinearOperator):
     def forward(self, x, out=None):
         """Calculate the forward operation, A(x).
 
-
         Parameters
         ----------
 
@@ -301,7 +302,6 @@ class FixedSizeLinop(LinearOperator):
 
     def adjoint(self, y, out=None):
         """Calculate the adjoint operation, A*(y).
-
 
         Parameters
         ----------

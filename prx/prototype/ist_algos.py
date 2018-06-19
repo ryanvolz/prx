@@ -1,23 +1,24 @@
-#-----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 # Copyright (c) 2014, 'prx' developers (see AUTHORS file)
 # All rights reserved.
 #
 # Distributed under the terms of the MIT license.
 #
 # The full license is in the LICENSE file, distributed with this software.
-#-----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 
 from __future__ import division
 
 import numpy as np
 
-from .thresholding import softthresh, medestnoise
 from ..algorithms import proxgrad, proxgradaccel
 from ..fun.norms import linfnorm
 from ..objectives import L1Norm, L2NormSqHalf
+from .thresholding import medestnoise, softthresh
 
-__all__ = ['fista', 'fista_cfar',
-           'ist', 'ist_cfar']
+__all__ = ('fista', 'fista_cfar',
+           'ist', 'ist_cfar')
+
 
 def ist(A, Astar, b, lmbda, x0, **kwargs):
     F = L1Norm(scale=lmbda)
@@ -25,11 +26,13 @@ def ist(A, Astar, b, lmbda, x0, **kwargs):
 
     return proxgrad(F, G, A, Astar, b, x0, **kwargs)
 
+
 def fista(A, Astar, b, lmbda, x0, **kwargs):
     F = L1Norm(scale=lmbda)
     G = L2NormSqHalf()
 
     return proxgradaccel(F, G, A, Astar, b, x0, **kwargs)
+
 
 # iterative soft thresholding with threshold set by constant false alarm rate
 # see Maleki and Donoho, 2010
@@ -83,6 +86,7 @@ def ist_cfar(A, Astar, y, x0, sigmamult=3, relax=1, reltol=1e-4, abstol=1e-6,
         return dict(x=x, numits=k, delta=delta, sigma_est=sigma_est)
     else:
         return x
+
 
 # doesn't converge for low threshold levels because noise estimate bounces around too much
 # smoothing added makes it converge like fixed threshold fista, but what formula for smoothing?

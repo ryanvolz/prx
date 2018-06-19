@@ -1,11 +1,11 @@
-#-----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 # Copyright (c) 2014-2016, 'prx' developers (see AUTHORS file)
 # All rights reserved.
 #
 # Distributed under the terms of the MIT license.
 #
 # The full license is in the LICENSE file, distributed with this software.
-#-----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 """Objective classes for polynomial functions.
 
 .. currentmodule:: prx.objectives.polynomials
@@ -31,65 +31,69 @@ Related Indicators
 """
 
 from __future__ import division
+
 import numpy as np
 
-from .objective_classes import (
-    _class_docstring_wrapper, _init_docstring_wrapper,
-    BaseObjective, IndicatorObjective,
-)
 from ..fun.norms import l2normsqhalf
 from ..operator_class import DiagLinop
+from .objective_classes import (BaseObjective, IndicatorObjective,
+                                _class_docstring_wrapper,
+                                _init_docstring_wrapper)
 
-__all__ = [
+__all__ = (
     'Quadratic', 'Affine', 'Const', 'PointInd',
-]
+)
+
 
 class Quadratic(BaseObjective):
     __doc__ = _class_docstring_wrapper(
-    """Objective class for a quadratic function.
+        """Objective class for a quadratic function.
 
-    This function is defined as::
+        This function is defined as::
 
-        f(x) = s*l2normsqhalf(A(x)) + Re(<b, x>) + c,
+            f(x) = s*l2normsqhalf(A(x)) + Re(<b, x>) + c,
 
-    where `A` is a linear operator or matrix, `b` is an array specifying the
-    linear term, `c` is a scalar constant, and `s` is a scaling constant.
+        where `A` is a linear operator or matrix, `b` is an array specifying
+        the linear term, `c` is a scalar constant, and `s` is a scaling
+        constant.
 
-    {common_summary}
-
-
-    Attributes
-    ----------
-
-    A : LinearOperator
-        Linear operator defining the quadratic term.
-
-    b : array
-        Linear term.
-
-    c : float | int
-        Constant term.
-
-    s : float | int
-        Scaling of quadratic term.
-
-    {common_attributes}
+        {common_summary}
 
 
-    See Also
-    --------
+        Attributes
+        ----------
 
-    Affine : Subtype with a zero quadratic term.
-    Const : Subtype with zero quadratic and linear terms.
-    .BaseObjective : Parent class.
+        A : LinearOperator
+            Linear operator defining the quadratic term.
+
+        b : array
+            Linear term.
+
+        c : float | int
+            Constant term.
+
+        s : float | int
+            Scaling of quadratic term.
+
+        {common_attributes}
 
 
-    Notes
-    -----
+        See Also
+        --------
 
-    {common_notes}
+        Affine : Subtype with a zero quadratic term.
+        Const : Subtype with zero quadratic and linear terms.
+        .BaseObjective : Parent class.
 
-    """)
+
+        Notes
+        -----
+
+        {common_notes}
+
+        """
+    )
+
     def __new__(cls, A=None, b=None, c=None, s=1, scale=None, stretch=None,
                 shift=None, linear=None, const=None):
         # if quadratic term is None, want to define an Affine or Const
@@ -189,17 +193,17 @@ class Quadratic(BaseObjective):
             linear=linear, const=const,
         )
 
-    #@property
-    #def _conjugate_class(self):
-        #return Quadratic
-
-    #@property
-    #def _conjugate_args(self):
-        ## The conjugate of the point indicator is the affine function with
-        ## the point as the linear term.
-        #kwargs = super(PointInd, self)._conjugate_args
-        #kwargs.update(linear, self._p)
-        #return kwargs
+    # @property
+    # def _conjugate_class(self):
+    #     return Quadratic
+    #
+    # @property
+    # def _conjugate_args(self):
+    #     # The conjugate of the point indicator is the affine function with
+    #     # the point as the linear term.
+    #     kwargs = super(PointInd, self)._conjugate_args
+    #     kwargs.update(b=self._p)
+    #     return kwargs
 
     @property
     def A(self):
@@ -219,31 +223,32 @@ class Quadratic(BaseObjective):
 
     def fun(self, x):
         """Quadratic function."""
-        q = self._s*l2normsqhalf(self._A(x))
+        quad = self._s*l2normsqhalf(self._A(x))
         # TODO replace multiply/sum with inner1d when it is available in numpy
-        l = np.multiply(self._bconj, x).sum().real
-        return q + l + self._c
+        lin = np.multiply(self._bconj, x).sum().real
+        return quad + lin + self._c
 
     def grad(self, x):
         """Gradient of quadratic function."""
         return self._s*self._A.H(self._A(x)) + self._b.real
 
-    #def prox(self, x, lmbda=1):
-        #"""Prox of an quadratic function."""
-        #return self._A.ideninv(x - lmbda*self._b, lmbda*self._s)
+    # def prox(self, x, lmbda=1):
+    #     """Prox of an quadratic function."""
+    #     return self._A.ideninv(x - lmbda*self._b, lmbda*self._s)
+
 
 class Affine(Quadratic):
-    #@property
-    #def _conjugate_class(self):
-        #return PointInd
-
-    #@property
-    #def _conjugate_args(self):
-        ## The conjugate of the point indicator is the affine function with
-        ## the point as the linear term.
-        #kwargs = super(PointInd, self)._conjugate_args
-        #kwargs.update(linear, self._p)
-        #return kwargs
+    # @property
+    # def _conjugate_class(self):
+    #     return PointInd
+    #
+    # @property
+    # def _conjugate_args(self):
+    #     # The conjugate of the point indicator is the affine function with
+    #     # the point as the linear term.
+    #     kwargs = super(PointInd, self)._conjugate_args
+    #     kwargs.update(b=self._p)
+    #     return kwargs
 
     def fun(self, x):
         """Affine function."""
@@ -258,10 +263,11 @@ class Affine(Quadratic):
         """Prox of an affine function."""
         return x - lmbda*self._b
 
+
 class Const(Affine):
-    #@property
-    #def _conjugate_class(self):
-        #return Infinity
+    # @property
+    # def _conjugate_class(self):
+    #     return Infinity
 
     def fun(self, x):
         """Constant function."""
@@ -277,37 +283,40 @@ class Const(Affine):
         """Identity function, the prox operator of a constant function."""
         return x
 
+
 class PointInd(IndicatorObjective):
     __doc__ = _class_docstring_wrapper(
-    """Objective class for the point indicator function.
+        """Objective class for the point indicator function.
 
-    {common_summary}
-
-
-    Attributes
-    ----------
-
-    p : array
-        The point at which this function is defined.
-
-    {common_attributes}
+        {common_summary}
 
 
-    See Also
-    --------
+        Attributes
+        ----------
 
-    .IndicatorObjective : Parent class.
+        p : array
+            The point at which this function is defined.
+
+        {common_attributes}
 
 
-    Notes
-    -----
+        See Also
+        --------
 
-    The indicator function is zero at the given point p and infinity
-    everywhere else. Its gradient is undefined.
+        .IndicatorObjective : Parent class.
 
-    The prox operator returns the defining point.
 
-    """)
+        Notes
+        -----
+
+        The indicator function is zero at the given point p and infinity
+        everywhere else. Its gradient is undefined.
+
+        The prox operator returns the defining point.
+
+        """
+    )
+
     @_init_docstring_wrapper
     def __init__(self, p, scale=None, stretch=None, shift=None,
                  linear=None, const=None):
@@ -358,14 +367,14 @@ class PointInd(IndicatorObjective):
 
     @property
     def _conjugate_class(self):
-        return _polynomial_classes.Affine
+        return Affine
 
     @property
     def _conjugate_args(self):
         # The conjugate of the point indicator is the affine function with
         # the point as the linear term.
         kwargs = super(PointInd, self)._conjugate_args
-        kwargs.update(b, self._p)
+        kwargs.update(b=self._p)
         return kwargs
 
     @property
@@ -380,5 +389,5 @@ class PointInd(IndicatorObjective):
             return np.inf
 
     def prox(self, x, lmbda=1):
-        """Projection onto the point p. (Always returns p.)"""
+        """Projection onto the point p (always returns p)."""
         return self._p
