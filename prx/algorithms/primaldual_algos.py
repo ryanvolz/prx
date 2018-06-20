@@ -24,7 +24,7 @@ import numpy as np
 from ..fun.norms import l2norm
 from ._common import docstring_wrapper as _docstring_wrapper
 
-__all__ = ('pdhg')
+__all__ = ('pdhg',)
 
 
 @_docstring_wrapper

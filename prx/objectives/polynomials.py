@@ -49,49 +49,49 @@ class Quadratic(BaseObjective):
     __doc__ = _class_docstring_wrapper(
         """Objective class for a quadratic function.
 
-        This function is defined as::
+    This function is defined as::
 
-            f(x) = s*l2normsqhalf(A(x)) + Re(<b, x>) + c,
+        f(x) = s*l2normsqhalf(A(x)) + Re(<b, x>) + c,
 
-        where `A` is a linear operator or matrix, `b` is an array specifying
-        the linear term, `c` is a scalar constant, and `s` is a scaling
-        constant.
+    where `A` is a linear operator or matrix, `b` is an array specifying
+    the linear term, `c` is a scalar constant, and `s` is a scaling
+    constant.
 
-        {common_summary}
-
-
-        Attributes
-        ----------
-
-        A : LinearOperator
-            Linear operator defining the quadratic term.
-
-        b : array
-            Linear term.
-
-        c : float | int
-            Constant term.
-
-        s : float | int
-            Scaling of quadratic term.
-
-        {common_attributes}
+    {common_summary}
 
 
-        See Also
-        --------
+    Attributes
+    ----------
 
-        Affine : Subtype with a zero quadratic term.
-        Const : Subtype with zero quadratic and linear terms.
-        .BaseObjective : Parent class.
+    A : LinearOperator
+        Linear operator defining the quadratic term.
+
+    b : array
+        Linear term.
+
+    c : float | int
+        Constant term.
+
+    s : float | int
+        Scaling of quadratic term.
+
+    {common_attributes}
 
 
-        Notes
-        -----
+    See Also
+    --------
 
-        {common_notes}
+    Affine : Subtype with a zero quadratic term.
+    Const : Subtype with zero quadratic and linear terms.
+    .BaseObjective : Parent class.
 
-        """
+
+    Notes
+    -----
+
+    {common_notes}
+
+    """
     )
 
     def __new__(cls, A=None, b=None, c=None, s=1, scale=None, stretch=None,
@@ -288,33 +288,33 @@ class PointInd(IndicatorObjective):
     __doc__ = _class_docstring_wrapper(
         """Objective class for the point indicator function.
 
-        {common_summary}
+    {common_summary}
 
 
-        Attributes
-        ----------
+    Attributes
+    ----------
 
-        p : array
-            The point at which this function is defined.
+    p : array
+        The point at which this function is defined.
 
-        {common_attributes}
-
-
-        See Also
-        --------
-
-        .IndicatorObjective : Parent class.
+    {common_attributes}
 
 
-        Notes
-        -----
+    See Also
+    --------
 
-        The indicator function is zero at the given point p and infinity
-        everywhere else. Its gradient is undefined.
+    .IndicatorObjective : Parent class.
 
-        The prox operator returns the defining point.
 
-        """
+    Notes
+    -----
+
+    The indicator function is zero at the given point p and infinity
+    everywhere else. Its gradient is undefined.
+
+    The prox operator returns the defining point.
+
+    """
     )
 
     @_init_docstring_wrapper

@@ -20,7 +20,7 @@
 
 from __future__ import division
 
-__all__ = ('grad_l2sqhalf')
+__all__ = ('grad_l2sqhalf',)
 
 
 def grad_l2sqhalf(x):

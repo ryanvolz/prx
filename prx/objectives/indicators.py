@@ -53,31 +53,31 @@ class NNegInd(IndicatorObjective):
     __doc__ = _class_docstring_wrapper(
         """Objective class for the non-negative indicator function.
 
-        {common_summary}
+    {common_summary}
 
 
-        Attributes
-        ----------
+    Attributes
+    ----------
 
-        {common_attributes}
-
-
-        See Also
-        --------
-
-        .IndicatorObjective : Parent class.
+    {common_attributes}
 
 
-        Notes
-        -----
+    See Also
+    --------
 
-        The indicator function is zero for vectors with only non-negative
-        entries and infinity if any of the entries are negative.
+    .IndicatorObjective : Parent class.
 
-        The prox operator is Euclidean projection onto the non-negative
-        halfspace, i.e. the negative entries are set to zero.
 
-        """
+    Notes
+    -----
+
+    The indicator function is zero for vectors with only non-negative
+    entries and infinity if any of the entries are negative.
+
+    The prox operator is Euclidean projection onto the non-negative
+    halfspace, i.e. the negative entries are set to zero.
+
+    """
     )
 
     @property
@@ -100,31 +100,31 @@ class NPosInd(IndicatorObjective):
     __doc__ = _class_docstring_wrapper(
         """Objective class for the non-positive indicator function.
 
-        {common_summary}
+    {common_summary}
 
 
-        Attributes
-        ----------
+    Attributes
+    ----------
 
-        {common_attributes}
-
-
-        See Also
-        --------
-
-        .IndicatorObjective : Parent class.
+    {common_attributes}
 
 
-        Notes
-        -----
+    See Also
+    --------
 
-        The indicator function is zero for vectors with only non-positive
-        entries and infinity if any of the entries are positive.
+    .IndicatorObjective : Parent class.
 
-        The prox operator is Euclidean projection onto the non-positive
-        halfspace, i.e. the positive entries are set to zero.
 
-        """
+    Notes
+    -----
+
+    The indicator function is zero for vectors with only non-positive
+    entries and infinity if any of the entries are positive.
+
+    The prox operator is Euclidean projection onto the non-positive
+    halfspace, i.e. the positive entries are set to zero.
+
+    """
     )
 
     @property
@@ -147,35 +147,35 @@ class ZerosInd(IndicatorObjective):
     __doc__ = _class_docstring_wrapper(
         """Objective class for the indicator of prescribed zero elements.
 
-        {common_summary}
+    {common_summary}
 
 
-        Attributes
-        ----------
+    Attributes
+    ----------
 
-        z : boolean array
-            Array specifying the zero locations, requiring x[z] == 0.
+    z : boolean array
+        Array specifying the zero locations, requiring x[z] == 0.
 
-        {common_attributes}
-
-
-        See Also
-        --------
-
-        .IndicatorObjective : Parent class.
+    {common_attributes}
 
 
-        Notes
-        -----
+    See Also
+    --------
 
-        The indicator function is zero for vectors with only zeros in the
-        specified places, infinity if any of the required zero entries are
-        nonzero.
+    .IndicatorObjective : Parent class.
 
-        The prox operator is Euclidean projection onto the set with
-        specified zeros (x[z] is set to 0).
 
-        """
+    Notes
+    -----
+
+    The indicator function is zero for vectors with only zeros in the
+    specified places, infinity if any of the required zero entries are
+    nonzero.
+
+    The prox operator is Euclidean projection onto the set with
+    specified zeros (x[z] is set to 0).
+
+    """
     )
 
     @_init_docstring_wrapper
@@ -247,32 +247,32 @@ class PSDInd(IndicatorObjective):
     __doc__ = _class_docstring_wrapper(
         """Objective class for the positive semi-definite indicator function.
 
-        {common_summary}
+    {common_summary}
 
 
-        Attributes
-        ----------
+    Attributes
+    ----------
 
-        {common_attributes}
-
-
-        See Also
-        --------
-
-        .IndicatorObjective : Parent class.
+    {common_attributes}
 
 
-        Notes
-        -----
+    See Also
+    --------
 
-        The indicator function is zero for matrices M that are positive
-        semi-definite (z*M*z is non-negative for all z != 0) and infinity
-        otherwise.
+    .IndicatorObjective : Parent class.
 
-        The prox operator is projection to the nearest positive semi-definite
-        matrix (negative eigenvalues are set to zero).
 
-        """
+    Notes
+    -----
+
+    The indicator function is zero for matrices M that are positive
+    semi-definite (z*M*z is non-negative for all z != 0) and infinity
+    otherwise.
+
+    The prox operator is projection to the nearest positive semi-definite
+    matrix (negative eigenvalues are set to zero).
+
+    """
     )
 
     @_init_docstring_wrapper

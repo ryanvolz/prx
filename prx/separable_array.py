@@ -20,7 +20,7 @@
 
 import numpy as np
 
-__all__ = ('separray')
+__all__ = ('separray',)
 
 
 class separray(np.ndarray):

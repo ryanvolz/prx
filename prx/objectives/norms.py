@@ -10,8 +10,8 @@
 
 .. currentmodule:: prx.objectives.norms
 
-Norm Indicators
----------------
+Norms
+-----
 
 .. autosummary::
     :toctree:
@@ -56,32 +56,32 @@ class L1Norm(NormObjective):
     __doc__ = _class_docstring_wrapper(
         """Objective class for the l1-norm, ``sum(abs(x))``.
 
-        {common_summary}
+    {common_summary}
 
 
-        Attributes
-        ----------
+    Attributes
+    ----------
 
-        {common_attributes}
-
-
-        See Also
-        --------
-
-        .NormObjective : Parent class.
+    {common_attributes}
 
 
-        Notes
-        -----
+    See Also
+    --------
 
-        ``fun(x) = sum(abs(x))``
+    .NormObjective : Parent class.
 
-        The prox operator is soft thresholding::
 
-            st(v[k], l) = {{ v[k] - l*v[k]/abs(v[k])  if abs(v[k]) > l
-                          {{           0              otherwise
+    Notes
+    -----
 
-        """
+    ``fun(x) = sum(abs(x))``
+
+    The prox operator is soft thresholding::
+
+        st(v[k], l) = {{ v[k] - l*v[k]/abs(v[k])  if abs(v[k]) > l
+                      {{           0              otherwise
+
+    """
     )
 
     @property
@@ -95,33 +95,33 @@ class L1L2Norm(NormObjective):
     __doc__ = _class_docstring_wrapper(
         """Objective class for the combined l1- and l2-norm.
 
-        {common_summary}
+    {common_summary}
 
 
-        Attributes
-        ----------
+    Attributes
+    ----------
 
-        {common_attributes}
-
-
-        See Also
-        --------
-
-        .NormObjective : Parent class.
+    {common_attributes}
 
 
-        Notes
-        -----
+    See Also
+    --------
 
-        ``fun(x) = l1norm(l2norm(x, axis))``
+    .NormObjective : Parent class.
 
-        The prox operator is block soft thresholding::
 
-            bst(v[k, :], l) =
-             {{ v[k, :] - l*v[k, :]/l2norm(v[k, :])  if l2norm(v[k, :]) > l
-             {{                 0                    otherwise
+    Notes
+    -----
 
-        """
+    ``fun(x) = l1norm(l2norm(x, axis))``
+
+    The prox operator is block soft thresholding::
+
+        bst(v[k, :], l) =
+         {{ v[k, :] - l*v[k, :]/l2norm(v[k, :])  if l2norm(v[k, :]) > l
+         {{                 0                    otherwise
+
+    """
     )
 
     @_init_docstring_wrapper
@@ -170,32 +170,32 @@ class L2Norm(NormObjective):
     __doc__ = _class_docstring_wrapper(
         """Objective class for the l2-norm, ``sqrt(sum(abs(x)**2))``.
 
-        {common_summary}
+    {common_summary}
 
 
-        Attributes
-        ----------
+    Attributes
+    ----------
 
-        {common_attributes}
-
-
-        See Also
-        --------
-
-        .NormObjective : Parent class.
+    {common_attributes}
 
 
-        Notes
-        -----
+    See Also
+    --------
 
-        ``fun(x) = sqrt(sum(abs(x)**2))``
+    .NormObjective : Parent class.
 
-        The prox operator is block soft thresholding for block=(all of v)::
 
-            bst(v, l) = {{ v - l*v/l2norm(v)  if l2norm(v) > l
-                        {{       0            otherwise
+    Notes
+    -----
 
-        """
+    ``fun(x) = sqrt(sum(abs(x)**2))``
+
+    The prox operator is block soft thresholding for block=(all of v)::
+
+        bst(v, l) = {{ v - l*v/l2norm(v)  if l2norm(v) > l
+                    {{       0            otherwise
+
+    """
     )
 
     @property
@@ -209,31 +209,31 @@ class L2NormSqHalf(NormSqObjective):
     __doc__ = _class_docstring_wrapper(
         """Objective class for half the squared l2-norm, 0.5*sum(abs(x)**2)).
 
-        {common_summary}
+    {common_summary}
 
 
-        Attributes
-        ----------
+    Attributes
+    ----------
 
-        {common_attributes}
-
-
-        See Also
-        --------
-
-        .NormSqObjective : Parent class.
+    {common_attributes}
 
 
-        Notes
-        -----
+    See Also
+    --------
 
-        ``fun(x) = 0.5*sum(abs(x)**2))``
+    .NormSqObjective : Parent class.
 
-        The prox operator is the shrinkage function::
 
-            shrink(v, l) = v/(1 + l)
+    Notes
+    -----
 
-        """
+    ``fun(x) = 0.5*sum(abs(x)**2))``
+
+    The prox operator is the shrinkage function::
+
+        shrink(v, l) = v/(1 + l)
+
+    """
     )
 
     @property
@@ -248,30 +248,30 @@ class LInfNorm(NormObjective):
     __doc__ = _class_docstring_wrapper(
         """Objective class for the linf-norm, ``max(abs(x))``.
 
-        {common_summary}
+    {common_summary}
 
 
-        Attributes
-        ----------
+    Attributes
+    ----------
 
-        {common_attributes}
-
-
-        See Also
-        --------
-
-        .NormObjective : Parent class.
+    {common_attributes}
 
 
-        Notes
-        -----
+    See Also
+    --------
 
-        ``fun(x) = max(abs(x))``
+    .NormObjective : Parent class.
 
-        The prox operator is the peak shrinkage function, which minimizes the
-        maximum value for a reduction of lmbda in the l1-norm.
 
-        """
+    Notes
+    -----
+
+    ``fun(x) = max(abs(x))``
+
+    The prox operator is the peak shrinkage function, which minimizes the
+    maximum value for a reduction of lmbda in the l1-norm.
+
+    """
     )
 
     @property
@@ -285,33 +285,33 @@ class L1BallInd(NormBallObjective):
     __doc__ = _class_docstring_wrapper(
         """Objective class for the indicator of the l1-ball.
 
-        {common_summary}
+    {common_summary}
 
 
-        Attributes
-        ----------
+    Attributes
+    ----------
 
-        radius : float | int
-            Radius of the l1-ball indicator.
+    radius : float | int
+        Radius of the l1-ball indicator.
 
-        {common_attributes}
-
-
-        See Also
-        --------
-
-        .NormBallObjective : Parent class.
+    {common_attributes}
 
 
-        Notes
-        -----
+    See Also
+    --------
 
-        The indicator function is zero for vectors inside the ball, infinity
-        for vectors outside the ball.
+    .NormBallObjective : Parent class.
 
-        The prox operator is Euclidean projection onto the l1-ball.
 
-        """
+    Notes
+    -----
+
+    The indicator function is zero for vectors inside the ball, infinity
+    for vectors outside the ball.
+
+    The prox operator is Euclidean projection onto the l1-ball.
+
+    """
     )
 
     @property
@@ -337,33 +337,33 @@ class L2BallInd(NormBallObjective):
     __doc__ = _class_docstring_wrapper(
         """Objective class for the indicator of the l2-ball.
 
-        {common_summary}
+    {common_summary}
 
 
-        Attributes
-        ----------
+    Attributes
+    ----------
 
-        radius : float | int
-            Radius of the l2-ball indicator.
+    radius : float | int
+        Radius of the l2-ball indicator.
 
-        {common_attributes}
-
-
-        See Also
-        --------
-
-        .NormBallObjective : Parent class.
+    {common_attributes}
 
 
-        Notes
-        -----
+    See Also
+    --------
 
-        The indicator function is zero for vectors inside the ball, infinity
-        for vectors outside the ball.
+    .NormBallObjective : Parent class.
 
-        The prox operator is Euclidean projection onto the l2-ball.
 
-        """
+    Notes
+    -----
+
+    The indicator function is zero for vectors inside the ball, infinity
+    for vectors outside the ball.
+
+    The prox operator is Euclidean projection onto the l2-ball.
+
+    """
     )
 
     @property
@@ -389,33 +389,33 @@ class LInfBallInd(NormBallObjective):
     __doc__ = _class_docstring_wrapper(
         """Objective class for the indicator of the linf-ball.
 
-        {common_summary}
+    {common_summary}
 
 
-        Attributes
-        ----------
+    Attributes
+    ----------
 
-        radius : float | int
-            Radius of the linf-ball indicator.
+    radius : float | int
+        Radius of the linf-ball indicator.
 
-        {common_attributes}
-
-
-        See Also
-        --------
-
-        .NormBallObjective : Parent class.
+    {common_attributes}
 
 
-        Notes
-        -----
+    See Also
+    --------
 
-        The indicator function is zero for vectors inside the ball, infinity
-        for vectors outside the ball.
+    .NormBallObjective : Parent class.
 
-        The prox operator is Euclidean projection onto the linf-ball.
 
-        """
+    Notes
+    -----
+
+    The indicator function is zero for vectors inside the ball, infinity
+    for vectors outside the ball.
+
+    The prox operator is Euclidean projection onto the linf-ball.
+
+    """
     )
 
     @property

@@ -137,31 +137,31 @@ class BaseObjective(object):
     __doc__ = _class_docstring_wrapper(
         """Objective class, a function with gradient and/or prox operator.
 
-        {common_summary}
+    {common_summary}
 
 
-        Attributes
-        ----------
+    Attributes
+    ----------
 
-        {common_attributes}
-
-
-        See Also
-        --------
-
-        LinearObjective : Special case for linear functions.
-        NormObjective : Special case for norms.
-        NormSqObjective : Special case for squared norms.
-        IndicatorObjective : Special case for indicator functions.
-        NormBallObjective : Special case for norm ball indicator functions.
+    {common_attributes}
 
 
-        Notes
-        -----
+    See Also
+    --------
 
-        {common_notes}
+    LinearObjective : Special case for linear functions.
+    NormObjective : Special case for norms.
+    NormSqObjective : Special case for squared norms.
+    IndicatorObjective : Special case for indicator functions.
+    NormBallObjective : Special case for norm ball indicator functions.
 
-        """
+
+    Notes
+    -----
+
+    {common_notes}
+
+    """
     )
 
     @_init_docstring_wrapper
@@ -337,31 +337,31 @@ class LinearObjective(BaseObjective):
     __doc__ = _class_docstring_wrapper(
         """Objective class for a linear function.
 
-        {common_summary}
+    {common_summary}
 
 
-        Attributes
-        ----------
+    Attributes
+    ----------
 
-        {common_attributes}
-
-
-        See Also
-        --------
-
-        BaseObjective : Base objective class.
-        NormObjective : Special case for norms.
-        NormSqObjective : Special case for squared norms.
-        IndicatorObjective : Special case for indicator functions.
-        NormBallObjective : Special case for norm ball indicator functions.
+    {common_attributes}
 
 
-        Notes
-        -----
+    See Also
+    --------
 
-        {common_notes}
+    BaseObjective : Base objective class.
+    NormObjective : Special case for norms.
+    NormSqObjective : Special case for squared norms.
+    IndicatorObjective : Special case for indicator functions.
+    NormBallObjective : Special case for norm ball indicator functions.
 
-        """
+
+    Notes
+    -----
+
+    {common_notes}
+
+    """
     )
 
     @_init_docstring_wrapper
@@ -413,31 +413,31 @@ class NormObjective(BaseObjective):
     __doc__ = _class_docstring_wrapper(
         """Objective class for a norm function.
 
-        {common_summary}
+    {common_summary}
 
 
-        Attributes
-        ----------
+    Attributes
+    ----------
 
-        {common_attributes}
-
-
-        See Also
-        --------
-
-        BaseObjective : Base objective class.
-        LinearObjective : Special case for linear objectives.
-        NormSqObjective : Special case for squared norms.
-        IndicatorObjective : Special case for indicator functions.
-        NormBallObjective : Special case for norm ball indicator functions.
+    {common_attributes}
 
 
-        Notes
-        -----
+    See Also
+    --------
 
-        {common_notes}
+    BaseObjective : Base objective class.
+    LinearObjective : Special case for linear objectives.
+    NormSqObjective : Special case for squared norms.
+    IndicatorObjective : Special case for indicator functions.
+    NormBallObjective : Special case for norm ball indicator functions.
 
-        """
+
+    Notes
+    -----
+
+    {common_notes}
+
+    """
     )
 
     @_init_docstring_wrapper
@@ -478,31 +478,31 @@ class NormSqObjective(BaseObjective):
     __doc__ = _class_docstring_wrapper(
         """Objective class for a squared norm function.
 
-        {common_summary}
+    {common_summary}
 
 
-        Attributes
-        ----------
+    Attributes
+    ----------
 
-        {common_attributes}
-
-
-        See Also
-        --------
-
-        BaseObjective : Base objective class.
-        LinearObjective : Special case for linear objectives.
-        NormObjective : Special case for norms.
-        IndicatorObjective : Special case for indicator functions.
-        NormBallObjective : Special case for norm ball indicator functions.
+    {common_attributes}
 
 
-        Notes
-        -----
+    See Also
+    --------
 
-        {common_notes}
+    BaseObjective : Base objective class.
+    LinearObjective : Special case for linear objectives.
+    NormObjective : Special case for norms.
+    IndicatorObjective : Special case for indicator functions.
+    NormBallObjective : Special case for norm ball indicator functions.
 
-        """
+
+    Notes
+    -----
+
+    {common_notes}
+
+    """
     )
 
     @_init_docstring_wrapper
@@ -543,31 +543,31 @@ class IndicatorObjective(BaseObjective):
     __doc__ = _class_docstring_wrapper(
         """Objective class for an indicator function.
 
-        {common_summary}
+    {common_summary}
 
 
-        Attributes
-        ----------
+    Attributes
+    ----------
 
-        {common_attributes}
-
-
-        See Also
-        --------
-
-        BaseObjective : Base objective class.
-        LinearObjective : Special case for linear objectives.
-        NormObjective : Special case for norms.
-        NormSqObjective : Special case for squared norms.
-        NormBallObjective : Special case for norm ball indicator functions.
+    {common_attributes}
 
 
-        Notes
-        -----
+    See Also
+    --------
 
-        {common_notes}
+    BaseObjective : Base objective class.
+    LinearObjective : Special case for linear objectives.
+    NormObjective : Special case for norms.
+    NormSqObjective : Special case for squared norms.
+    NormBallObjective : Special case for norm ball indicator functions.
 
-        """
+
+    Notes
+    -----
+
+    {common_notes}
+
+    """
     )
 
     @_init_docstring_wrapper
@@ -601,34 +601,34 @@ class NormBallObjective(IndicatorObjective):
     __doc__ = _class_docstring_wrapper(
         """Objective class for a norm ball indicator function.
 
-        {common_summary}
+    {common_summary}
 
 
-        Attributes
-        ----------
+    Attributes
+    ----------
 
-        radius : float | int
-            Radius of the norm ball indicator.
+    radius : float | int
+        Radius of the norm ball indicator.
 
-        {common_attributes}
-
-
-        See Also
-        --------
-
-        BaseObjective : Base objective class.
-        LinearObjective : Special case for linear objectives.
-        NormObjective : Special case for norms.
-        NormSqObjective : Special case for squared norms.
-        IndicatorObjective : Special case for indicator functions.
+    {common_attributes}
 
 
-        Notes
-        -----
+    See Also
+    --------
 
-        {common_notes}
+    BaseObjective : Base objective class.
+    LinearObjective : Special case for linear objectives.
+    NormObjective : Special case for norms.
+    NormSqObjective : Special case for squared norms.
+    IndicatorObjective : Special case for indicator functions.
 
-        """
+
+    Notes
+    -----
+
+    {common_notes}
+
+    """
     )
 
     @_init_docstring_wrapper
@@ -750,46 +750,46 @@ class SeparableObjective(BaseObjective):
     __doc__ = _class_docstring_wrapper(
         """Objective class for a separable function.
 
-        A separable function is one that can be divided into summed component
-        functions that each operate on mutually exclusive partitions of the
-        input. For a separable function F(X), we assume that the input X is a
-        separated array that when iterated over gives the individual input
-        components, ``X = (x1, x2, ..., xn)``. Then F is described by its
-        components ``(f1, f2, ..., fn)`` so that
-        ``F(X) = f1(x1) + f2(x2) + ... + fn(xn)``.
+    A separable function is one that can be divided into summed component
+    functions that each operate on mutually exclusive partitions of the
+    input. For a separable function F(X), we assume that the input X is a
+    separated array that when iterated over gives the individual input
+    components, ``X = (x1, x2, ..., xn)``. Then F is described by its
+    components ``(f1, f2, ..., fn)`` so that
+    ``F(X) = f1(x1) + f2(x2) + ... + fn(xn)``.
 
-        {common_summary}
-
-
-        Attributes
-        ----------
-
-        components : tuple
-            The component Objective objects.
-
-        conjugate : :class:`SeparableObjective` object
-            The corresponding separable conjugate Objective.
-
-        {common_attributes}
+    {common_summary}
 
 
-        See Also
-        --------
+    Attributes
+    ----------
 
-        BaseObjective : Base objective class.
+    components : tuple
+        The component Objective objects.
+
+    conjugate : :class:`SeparableObjective` object
+        The corresponding separable conjugate Objective.
+
+    {common_attributes}
 
 
-        Notes
-        -----
+    See Also
+    --------
 
-        The gradient and prox operators of a separable function are simply the
-        combination of the gradients and proxes of the component functions:
-        ``grad_F(X) = ( grad_f1(x1), grad_f2(x2), ..., grad_fn(xn) )`` and
-        similarly for the prox operator.
+    BaseObjective : Base objective class.
 
-        {common_notes}
 
-        """
+    Notes
+    -----
+
+    The gradient and prox operators of a separable function are simply the
+    combination of the gradients and proxes of the component functions:
+    ``grad_F(X) = ( grad_f1(x1), grad_f2(x2), ..., grad_fn(xn) )`` and
+    similarly for the prox operator.
+
+    {common_notes}
+
+    """
     )
 
     @_init_docstring_wrapper
