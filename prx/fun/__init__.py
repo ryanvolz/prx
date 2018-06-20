@@ -6,7 +6,9 @@
     :toctree:
 
     norms
+    covariance
 
 """
 
+from .covariance import *
 from .norms import *

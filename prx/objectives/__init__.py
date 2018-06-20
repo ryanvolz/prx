@@ -1,4 +1,4 @@
-"""Useful gradient functions.
+"""Useful objective functions.
 
 .. currentmodule:: prx.objectives
 
@@ -11,6 +11,7 @@ Common Objectives
     norms
     indicators
     polynomials
+    covariance
 
 Customizable Objectives
 -----------------------
@@ -24,6 +25,7 @@ Customizable Objectives
 
 """
 
+from .covariance import *
 from .indicators import *
 from .norms import *
 from . import objective_classes

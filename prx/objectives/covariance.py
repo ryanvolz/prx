@@ -10,20 +10,13 @@
 
 .. currentmodule:: prx.objectives.covariance
 
-Covariance
------------
+Covariance Likelihoods
+----------------------
 
 .. autosummary::
     :toctree:
 
-    NegNormCovarianceLogLikelihood
-
-Related Indicators
-------------------
-
-.. autosummary::
-    :toctree:
-
+    NormCovNegLogLik
 
 """
 
@@ -31,133 +24,104 @@ from __future__ import division
 
 import numpy as np
 
+from ..fun.covariance import normcov_negloglik
+from ..grad.covariance import grad_normcov_negloglik
 from .objective_classes import (BaseObjective, _class_docstring_wrapper,
                                 _init_docstring_wrapper)
 
 __all__ = (
-    'NegNormCovarianceLogLikelihood',
+    'NormCovNegLogLik',
 )
 
 
-class NegNormCovarianceLogLikelihood(BaseObjective):
-    # TODO, consider building this up from more basic logdet and trace fcns
-    # TODO, consider adding getter and setter functions for S
+class NormCovNegLogLik(BaseObjective):
+    # TODO, consider building this up from more basic logdet and trace objs
     __doc__ = _class_docstring_wrapper(
-        """Objective class for the negative log-likelihood normal covariance.
+        r"""Objective class for the normal covariance negative log-likelihood.
 
-        {common_summary}
+    For a multivariate normal random variable with a measured sample
+    covariance, this objective function represents the (shifted and scaled)
+    negative log-likelihood of the variable's unknown covariance matrix
+    parameter.
 
-
-        Attributes
-        ----------
-
-        S : array with shape (N, N) or (M, N, N)
-            Sample covariance matrix or matrices. Must be Hermitian, with
-            ``S == S.conj().transpose()``.
-
-        {common_attributes}
+    {common_summary}
 
 
-        See Also
-        --------
+    Attributes
+    ----------
 
-        .IndicatorObjective : Parent class.
+    S : (..., M, M) array_like
+        Sample covariance matrix or matrices. Must be Hermitian, with
+        ``S == S.conj().swapaxes(-2, -1)``, and positive semidefinite.
+
+    {common_attributes}
 
 
-        Notes
-        -----
+    See Also
+    --------
+
+    .IndicatorObjective : Parent class.
 
 
-        """
+    Notes
+    -----
+
+    ``fun(X) = log(det(X)) + tr(X \ S)``
+
+    ``grad(X) = X \ (X - S) / S``
+
+    This function is convex when restricted to the domain where X <= 2*S or
+    equivalently where (2*S - X) is positive semidefinite.
+
+    """
     )
 
     @_init_docstring_wrapper
     def __init__(self, S, scale=None, stretch=None, shift=None,
                  linear=None, const=None):
-        """Create Objective that defines an indicator function.
+        """Create Objective defining normal covariance negative log-likelihood.
 
         {common_summary}
-
-        Since this objective is an indicator, `scale` can be eliminated::
-
-            s*f(a*x + b) => f(a*x + b)
 
 
         Parameters
         ----------
 
-        S : array with shape (N, N) or (M, N, N)
+        S : (..., M, M) array_like
             Sample covariance matrix or matrices. Must be Hermitian, with
-            ``S == S.conj().transpose()``.
+            ``np.allclose(S, S.conj().swapaxes(-2, -1))``, and positive
+            semidefinite.
 
         {common_params}
 
         """
+        if not np.allclose(S, S.conj().swapaxes(-2, -1)):
+            raise ValueError('Sample covariance S must be Hermitian.')
+        w = np.linalg.eigvalsh(S)
+        if np.any(
+            np.min(w, axis=-1) < -8*np.finfo(w.dtype).eps*np.max(w, axis=-1)
+        ):
+            errstr = 'Sample covariance S must be positive semidefinite.'
+            raise ValueError(errstr)
         self._S = S
-        assert len(self._S.shape) in {2, 3}, \
-            "Error, S must be an N x N matrix or a stack of M N x N matrices"
-        # Reshape S to be compatible with for loop over matrix stack if S only
-        # has 1 matrix
-        if len(self._S) == 2:
-            self._S = self._S.reshape((1, -1))
-        # eliminate scale
-        if scale is not None:
-            scale = None
 
-        super(NegNormCovarianceLogLikelihood, self).__init__(
+        super(NormCovNegLogLik, self).__init__(
             scale=scale, stretch=stretch, shift=shift,
             linear=linear, const=const)
 
     @property
     def _conjugate_class(self):
-        return NegNormCovarianceLogLikelihood
+        raise NotImplementedError
 
-    def fun(self, x):
-        # TODO docstring
-        assert len(x.shape) in {2, 3}, (
-            "Error, input matrix x must be an N x N matrix or a stack of M"
-            " N x N matrices"
-        )
-        # Reshape x to be compatible with for loop over matrix stack if x only
-        # has 1 matrix
-        if len(x.shape) == 2:
-            x = x.reshape((1, -1))
-        assert x.shape == self._S.shape, (
-            "Error, dimensionality of x and sample covariance matrix S must"
-            " match"
-        )
-        m = self._S.shape[0]
-        val = 0
-        for k in range(m):
-            s_k = self._S[k]
-            x_k = x[k]
-            val = val - np.real(
-                np.log(np.linalg.det(x_k))
-                + np.trace(np.linalg.solve(x_k, s_k))
-            )
+    @property
+    def S(self):
+        """Sample covariance matrix associated with the likelihood function."""
+        return self._S
 
-        return -val
+    def fun(self, X):
+        """Evaluate normal covariance negative log-likelihood function."""
+        return np.sum(normcov_negloglik(X, self._S))
 
-    def grad(self, x):
-        # TODO docstring
-        length = self._S.shape[1]
-        m = self._S.shape[0]
-        g = np.zeros((m, length, length), dtype=np.complex)
-
-        assert len(x.shape) in {2, 3}, (
-            "Error, input matrix x must be an N x N matrix or a stack of M"
-            " N x N matrices"
-        )
-        # Reshape x to be compatible with for loop over matrix stack if x only
-        # has 1 matrix
-        if len(x.shape) == 2:
-            x = x.reshape((1, -1))
-
-        for i in range(m):
-            s_i = self._S[i]
-            x_i = x[i]
-            g_i = np.linalg.solve(x_i.T, np.linalg.solve(x_i, (x_i - s_i)).T).T
-            g_i = (g_i + np.conj(g_i.T)) / 2
-            g[i] = g_i
-
-        return g
+    def grad(self, X):
+        """Evaluate normal covariance negative log-likelihood gradient."""
+        return grad_normcov_negloglik(X, self._S)
