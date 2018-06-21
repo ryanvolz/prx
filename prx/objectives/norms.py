@@ -69,6 +69,9 @@ class L1Norm(NormObjective):
     --------
 
     .NormObjective : Parent class.
+    L1L2Norm : Combined l1- and l2-norm objective.
+    .l1norm : Associated function.
+    .prox_l1 : Prox operator function.
 
 
     Notes
@@ -108,6 +111,10 @@ class L1L2Norm(NormObjective):
     --------
 
     .NormObjective : Parent class.
+    L1Norm : l1-norm objective.
+    L2Norm : l2-norm objective.
+    .l1l2norm : Associated function.
+    .prox_l1l2 : Prox operator function.
 
 
     Notes
@@ -183,6 +190,9 @@ class L2Norm(NormObjective):
     --------
 
     .NormObjective : Parent class.
+    L1L2Norm : Combined l1- and l2-norm objective.
+    .l2norm : Associated function.
+    .prox_l2 : Prox operator function.
 
 
     Notes
@@ -222,6 +232,9 @@ class L2NormSqHalf(NormSqObjective):
     --------
 
     .NormSqObjective : Parent class.
+    L2Norm : l2-norm objective.
+    .l2sqhalf : Associated function.
+    .prox_l2sqhalf : Prox operator function.
 
 
     Notes
@@ -261,6 +274,8 @@ class LInfNorm(NormObjective):
     --------
 
     .NormObjective : Parent class.
+    .linfnorm : Associated function.
+    .prox_linf : Prox operator function.
 
 
     Notes
@@ -301,6 +316,8 @@ class L1BallInd(NormBallObjective):
     --------
 
     .NormBallObjective : Parent class.
+    .l1norm : l1-norm function.
+    .proj_l1 : Prox operator projection function.
 
 
     Notes
@@ -353,6 +370,8 @@ class L2BallInd(NormBallObjective):
     --------
 
     .NormBallObjective : Parent class.
+    .l2norm : l2-norm function.
+    .proj_l2 : Prox operator projection function.
 
 
     Notes
@@ -405,6 +424,8 @@ class LInfBallInd(NormBallObjective):
     --------
 
     .NormBallObjective : Parent class.
+    .linfnorm : linf-norm function.
+    .proj_linf : Prox operator projection function.
 
 
     Notes

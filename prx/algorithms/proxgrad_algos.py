@@ -138,7 +138,7 @@ def proxgrad(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5, expand=1.25,
     See Also
     --------
 
-    proxgradaccel, admmlin
+    proxgradaccel, .admmlin
 
 
     Notes
@@ -403,7 +403,7 @@ def proxgradaccel(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5,
     See Also
     --------
 
-    proxgrad, admmlin
+    proxgrad, .admmlin
 
 
     Notes

@@ -80,7 +80,7 @@ def lasso(A, Astar, b, tau, x0, **kwargs):
     See Also
     --------
 
-    bpdn, dantzig, l1rls, srlasso, {seealso}
+    .bpdn, .dantzig, .l1rls, .srlasso, {seealso}
 
 
     References

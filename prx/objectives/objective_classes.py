@@ -276,7 +276,7 @@ class BaseObjective(object):
 
             f^*(y) = sup_x ( <y, x> - f(x) ).
 
-        Additionally, if ``g(x) = s*f(a*x + b) + Re(<c, x>) + d``, then
+        Additionally, if :math:`g(x) = s*f(a*x + b) + Re(<c, x>) + d`, then
 
         .. math::
 

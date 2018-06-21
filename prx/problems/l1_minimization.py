@@ -83,7 +83,7 @@ def bpdn(A, Astar, b, eps, x0, **kwargs):
     See Also
     --------
 
-    dantzig, l1rls, lasso, srlasso, {seealso}
+    dantzig, l1rls, .lasso, srlasso, {seealso}
 
     """
     try:
@@ -154,7 +154,7 @@ def dantzig(A, Astar, b, delta, x0, **kwargs):
     See Also
     --------
 
-    bpdn, l1rls, lasso, srlasso, {seealso}
+    bpdn, l1rls, .lasso, srlasso, {seealso}
 
 
     References
@@ -244,7 +244,7 @@ def l1rls(A, Astar, b, lmbda, x0, **kwargs):
     See Also
     --------
 
-    bpdn, dantzig, lasso, srlasso, {seealso}
+    bpdn, dantzig, .lasso, srlasso, {seealso}
 
 
     References
@@ -327,7 +327,7 @@ def srlasso(A, Astar, b, lmbda, x0, **kwargs):
     See Also
     --------
 
-    bpdn, dantzig, l1rls, lasso, {seealso}
+    bpdn, dantzig, l1rls, .lasso, {seealso}
 
 
     References

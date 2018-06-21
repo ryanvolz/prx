@@ -46,8 +46,8 @@ from .objective_classes import (IndicatorObjective, _class_docstring_wrapper,
 
 __all__ = (
     'NNegInd', 'NPosInd', 'ZerosInd',
-    'L1BallInd', 'L2BallInd', 'LInfBallInd',
     'PSDInd', 'PSDIndStokes',
+    'L1BallInd', 'L2BallInd', 'LInfBallInd',
 )
 
 
@@ -68,6 +68,8 @@ class NNegInd(IndicatorObjective):
     --------
 
     .IndicatorObjective : Parent class.
+    NPosInd : Conjugate objective.
+    .proj_nneg : Prox operator projection function.
 
 
     Notes
@@ -115,6 +117,8 @@ class NPosInd(IndicatorObjective):
     --------
 
     .IndicatorObjective : Parent class.
+    NNegInd : Conjugate objective.
+    .proj_npos : Prox operator projection function.
 
 
     Notes
@@ -165,6 +169,7 @@ class ZerosInd(IndicatorObjective):
     --------
 
     .IndicatorObjective : Parent class.
+    .proj_zeros : Prox operator projection function.
 
 
     Notes
