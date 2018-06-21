@@ -1,5 +1,5 @@
 # ----------------------------------------------------------------------------
-# Copyright (c) 2014, 2016 'prx' developers (see AUTHORS file)
+# Copyright (c) 2014, 2016, 2018 'prx' developers (see AUTHORS file)
 # All rights reserved.
 #
 # Distributed under the terms of the MIT license.
@@ -18,6 +18,8 @@
     proj_linf
     proj_nneg
     proj_npos
+    proj_psd
+    proj_psd_stokes
     proj_zeros
 
 """
@@ -29,8 +31,8 @@ import numpy as np
 from ..fun.norms import l2norm
 
 __all__ = (
-    'proj_l1', 'proj_l2', 'proj_linf', 'proj_nneg', 'proj_npos', 'proj_zeros',
-    'proj_psd_stokes',
+    'proj_l1', 'proj_l2', 'proj_linf', 'proj_nneg', 'proj_npos', 'proj_psd',
+    'proj_psd_stokes', 'proj_zeros',
 )
 
 
@@ -269,25 +271,149 @@ def proj_zeros(v, z):
     proj_nneg, proj_npos
 
     """
-    v[z] = 0
-    return v
+    x = v.copy()
+    x[z] = 0
+    return x
 
 
-def proj_psd_stokes(x, epsilon=0):
-    # TODO, docstring
-    i, q, u, v = x
+def proj_psd(V, epsilon=0):
+    """Project Hermitian matrix onto positive semidefinite cone.
 
+    In effect, this sets negative eigenvalues set to 0.
+
+    This prox operator solves for X in::
+
+        minimize    l2normsqhalf(X - V, axis=(-2, -1))
+        subject to  X >= 0 (in matrix inequality sense)
+
+    which is Euclidean projection onto the positive semidefinite cone.
+
+
+    Parameters
+    ----------
+
+    V : (..., M, M) array_like
+        Hermitian matrix or matrices to project.
+
+    epsilon : float, optional
+        When `epsilon` is non-zero, project onto the cone given by
+        :math:`X \succeq \epsilon I` instead of the PSD cone. This sets
+        eigenvalues less than `epsilon` to `epsilon`.
+
+
+    Returns
+    -------
+
+    X : (..., M, M) array_like
+        Nearest positive semidefinite matrix.
+
+
+    See Also
+    --------
+
+    proj_psd_stokes
+
+    """
+    w, v = np.linalg.eigh(V)
+    wnneg = np.maximum(w, epsilon)
+    # reforming projected V from square roots guarantees that it is exactly
+    # Hermitian
+    Xhalf = v*np.sqrt(wnneg)[..., np.newaxis, :]
+    X = np.matmul(Xhalf, Xhalf.conj().swapaxes(-2, -1))
+    return X
+
+
+def proj_psd_stokes(v_s, epsilon=0):
+    """Project Hermitian matrix onto positive semidefinite cone.
+
+    In effect, this sets negative eigenvalues set to 0. This function handles
+    the special case of a block 2x2 Hermitian matrix represented by Stokes
+    parameters where the projection can be achieved efficiently without an
+    eigen-decomposition.
+
+    This prox operator solves for X in::
+
+        minimize    l2normsqhalf(X - V, axis=(-2, -1))
+        subject to  X >= 0 (in matrix inequality sense)
+
+    which is Euclidean projection onto the positive semidefinite cone where V
+    is the equivalent matrix corresponding to the Stokes parameters `v_s`.
+
+
+    Parameters
+    ----------
+
+    v_s : (..., 4) array_like of floats
+        2x2 Hermitian matrix block or blocks represented by an array of the 4
+        Stokes parameters (see notes).
+
+    epsilon : float, optional
+        When `epsilon` is non-zero, project onto the cone given by
+        :math:`X \succeq \epsilon I` instead of the PSD cone. This sets
+        eigenvalues less than `epsilon` to `epsilon`.
+
+
+    Returns
+    -------
+
+    x_s : (..., 4) array_like of floats
+        Nearest positive semidefinite matrix, represented by Stokes parameters.
+
+
+    See Also
+    --------
+
+    proj_psd
+
+
+    Notes
+    -----
+
+    This projection function operates on 2x2 Hermitian blocks given in terms of
+    Stokes parameters (I, Q, U, V)::
+
+        [[  I + Q,   U - 1j*V, ],
+         [ U + 1j*V,  I - Q,   ]]
+
+    The Stokes parameters for all such blocks are passed as an array `s` such
+    that::
+
+        I = s[..., 0]
+        Q = s[..., 1]
+        U = s[..., 2]
+        V = s[..., 3]
+
+    The equivalent set of Hermitian matrices of shape (..., 2, 2) could be
+    formed from the (...,)-shaped Stokes parameter arrays as::
+
+        np.moveaxis(
+            np.asarray([[ I + Q, U - 1j*V], [U + 1j*V, I - Q]]),
+            [0, 1], [-2, -1],
+        )
+
+    """
+    x_s = v_s.copy()
+    i, q, u, v = [x_s[..., k] for k in range(4)]
+
+    # polarized intensity
     i_pol = np.sqrt(q ** 2 + u ** 2 + v ** 2)
+    # entries that need scaling, includes i < 0 since i_pol is always >= 0
     scale = i_pol > i
+    # projection of intensity is average between total and polarized
     i_psd = (i[scale] + i_pol[scale]) / 2
+    # but always >= epsilon
     i_psd = np.maximum(i_psd, epsilon)
+
+    # knowing amount polarization is scaled, scale q, u, v the same
     pol_scale = i_psd / i_pol[scale]
+    # make zero in case where we have 0/0
     pol_scale[np.isnan(pol_scale)] = 0
+
     i[scale] = i_psd
     q[scale] = q[scale] * pol_scale
     u[scale] = u[scale] * pol_scale
     v[scale] = v[scale] * pol_scale
 
-    # Note here x is modified in the above operations as i q u v are just views
-    # into x and affect the same arrays
-    return x
+    # since i, q, u, v are views into x_s, we can simply return x_s after
+    # having written the modified values to i, q, u, v
+    return x_s
