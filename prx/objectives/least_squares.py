@@ -7,27 +7,16 @@
 # The full license is in the LICENSE file, distributed with this software.
 # ----------------------------------------------------------------------------
 
-"""Optimization problems minimizing the l2-norm.
-
-.. currentmodule:: prx.problems.least_squares
-
-.. autosummary::
-    :toctree:
-
-    lasso
-    nnls
-    zcls
-
-"""
+"""Optimization objectives for minimizing the l2-norm."""
 
 from .. import algorithms as _alg
-from .. import objectives as _obj
+from .. import functions as _fun
 from ._common import backends
 
 __all__ = ('lasso', 'nnls', 'zcls')
 
 
-@backends(_alg.proxgradaccel, _alg.admmlin, _alg.pdhg, _alg.proxgrad)
+@backends(_alg._proxgradaccel, _alg.admmlin, _alg.pdhg, _alg.proxgrad)
 def lasso(A, Astar, b, tau, x0, **kwargs):
     """Solve the LASSO problem.
 
@@ -92,15 +81,15 @@ def lasso(A, Astar, b, tau, x0, **kwargs):
 
 
     """
-    F = _obj.L1BallInd(radius=tau)
-    G = _obj.L2NormSqHalf()
+    F = _fun.L1BallInd(radius=tau)
+    G = _fun.L2NormSqHalf()
 
     args = (F, G, A, Astar, b, x0)
 
     return args, kwargs
 
 
-@backends(_alg.proxgradaccel, _alg.admmlin, _alg.pdhg, _alg.proxgrad)
+@backends(_alg._proxgradaccel, _alg.admmlin, _alg.pdhg, _alg.proxgrad)
 def nnls(A, Astar, b, x0, **kwargs):
     """Solve the non-negative least squares problem.
 
@@ -149,15 +138,15 @@ def nnls(A, Astar, b, x0, **kwargs):
     zcls, {seealso}
 
     """
-    F = _obj.NNegInd()
-    G = _obj.L2NormSqHalf()
+    F = _fun.NNegInd()
+    G = _fun.L2NormSqHalf()
 
     args = (F, G, A, Astar, b, x0)
 
     return args, kwargs
 
 
-@backends(_alg.proxgradaccel, _alg.admmlin, _alg.pdhg, _alg.proxgrad)
+@backends(_alg._proxgradaccel, _alg.admmlin, _alg.pdhg, _alg.proxgrad)
 def zcls(A, Astar, b, zeros, x0, **kwargs):
     """Solve the zero-constrained least squares problem.
 
@@ -209,8 +198,8 @@ def zcls(A, Astar, b, zeros, x0, **kwargs):
     nnls, {seealso}
 
     """
-    F = _obj.ZerosInd(z=zeros)
-    G = _obj.L2NormSqHalf()
+    F = _fun.ZerosInd(z=zeros)
+    G = _fun.L2NormSqHalf()
 
     args = (F, G, A, Astar, b, x0)
 

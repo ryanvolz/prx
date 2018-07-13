@@ -7,22 +7,13 @@
 # The full license is in the LICENSE file, distributed with this software.
 # ----------------------------------------------------------------------------
 
-"""Optimization problems minimizing the l1-norm.
+"""Optimization objectives for minimizing the l1-norm."""
 
-.. currentmodule:: prx.problems.l1_minimization
+import numpy as np
 
-.. autosummary::
-    :toctree:
-
-    bpdn
-    dantzig
-    l1rls
-    srlasso
-
-"""
-
+from . import split_objectives as _split_objectives
 from .. import algorithms as _alg
-from .. import objectives as _obj
+from .. import functions as _fun
 from ._common import backends
 
 __all__ = ('bpdn', 'dantzig', 'l1rls', 'srlasso')
@@ -89,10 +80,10 @@ def bpdn(A, Astar, b, eps, x0, **kwargs):
     try:
         axis = kwargs.pop('axis')
     except KeyError:
-        F = _obj.L1Norm()
+        F = _fun.L1Norm()
     else:
-        F = _obj.L1L2Norm(axis=axis)
-    G = _obj.L2BallInd(radius=eps)
+        F = _fun.L1L2Norm(axis=axis)
+    G = _fun.L2BallInd(radius=eps)
 
     args = (F, G, A, Astar, b, x0)
 
@@ -169,10 +160,10 @@ def dantzig(A, Astar, b, delta, x0, **kwargs):
     try:
         axis = kwargs.pop('axis')
     except KeyError:
-        F = _obj.L1Norm()
+        F = _fun.L1Norm()
     else:
-        F = _obj.L1L2Norm(axis=axis)
-    G = _obj.LInfBallInd(radius=delta)
+        F = _fun.L1L2Norm(axis=axis)
+    G = _fun.LInfBallInd(radius=delta)
 
     # "A" and "Astar" in admmlin notation
     def AsA(x):
@@ -186,7 +177,7 @@ def dantzig(A, Astar, b, delta, x0, **kwargs):
     return args, kwargs
 
 
-@backends(_alg.proxgradaccel, _alg.admmlin, _alg.pdhg, _alg.proxgrad)
+@backends(_alg._proxgradaccel, _alg.admmlin, _alg.pdhg, _alg.proxgrad)
 def l1rls(A, Astar, b, lmbda, x0, **kwargs):
     """Solve the l1-regularized least squares problem.
 
@@ -258,10 +249,10 @@ def l1rls(A, Astar, b, lmbda, x0, **kwargs):
     try:
         axis = kwargs.pop('axis')
     except KeyError:
-        F = _obj.L1Norm(scale=lmbda)
+        F = _fun.L1Norm(scale=lmbda)
     else:
-        F = _obj.L1L2Norm(axis=axis, scale=lmbda)
-    G = _obj.L2NormSqHalf()
+        F = _fun.L1L2Norm(axis=axis, scale=lmbda)
+    G = _fun.L2NormSqHalf()
 
     args = (F, G, A, Astar, b, x0)
 
@@ -342,10 +333,10 @@ def srlasso(A, Astar, b, lmbda, x0, **kwargs):
     try:
         axis = kwargs.pop('axis')
     except KeyError:
-        F = _obj.L1Norm(scale=lmbda)
+        F = _fun.L1Norm(scale=lmbda)
     else:
-        F = _obj.L1L2Norm(axis=axis, scale=lmbda)
-    G = _obj.L2Norm()
+        F = _fun.L1L2Norm(axis=axis, scale=lmbda)
+    G = _fun.L2Norm()
 
     args = (F, G, A, Astar, b, x0)
 
