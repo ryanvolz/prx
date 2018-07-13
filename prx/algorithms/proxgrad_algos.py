@@ -16,13 +16,13 @@ from . import base as _base
 from ..fun.norms import l2norm, l2normsqhalf, linfnorm
 from ._common import docstring_wrapper as _docstring_wrapper
 
-__all__ = ('proxgrad', '_proxgradaccel', 'ProxGradAccel')
+__all__ = ('_proxgrad', '_proxgradaccel', 'ProxGrad', 'ProxGradAccel')
 
 
 @_docstring_wrapper
-def proxgrad(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5, expand=1.25,
-             reltol=1e-6, abstol=1e-10, maxits=10000,
-             moreinfo=False, printrate=100, xstar=None):
+def _proxgrad(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5, expand=1.25,
+              reltol=1e-6, abstol=1e-10, maxits=10000,
+              moreinfo=False, printrate=100, xstar=None):
     """Minimize ``F(x) + G(A(x) - b)`` using proximal gradient descent.
 
     The proximal gradient method is a useful basic algorithm for solving
@@ -273,6 +273,344 @@ def proxgrad(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5, expand=1.25,
         return x
 
 
+class ProxGrad(_base.BaseIterativeAlgorithm):
+    """Class for the proximal gradient algorithm.
+
+    {algorithm_description}
+
+
+    Attributes
+    ----------
+
+    {algorithm_attributes}
+
+
+    See Also
+    --------
+
+    {algorithm_see_also}
+
+
+    Notes
+    -----
+
+    {algorithm_notes}
+
+
+    References
+    ----------
+
+    {algorithm_references_primary}
+
+    """
+
+    _doc_algorithm_description = """
+    The proximal gradient method is a useful basic algorithm for solving
+    convex optimization problems with a mixed smooth and non-smooth objective
+    function of the form ``F(x) + G(A(x) - b)``. This implementation includes
+    an adaptive step size (backtracking and expansion) that helps improve
+    convergence. The default parameters work best when the linear operator `A`
+    is scaled to have an operator norm of one.
+
+    """
+
+    _doc_algorithm_self = ':class:`.ProxGrad`'
+
+    _doc_algorithm_see_also = ':class:`.ProxGradAccel`, :class:`.ADMMLin`'
+
+    _doc_algorithm_notes = """
+    Proximal gradient is an iterative first-order optimization method where
+    each iteration is composed of two steps:
+
+        Gradient step with respect to `G`::
+
+            grad_new = Astar(G.grad(A(x) - b))
+            y_new = x - stepsize*grad_new
+
+        Prox step with respect to `F`::
+
+            x_new = F.prox(y_new, stepsize)
+
+    Convergence is determined in terms of the residual::
+
+        r = (x_new - x) - step_size * (grad_new - grad)
+
+    The basic algorithm is described in section 4.2 of [PB14]_. Expanding
+    backtracking line search is due to [SGB14]_ and [BCG11]_.
+
+    """
+
+    __doc_algorithm_references = """
+    .. [PB14]{0} N. Parikh and S. Boyd, "Proximal Algorithms," Foundations and
+       Trends in Optimization, vol. 1, no. 3, pp. 123-231, 2013.
+
+    .. [SGB14]{0} K. Scheinberg, D. Goldfarb, and X. Bai, "Fast First-Order
+       Methods for Composite Convex Optimization with Backtracking,"
+       Found Comput Math, pp. 389-417, Mar. 2014.
+
+    .. [BCG11]{0} S. R. Becker, E. J. Candes, and M. C. Grant, "Templates for
+       convex cone problems with  applications to sparse signal recovery,"
+       Mathematical Programming Computation, vol. 3, no. 3, pp. 165-218,
+       Aug. 2011.
+
+    """
+
+    _doc_algorithm_references_primary = __doc_algorithm_references.format('')
+    _doc_algorithm_references = __doc_algorithm_references.format('_')
+
+    _doc_algorithm_objective_attributes = """
+    x_ : array_like
+        Value of the optimization variable, set after minimization has
+        converged through :meth:`minimize` or :meth:`self.alg.iterate`.
+
+    """
+
+    _doc_keyword_arguments = """
+    A : callable
+        ``A(x)`` is a linear operator, used in the `G` term of the objective
+        function: ``G(A(x) - b)``. Although not checked, it must obey the
+        linearity condition
+
+            ``A(a*x + b*y) == a*A(x) + b*A(y)``.
+
+    Astar : callable
+        ``Astar(z)``, the adjoint operator of `A`. By definition, `Astar`
+        satisfies
+
+            ``vdot(A(x), z) == vdot(x, Astar(z))``
+
+        for all x, z and the inner product ``vdot``. If, for instance, `A`
+        represented multiplication by a matrix M, `Astar` would then
+        represent multiplcation by the complex conjugate transpose of M.
+
+    b : np.ndarray
+        Constant used in the `G` term of the objective function:
+        ``G(A(x) - b)``.
+
+    """
+
+    _doc_algorithm_parameters = """
+    step_size : float, optional
+        Initial step size when backtracking is used, or constant step size
+        for all iterations when backtracking is not used. Must be between 0
+        and 2/L to guarantee convergence, where L is the Lipschitz constant
+        of the gradient of ``G(A(x) - b)``.
+
+    step_dir : callable, optional
+        Function ``step_dir(x, grad)`` that returns a step direction given a
+        point ``x`` and the gradient of `G` at that point. If ``None`` (the
+        default), the gradient is used as the descent direction, i.e.
+        ``step_dir(x, grad)`` returns ``grad``.
+
+    backtrack : float | ``None``, optional
+        Backtracking multiplication factor between 0 and 1 that decreases
+        the step size when the local Lipschitz condition is violated. If
+        ``None``, no backtracking is used.
+
+    expand : float | ``None``, optional
+        Expansion multiplication factor greater than 1 that increases the
+        step size after every iteration. This allows the step size to adapt
+        to a decreasing local Lipschitz constant and improve convergence.
+        If ``None``, no expansion is used.
+
+    {algorithm_parameters}
+
+    """
+
+    def __init__(
+        self, objective, step_size=1.0, step_dir=None, backtrack=0.5,
+        expand=1.25, **kwargs
+    ):
+        """Initialize proximal gradient algorithm parameters.
+
+        Parameters
+        ----------
+
+        {algorithm_objective_parameter}
+
+        {algorithm_parameters}
+
+        """
+        super(ProxGrad, self).__init__(objective, **kwargs)
+        self.step_size = step_size
+        self.backtrack = backtrack
+        self.expand = expand
+
+        if step_dir is None:
+            def step_dir(x, grad):
+                """Return a step direction at `x` given the gradient `grad`."""
+                return grad
+        self.step_dir = step_dir
+
+        self.print_str = (
+            '{_iter}: val={_val:.5}, step={step_size:.4},'
+            ' resid={_resid_nrm:.4} ({_resid_thresh:.3})'
+        )
+
+    def validate_params(self):
+        """."""
+        self.step_size = float(self.step_size)
+        if self.step_size <= 0:
+            raise ValueError('step_size must be positive')
+
+        if not callable(self.step_dir):
+            raise ValueError('step_dir must be a callable taking (x, grad)')
+
+        if self.backtrack is not None:
+            self.backtrack = float(self.backtrack)
+            if self.backtrack <= 0 or self.backtrack >= 1:
+                raise ValueError('backtrack must be None or between 0 and 1')
+
+        if self.expand is not None:
+            self.expand = float(self.expand)
+            if self.expand <= 1:
+                raise ValueError('expand must be None or greater than 1')
+
+        # check for Objective compatibility
+        for pname in ('F', 'proxF', 'G', 'gradG'):
+            p = getattr(self.objective, pname)
+            if p is None or not callable(p):
+                errstr = 'self.objective.{0} must be set to a callable'
+                raise ValueError(errstr.format(pname))
+
+        return super(ProxGrad, self).validate_params()
+
+    def get_params(self, deep=True):
+        """."""
+        params = super(ProxGrad, self).get_params(deep=deep)
+        params.update(
+            step_size=self.step_size, step_dir=self.step_dir,
+            backtrack=self.backtrack, expand=self.expand,
+        )
+        return params
+
+    def iterate(self, state, A, Astar, b):
+        """Create generator that yields the `state` dictionary after each step.
+
+        You can inspect the `state` dictionary for useful information to
+        customize each iteration. Variables in the `state` dictionary that
+        are not prefixed with an underscore can be modified and will affect the
+        subsequent iteration step.
+
+
+        Parameters
+        ----------
+
+        state : dict
+            Initial state dictionary. This must contain:
+
+                x : array_like
+                    Initial value for the optimization variable.
+
+        {keyword_arguments}
+
+
+        Yields
+        ------
+
+        state : dict
+            A dictionary of iteration state variables.
+
+        """
+        # get initial iterate value
+        try:
+            x0 = state['x']
+        except KeyError:
+            errstr = (
+                'Keyword arguments for state must include an initial value for'
+                ' x.'
+            )
+            raise ValueError(errstr)
+
+        # set absolute tolerance threshold based on taking the tolerance norm
+        # of a residual vector with all entries equal to abs_tol
+        abs_tol_thresh = self.abs_tol * self.tol_norm(np.ones_like(x0))
+
+        # initialize state
+        z0 = A(x0) - b
+        grad0 = Astar(self.objective.gradG(z0))
+        step_dir0 = self.step_dir(x0, grad0)
+        self.objective.state_ = dict(
+            x=x0, z=z0, step_dir=step_dir0, step_size=self.step_size, _iter=0,
+            _backtracks=0, _resid=np.full_like(x0, np.inf), _resid_nrm=np.inf,
+            _resid_thresh=abs_tol_thresh,
+        )
+        # update with passed-in state
+        self.objective.state_.update(state)
+
+        yield self.objective.state_
+
+        s = self.objective.state_
+        for s['_iter'] in range(1, self.max_iter + 1):
+            # get step direction
+            grad = Astar(self.objective.gradG(s['z']))
+            step_dir = self.step_dir(s['x'], grad)
+
+            # inner loop for backtracking line search
+            while True:
+                # proximal gradient step
+                x = self.objective.proxF(
+                    s['x'] - s['step_size']*step_dir, s['step_size'],
+                )
+                z = A(x) - b  # needed to limit A evals as above
+                xmx = x - s['x']
+
+                if self.backtrack is None:
+                    # no backtracking specified
+                    break
+                else:
+                    gval = self.objective.G(z)
+                    bound = (
+                        self.objective.G(s['z']) + np.vdot(xmx, step_dir).real
+                        + l2normsqhalf(xmx)/s['step_size']
+                    )
+                    # test Lipschitz bound, don't need to backtrack if it holds
+                    if gval <= bound:
+                        break
+                    else:
+                        # backtrack
+                        s['step_size'] = s['step_size'] * self.backtrack
+                        s['_backtracks'] += 1
+
+            # residual for convergence check
+            resid = xmx - s['step_size']*(step_dir - s['step_dir'])
+
+            # norms for convergence check
+            resid_nrm = self.tol_norm(resid)
+            x_nrm = self.tol_norm(x)
+            step_dir_nrm = self.tol_norm(step_dir)
+
+            # threshold for convergence check
+            resid_thresh = (
+                abs_tol_thresh
+                + self.rel_tol*min(x_nrm, s['step_size'] * step_dir_nrm)
+            )
+
+            # update state variables for which we had to track previous values
+            s['step_dir'] = step_dir
+            s['x'] = x
+            s['z'] = z
+
+            # update informational state variables
+            s['_resid'] = resid
+            s['_resid_nrm'] = resid_nrm
+            s['_resid_thresh'] = resid_thresh
+
+            # yield state at this iteration step
+            yield s
+
+            # check for convergence
+            if resid_nrm < resid_thresh:
+                break
+
+            # expand stepsize and reset step ratio
+            if self.expand is not None and self.backtrack is not None:
+                s['step_size'] = s['step_size'] * self.expand
+
+        # iterations have converged, store the resulting iterate
+        self.objective.x_ = s['x']
+
+
 @_docstring_wrapper
 def _proxgradaccel(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5,
                    expand=1.25, restart=True, reltol=1e-6, abstol=1e-10,
@@ -394,7 +732,7 @@ def _proxgradaccel(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5,
     See Also
     --------
 
-    proxgrad, .admmlin
+    _proxgrad, .admmlin
 
 
     Notes
@@ -644,7 +982,7 @@ class ProxGradAccel(_base.BaseIterativeAlgorithm):
 
     Convergence is determined in terms of the residual::
 
-        r = (x - x_new) + step_size * (grad_new - grad)
+        r = (x_new - x) - step_size * (grad_new - grad)
 
     The basic algorithm is described in section 4.3 of [PB14]_. Expanding
     backtracking line search is due to [SGB14]_ and [BCG11]_. Adaptive restart
@@ -653,14 +991,14 @@ class ProxGradAccel(_base.BaseIterativeAlgorithm):
     """
 
     __doc_algorithm_references = """
-    .. [PB14]{0} N. Parikh and S. Boyd, "Proximal Algorithms," Foundations and
+    .. [PB14]_ N. Parikh and S. Boyd, "Proximal Algorithms," Foundations and
        Trends in Optimization, vol. 1, no. 3, pp. 123-231, 2013.
 
-    .. [SGB14]{0} K. Scheinberg, D. Goldfarb, and X. Bai, "Fast First-Order
+    .. [SGB14]_ K. Scheinberg, D. Goldfarb, and X. Bai, "Fast First-Order
        Methods for Composite Convex Optimization with Backtracking,"
        Found Comput Math, pp. 389-417, Mar. 2014.
 
-    .. [BCG11]{0} S. R. Becker, E. J. Candes, and M. C. Grant, "Templates for
+    .. [BCG11]_ S. R. Becker, E. J. Candes, and M. C. Grant, "Templates for
        convex cone problems with  applications to sparse signal recovery,"
        Mathematical Programming Computation, vol. 3, no. 3, pp. 165-218,
        Aug. 2011.
@@ -896,7 +1234,7 @@ class ProxGradAccel(_base.BaseIterativeAlgorithm):
                 else:
                     gval = self.objective.G(z)
                     bound = (
-                        self.objective.G(zp) + np.real(np.vdot(xmxp, step_dir))
+                        self.objective.G(zp) + np.vdot(xmxp, step_dir).real
                         + l2normsqhalf(xmxp)/s['step_size']
                     )
                     # test Lipschitz bound, don't need to backtrack if it holds
@@ -913,8 +1251,8 @@ class ProxGradAccel(_base.BaseIterativeAlgorithm):
 
             # norms for convergence check
             resid_nrm = self.tol_norm(resid)
-            x_nrm = self.tol_norm(s['x'])
-            step_dir_nrm = self.tol_norm(s['step_dir'])
+            x_nrm = self.tol_norm(x)
+            step_dir_nrm = self.tol_norm(step_dir)
 
             # threshold for convergence check
             resid_thresh = (

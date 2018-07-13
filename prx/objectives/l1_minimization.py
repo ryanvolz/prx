@@ -293,7 +293,7 @@ class L1RLS(_split_objectives.SplitObjectiveAffine):
         return super(L1RLS, self).set_params(**alg_params)
 
 
-@backends(_alg._proxgradaccel, _alg.admmlin, _alg.pdhg, _alg.proxgrad)
+@backends(_alg._proxgradaccel, _alg.admmlin, _alg.pdhg, _alg._proxgrad)
 def _l1rls(A, Astar, b, lmbda, x0, **kwargs):
     """Solve the l1-regularized least squares problem.
 

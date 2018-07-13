@@ -16,7 +16,7 @@ from ._common import backends
 __all__ = ('lasso', 'nnls', 'zcls')
 
 
-@backends(_alg._proxgradaccel, _alg.admmlin, _alg.pdhg, _alg.proxgrad)
+@backends(_alg._proxgradaccel, _alg.admmlin, _alg.pdhg, _alg._proxgrad)
 def lasso(A, Astar, b, tau, x0, **kwargs):
     """Solve the LASSO problem.
 
@@ -89,7 +89,7 @@ def lasso(A, Astar, b, tau, x0, **kwargs):
     return args, kwargs
 
 
-@backends(_alg._proxgradaccel, _alg.admmlin, _alg.pdhg, _alg.proxgrad)
+@backends(_alg._proxgradaccel, _alg.admmlin, _alg.pdhg, _alg._proxgrad)
 def nnls(A, Astar, b, x0, **kwargs):
     """Solve the non-negative least squares problem.
 
@@ -146,7 +146,7 @@ def nnls(A, Astar, b, x0, **kwargs):
     return args, kwargs
 
 
-@backends(_alg._proxgradaccel, _alg.admmlin, _alg.pdhg, _alg.proxgrad)
+@backends(_alg._proxgradaccel, _alg.admmlin, _alg.pdhg, _alg._proxgrad)
 def zcls(A, Astar, b, zeros, x0, **kwargs):
     """Solve the zero-constrained least squares problem.
 

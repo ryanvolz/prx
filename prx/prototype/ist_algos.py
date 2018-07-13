@@ -11,7 +11,7 @@ from __future__ import division
 
 import numpy as np
 
-from ..algorithms import proxgrad, _proxgradaccel
+from ..algorithms import _proxgrad, _proxgradaccel
 from ..fun.norms import linfnorm
 from ..objectives import L1Norm, L2NormSqHalf
 from .thresholding import medestnoise, softthresh
@@ -24,7 +24,7 @@ def ist(A, Astar, b, lmbda, x0, **kwargs):
     F = L1Norm(scale=lmbda)
     G = L2NormSqHalf()
 
-    return proxgrad(F, G, A, Astar, b, x0, **kwargs)
+    return _proxgrad(F, G, A, Astar, b, x0, **kwargs)
 
 
 def fista(A, Astar, b, lmbda, x0, **kwargs):

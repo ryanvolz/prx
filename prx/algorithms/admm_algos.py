@@ -411,7 +411,7 @@ def admmlin(F, G, A, Astar, b, x0, y0=None, stepsize=1.0, backtrack=0.5,
     See Also
     --------
 
-    admm, .proxgrad, ._proxgradaccel
+    admm, ._proxgrad, ._proxgradaccel
 
 
     Notes
