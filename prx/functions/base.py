@@ -6,41 +6,16 @@
 #
 # The full license is in the LICENSE file, distributed with this software.
 # ----------------------------------------------------------------------------
-"""Base classes for function-grad-prox objective objects.
-
-.. currentmodule:: prx.objectives.objective_classes
-
-
-Creating Objectives
--------------------
-
-.. autosummary::
-    :toctree:
-
-    Objective
-    SeparableObjective
-
-
-Base Classes
-------------
-
-.. autosummary::
-    :toctree:
-
-    BaseObjective
-    LinearObjective
-    NormObjective
-    NormSqObjective
-    IndicatorObjective
-    NormBallObjective
-
-"""
+"""Base classes for function-grad-prox Function objects."""
 
 from __future__ import division
 
 import numpy as np
 
+from six import with_metaclass
+
 from ..algorithms import admm as _admm
+from ..docstring_helpers import DocstringSubstituteMeta
 from ..separable_array import separray
 from .transform_operations import (addconst_fun, addlinear_fun, addlinear_grad,
                                    addlinear_prox, scale_fun, scale_grad,
@@ -49,15 +24,44 @@ from .transform_operations import (addconst_fun, addlinear_fun, addlinear_grad,
                                    stretch_prox)
 
 __all__ = (
-    'BaseObjective', 'LinearObjective',
-    'NormObjective', 'NormSqObjective',
-    'IndicatorObjective', 'NormBallObjective',
-    'Objective', 'SeparableObjective',
+    'BaseFunction', 'LinearFunction',
+    'NormFunction', 'NormSqFunction',
+    'IndicatorFunction', 'NormBallFunction',
+    'Function', 'SeparableFunction',
 )
 
 
-def _class_docstring_wrapper(cls_docstring):
-    summary = """This class holds a function and its associated gradient and
+class BaseFunction(with_metaclass(DocstringSubstituteMeta, object)):
+    """Function class, a function with gradient and/or prox operator.
+
+    {function_summary}
+
+
+    Attributes
+    ----------
+
+    {function_attributes}
+
+
+    See Also
+    --------
+
+    LinearFunction : Special case for linear functions.
+    NormFunction : Special case for norms.
+    NormSqFunction : Special case for squared norms.
+    IndicatorFunction : Special case for indicator functions.
+    NormBallFunction : Special case for norm ball indicator functions.
+
+
+    Notes
+    -----
+
+    {function_notes}
+
+    """
+
+    _doc_function_summary = """
+    This class holds a function and its associated gradient and
     prox operators, with optional scaling, stretching, shifting, and linear or
     constant terms added for initialized objects.
 
@@ -70,10 +74,11 @@ def _class_docstring_wrapper(cls_docstring):
     also necessary to override the attribute :attr:`_conjugate_class` to
     give the class of the conjugate function, if applicable.
 
-    .. automethod:: __init__"""
+    """
 
-    attr = """conjugate : :class:`BaseObjective` object
-        The corresponding conjugate Objective.
+    _doc_function_attributes = """
+    conjugate : :class:`.BaseFunction` object
+        The corresponding conjugate Function.
 
     const : float | int
         Added constant.
@@ -87,95 +92,61 @@ def _class_docstring_wrapper(cls_docstring):
     shift : float | int | array
         Input shifting.
 
-    stretch : float | int
-        Input stretching."""
+    stretch : float | int | array
+        Input stretching.
 
-    notes = """The prox operator of a function g(x) gives the solution x to the
+    """
+
+    _doc_function_notes = """
+    The prox operator of a function ``g(x)`` gives the solution ``x`` to the
     problem::
 
         minimize    g(x) + l2normsqhalf(x - v)/lmbda
 
-    for a given v and lmbda."""
-
-    cls_docstring = cls_docstring.format(
-        common_summary=summary, common_attributes=attr, common_notes=notes
-    )
-    return cls_docstring
-
-
-def _init_docstring_wrapper(init):
-    summary = """With the class defined for the function f(x), this creates an
-        object for evaluating the value, gradient, and prox operator of the
-        function::
-
-            g(x) = s*f(a*x + b) + Re(<c, x>) + d
-
-        for `scale` s, `stretch` a, `shift` b, `linear` c, and `const` d."""
-
-    params = """scale : float | int, optional
-            Function scaling.
-
-        stretch : float | int, optional
-            Input stretching.
-
-        shift : float | int | array, optional
-            Input shifting.
-
-        linear : float | int | array, optional
-            Added inner product term applied to function input.
-
-        const : float | int, optional
-            Added constant."""
-
-    init.__doc__ = init.__doc__.format(
-        common_summary=summary, common_params=params,
-    )
-    return init
-
-
-class BaseObjective(object):
-    __doc__ = _class_docstring_wrapper(
-        """Objective class, a function with gradient and/or prox operator.
-
-    {common_summary}
-
-
-    Attributes
-    ----------
-
-    {common_attributes}
-
-
-    See Also
-    --------
-
-    LinearObjective : Special case for linear functions.
-    NormObjective : Special case for norms.
-    NormSqObjective : Special case for squared norms.
-    IndicatorObjective : Special case for indicator functions.
-    NormBallObjective : Special case for norm ball indicator functions.
-
-
-    Notes
-    -----
-
-    {common_notes}
+    for a given `v` and `lmbda`.
 
     """
-    )
 
-    @_init_docstring_wrapper
-    def __init__(self, scale=None, stretch=None, shift=None, linear=None,
-                 const=None):
-        """Create objective function with gradient and/or prox operator.
+    _doc_init_summary = """
+    With the class defined for the function f(x), this creates an object for
+    evaluating the value, gradient, and prox operator of the function::
 
-        {common_summary}
+        g(x) = s*f(a*x + b) + Re(<c, x>) + d
+
+    for ``s=scale``, ``a=stretch``, ``b=shift``, ``c=linear``, and ``d=const``.
+
+    """
+
+    _doc_init_params = """
+    scale : float | int, optional
+        Function scaling.
+
+    stretch : float | int | (array, for separable functions), optional
+        Input stretching.
+
+    shift : float | int | array, optional
+        Input shifting.
+
+    linear : float | int | array, optional
+        Added inner product term applied to function input.
+
+    const : float | int, optional
+        Added constant.
+
+    """
+
+    def __init__(
+        self, scale=None, stretch=None, shift=None, linear=None, const=None,
+    ):
+        """Create Function with gradient and/or prox operator.
+
+        {init_summary}
 
 
         Parameters
         ----------
 
-        {common_params}
+        {init_params}
 
         """
         # modify functions to apply parameters
@@ -216,25 +187,26 @@ class BaseObjective(object):
             self._const = 0
 
     def __call__(self, x):
+        """Evaluate function."""
         return self.fun(x)
 
     def __add__(self, other):
-        """Return the Objective object for the sum of two functions.
+        """Return the Function object for the sum of two functions.
 
-        The summed Objective's value, gradient, and prox are defined when both
-        of the component Objectives have a value, gradient, or prox,
+        The summed Function's value, gradient, and prox are defined when both
+        of the component Functions have a value, gradient, or prox,
         respectively.
 
         Since the prox operator requires the solution of an optimization
         problem in general, the summed prox operator is evaluated using
-        :func:`.admm`. Accordingly, the order of the addition may effect
+        :class:`.ADMM`. Accordingly, the order of the addition may effect
         the speed and accuracy of the prox operator solution.
 
         """
-        if not isinstance(other, BaseObjective):
+        if not isinstance(other, BaseFunction):
             return NotImplemented
 
-        summed = BaseObjective()
+        summed = BaseFunction()
 
         def summed_fun(x):
             return self.fun(x) + other.fun(x)
@@ -252,7 +224,7 @@ class BaseObjective(object):
             def proxF(u, s):
                 return other.prox((s*x + lmbda*u)/(s + lmbda),
                                   lmbda*s/(s + lmbda))
-            F = Objective(fun=other.fun, prox=proxF)
+            F = Function(fun=other.fun, prox=proxF)
             return _admm(F, self, x0=x, pen=lmbda, maxits=100, printrate=None)
 
         summed.fun = summed_fun
@@ -265,12 +237,12 @@ class BaseObjective(object):
 
     @property
     def conjugate(self):
-        """Objective object for the conjugate function.
+        """Function object for the conjugate function.
 
         Notes
         -----
 
-        The convex conjugate of f(x) is defined as
+        The convex conjugate of :math:`f(x)` is defined as
 
         .. math::
 
@@ -288,12 +260,12 @@ class BaseObjective(object):
 
     @property
     def _conjugate_class(self):
-        """Return the class for the conjugate objective function."""
+        """Return the class for the conjugate Function."""
         raise NotImplementedError
 
     @property
     def _conjugate_args(self):
-        """Return the keyword args for the conjugate objective in a dict."""
+        """Return the keyword args for the conjugate Function in a dict."""
         scale = self._scale
         stretch = 1/(self._scale*self._stretch)
         shift = -stretch*self._linear
@@ -304,83 +276,94 @@ class BaseObjective(object):
                     const=const)
 
     def fun(self, x):
+        """Evaluate function."""
         raise NotImplementedError
 
     def grad(self, x):
+        """Evaluate gradient."""
         raise NotImplementedError
 
     def prox(self, x, lmbda=1):
+        """Evaluate proximal operator."""
         raise NotImplementedError
 
     @property
     def const(self):
+        """Additive constant."""
         return self._const
 
     @property
     def linear(self):
+        """Additive linear component."""
         return self._linear
 
     @property
     def scale(self):
+        """Scaling constant."""
         return self._scale
 
     @property
     def shift(self):
+        """Shift constant."""
         return self._shift
 
     @property
     def stretch(self):
+        """Stretch constant."""
         return self._stretch
 
 
-class LinearObjective(BaseObjective):
-    __doc__ = _class_docstring_wrapper(
-        """Objective class for a linear function.
+class LinearFunction(BaseFunction):
+    """Function class for a linear function.
 
-    {common_summary}
+    {function_summary}
 
 
     Attributes
     ----------
 
-    {common_attributes}
+    {function_attributes}
 
 
     See Also
     --------
 
-    BaseObjective : Base objective class.
-    NormObjective : Special case for norms.
-    NormSqObjective : Special case for squared norms.
-    IndicatorObjective : Special case for indicator functions.
-    NormBallObjective : Special case for norm ball indicator functions.
+    BaseFunction : Base Function class.
+    NormFunction : Special case for norms.
+    NormSqFunction : Special case for squared norms.
+    IndicatorFunction : Special case for indicator functions.
+    NormBallFunction : Special case for norm ball indicator functions.
 
 
     Notes
     -----
 
-    {common_notes}
+    {function_notes}
 
     """
-    )
 
-    @_init_docstring_wrapper
-    def __init__(self, scale=None, stretch=None, shift=None, linear=None,
-                 const=None):
-        """Create Objective that is known to be linear.
+    _doc_init_summary = """
+    {init_summary}
 
-        {common_summary}
+    Since this function is linear, `scale` and `shift` can be
+    eliminated by absorbing them into `stretch` and `const`::
 
-        Since this objective is linear, `stretch` and `shift` can be
-        eliminated by absorbing them into `scale` and `const`::
+        s*f(a*x + b) + d => f((s*a)*x) + (s*f(b) + d)
 
-            s*f(a*x + b) + d => a*s*f(x) + (s*f(b) + d)
+    """
+
+    def __init__(
+        self, scale=None, stretch=None, shift=None, linear=None, const=None,
+    ):
+        """Create Function that is known to be linear.
+
+        {init_summary}
 
 
         Parameters
         ----------
 
-        {common_params}
+        {init_params}
 
         """
         # change 'None's to identities
@@ -392,286 +375,293 @@ class LinearObjective(BaseObjective):
             shift = 0
         if const is None:
             const = 0
-        # absorb stretch into scale
-        scale = scale*stretch
-        stretch = None
-        # absorb shift into const
+        # absorb scale and shift into const
         const = const + scale*self.fun(shift)
         shift = None
+        # absorb scale into stretch
+        stretch = scale*stretch
+        scale = None
+
         # turn identities into Nones
-        if scale == 1:
-            scale = None
+        if stretch == 1:
+            stretch = None
         if const == 0:
             const = None
 
-        super(LinearObjective, self).__init__(
+        super(LinearFunction, self).__init__(
             scale=scale, stretch=stretch, shift=shift,
             linear=linear, const=const)
 
 
-class NormObjective(BaseObjective):
-    __doc__ = _class_docstring_wrapper(
-        """Objective class for a norm function.
+class NormFunction(BaseFunction):
+    """Function class for a norm function.
 
-    {common_summary}
+    {function_summary}
 
 
     Attributes
     ----------
 
-    {common_attributes}
+    {function_attributes}
 
 
     See Also
     --------
 
-    BaseObjective : Base objective class.
-    LinearObjective : Special case for linear objectives.
-    NormSqObjective : Special case for squared norms.
-    IndicatorObjective : Special case for indicator functions.
-    NormBallObjective : Special case for norm ball indicator functions.
+    BaseFunction : Base Function class.
+    LinearFunction : Special case for linear functions.
+    NormSqFunction : Special case for squared norms.
+    IndicatorFunction : Special case for indicator functions.
+    NormBallFunction : Special case for norm ball indicator functions.
 
 
     Notes
     -----
 
-    {common_notes}
+    {function_notes}
 
     """
-    )
 
-    @_init_docstring_wrapper
-    def __init__(self, scale=None, stretch=None, shift=None, linear=None,
-                 const=None):
-        """Create Objective that defines a norm function.
+    _doc_init_summary = """
+    {init_summary}
 
-        {common_summary}
+    Since this function is a norm, `scale` can be eliminated by
+    absorbing it into `stretch` and `shift`::
 
-        Since this objective is a norm, `stretch` can be eliminated by
-        absorbing it into `scale` and `shift`::
+        s*f(a*x + b) => f((s*a)*x + (s*b))
 
-            s*f(a*x + b) => a*s*f(x + b/a)
+    """
+
+    def __init__(
+        self, scale=None, stretch=None, shift=None, linear=None, const=None,
+    ):
+        """Create Function that defines a norm function.
+
+        {init_summary}
 
 
         Parameters
         ----------
 
-        {common_params}
+        {init_params}
 
         """
-        # absorb stretch into scale and shift
-        if stretch is not None:
+        # absorb scale into stretch and shift
+        if scale is not None:
             if shift is not None:
-                shift = shift/stretch
-            if scale is not None:
-                scale = scale*stretch
+                shift = scale*shift
+            if stretch is not None:
+                stretch = scale*stretch
             else:
-                scale = stretch
-            stretch = None
+                stretch = scale
+            scale = None
 
-        super(NormObjective, self).__init__(
+        super(NormFunction, self).__init__(
             scale=scale, stretch=stretch, shift=shift,
             linear=linear, const=const)
 
 
-class NormSqObjective(BaseObjective):
-    __doc__ = _class_docstring_wrapper(
-        """Objective class for a squared norm function.
+class NormSqFunction(BaseFunction):
+    """Function class for a squared norm function.
 
-    {common_summary}
+    {function_summary}
 
 
     Attributes
     ----------
 
-    {common_attributes}
+    {function_attributes}
 
 
     See Also
     --------
 
-    BaseObjective : Base objective class.
-    LinearObjective : Special case for linear objectives.
-    NormObjective : Special case for norms.
-    IndicatorObjective : Special case for indicator functions.
-    NormBallObjective : Special case for norm ball indicator functions.
+    BaseFunction : Base Function class.
+    LinearFunction : Special case for linear functions.
+    NormFunction : Special case for norms.
+    IndicatorFunction : Special case for indicator functions.
+    NormBallFunction : Special case for norm ball indicator functions.
 
 
     Notes
     -----
 
-    {common_notes}
+    {function_notes}
 
     """
-    )
 
-    @_init_docstring_wrapper
-    def __init__(self, scale=None, stretch=None, shift=None, linear=None,
-                 const=None):
-        """Create Objective that defines a squared norm function.
+    _doc_init_summary = """
+    {init_summary}
 
-        {common_summary}
+    Since this function is a squared norm, `scale` can be eliminated by
+    absorbing it into `stretch` and `shift`::
 
-        Since this objective is a squared norm, `stretch` can be eliminated by
-        absorbing it into `scale` and `shift`::
+        s*f(a*x + b) => f((sqrt(s)*a)*x + (sqrt(s)*b))
 
-            s*f(a*x + b) => (a**2)*s*f(x + b/a)
+    """
+
+    def __init__(
+        self, scale=None, stretch=None, shift=None, linear=None, const=None,
+    ):
+        """Create Function that defines a squared norm function.
+
+        {init_summary}
 
 
         Parameters
         ----------
 
-        {common_params}
+        {init_params}
 
         """
-        # absorb stretch into scale and shift
-        if stretch is not None:
+        # absorb scale into stretch and shift
+        if scale is not None:
             if shift is not None:
-                shift = shift/stretch
-            if scale is not None:
-                scale = scale*stretch**2
+                shift = np.sqrt(scale)*shift
+            if stretch is not None:
+                stretch = np.sqrt(scale)*stretch
             else:
-                scale = stretch**2
-            stretch = None
+                stretch = np.sqrt(scale)
+            scale = None
 
-        super(NormSqObjective, self).__init__(
+        super(NormSqFunction, self).__init__(
             scale=scale, stretch=stretch, shift=shift,
             linear=linear, const=const)
 
 
-class IndicatorObjective(BaseObjective):
-    __doc__ = _class_docstring_wrapper(
-        """Objective class for an indicator function.
+class IndicatorFunction(BaseFunction):
+    """Function class for an indicator function.
 
-    {common_summary}
+    {function_summary}
 
 
     Attributes
     ----------
 
-    {common_attributes}
+    {function_attributes}
 
 
     See Also
     --------
 
-    BaseObjective : Base objective class.
-    LinearObjective : Special case for linear objectives.
-    NormObjective : Special case for norms.
-    NormSqObjective : Special case for squared norms.
-    NormBallObjective : Special case for norm ball indicator functions.
+    BaseFunction : Base Function class.
+    LinearFunction : Special case for linear functions.
+    NormFunction : Special case for norms.
+    NormSqFunction : Special case for squared norms.
+    NormBallFunction : Special case for norm ball indicator functions.
 
 
     Notes
     -----
 
-    {common_notes}
+    {function_notes}
 
     """
-    )
 
-    @_init_docstring_wrapper
-    def __init__(self, scale=None, stretch=None, shift=None,
-                 linear=None, const=None):
-        """Create Objective that defines an indicator function.
+    _doc_init_summary = """
+    {init_summary}
 
-        {common_summary}
+    Since this function is an indicator, `scale` can be eliminated::
 
-        Since this objective is an indicator, `scale` can be eliminated::
+        s*f(a*x + b) => f(a*x + b)
 
-            s*f(a*x + b) => f(a*x + b)
+    """
+
+    def __init__(
+        self, scale=None, stretch=None, shift=None, linear=None, const=None,
+    ):
+        """Create Function that defines an indicator function.
+
+        {init_summary}
 
 
         Parameters
         ----------
 
-        {common_params}
+        {init_params}
 
         """
         # eliminate scale
         if scale is not None:
             scale = None
 
-        super(IndicatorObjective, self).__init__(
+        super(IndicatorFunction, self).__init__(
             scale=scale, stretch=stretch, shift=shift,
             linear=linear, const=const)
 
 
-class NormBallObjective(IndicatorObjective):
-    __doc__ = _class_docstring_wrapper(
-        """Objective class for a norm ball indicator function.
+class NormBallFunction(IndicatorFunction):
+    """Function class for a norm ball indicator function.
 
-    {common_summary}
+    {function_summary}
 
 
     Attributes
     ----------
 
-    radius : float | int
-        Radius of the norm ball indicator.
-
-    {common_attributes}
+    {function_attributes}
 
 
     See Also
     --------
 
-    BaseObjective : Base objective class.
-    LinearObjective : Special case for linear objectives.
-    NormObjective : Special case for norms.
-    NormSqObjective : Special case for squared norms.
-    IndicatorObjective : Special case for indicator functions.
+    BaseFunction : Base Function class.
+    LinearFunction : Special case for linear functions.
+    NormFunction : Special case for norms.
+    NormSqFunction : Special case for squared norms.
+    IndicatorFunction : Special case for indicator functions.
 
 
     Notes
     -----
 
-    {common_notes}
+    {function_notes}
 
     """
-    )
 
-    @_init_docstring_wrapper
-    def __init__(self, radius=1, scale=None, stretch=None, shift=None,
-                 linear=None, const=None):
-        """Create Objective that defines a norm ball indicator function.
+    _doc_function_attributes = """
+    radius : float | int
+        Radius of the norm ball indicator.
 
-        {common_summary}
+    {function_attributes}
 
-        Since this objective is a norm ball indicator, `scale` can be
-        eliminated completely and `stretch` can be absorbed into `radius`
-        and `shift`. With `radius` r::
+    """
 
-            s*f_r(a*x + b) => s*f_(r/a)(x + b/a)
+    _doc_init_params = """
+    radius : float | int, optional
+        Radius of the norm ball indicator.
+
+    {init_params}
+
+    """
+
+    def __init__(
+        self, radius=1, scale=None, stretch=None, shift=None, linear=None,
+        const=None,
+    ):
+        """Create Function that defines a norm ball indicator function.
+
+        {init_summary}
 
 
         Parameters
         ----------
 
-        radius : float | int, optional
-            Radius of the norm ball indicator.
-
-        {common_params}
+        {init_params}
 
         """
-        # absorb stretch into radius and shift
-        if stretch is not None:
-            radius = radius/stretch
-            if shift is not None:
-                shift = shift/stretch
-            stretch = None
-
         # set radius parameter
         self._radius = radius
 
-        # we can also eliminate scaling,
+        # we can eliminate scaling,
         # but this is taken care of by parent class
-        super(NormBallObjective, self).__init__(
+        super(NormBallFunction, self).__init__(
             scale=scale, stretch=stretch, shift=shift,
             linear=linear, const=const)
 
     @property
     def radius(self):
+        """Norm ball radius."""
         return self._radius
 
 
@@ -679,13 +669,14 @@ class NormBallObjective(IndicatorObjective):
 # * User-facing classes/factories for function-prox objects ******************
 # ****************************************************************************
 
-def Objective(fun=None, grad=None, prox=None,
-              cls=BaseObjective, Conjugate=None, **kwargs):
-    """Create custom Objective object, a function with grad and/or prox.
+def Function(
+    fun=None, grad=None, prox=None, cls=BaseFunction, Conjugate=None, **kwargs
+):
+    """Create custom Function object, a function with grad and/or prox.
 
-    This function provides a convenient way to create and Objective object
+    This function provides a convenient way to create and Function object
     directly from function, gradient, and prox functions. Keyword arguments
-    are passed to the __init__ method of the defined Objective class to allow
+    are passed to the __init__ method of the defined Function class to allow
     for initialization with transformation parameters.
 
 
@@ -703,23 +694,23 @@ def Objective(fun=None, grad=None, prox=None,
         scaling lmbda.
 
     cls : class, optional
-        Objective class or a subclass that the custom objective belongs to.
+        Function class or a subclass that the custom function belongs to.
 
     Conjugate : class, optional
-        Class for the corresponding conjugate Objective, if any.
+        Class for the corresponding conjugate Function, if any.
 
 
     Returns
     -------
 
     f : `cls` object
-        Object of type `cls` that contains the custom objective function.
+        Object of type `cls` that contains the custom function.
 
 
     Other Parameters
     ----------------
 
-    **kwargs
+    kwargs : dict
         Keyword arguments (e.g. transformations) passed to the __init__ method
         of `cls`.
 
@@ -746,10 +737,32 @@ def Objective(fun=None, grad=None, prox=None,
     return Custom(**kwargs)
 
 
-class SeparableObjective(BaseObjective):
-    __doc__ = _class_docstring_wrapper(
-        """Objective class for a separable function.
+class SeparableFunction(BaseFunction):
+    """Function class for a separable function.
 
+    {function_summary}
+
+
+    Attributes
+    ----------
+
+    {function_attributes}
+
+
+    See Also
+    --------
+
+    :class:`.BaseFunction` : Base Function class.
+
+
+    Notes
+    -----
+
+    {function_notes}
+
+    """
+
+    _doc_function_summary = """
     A separable function is one that can be divided into summed component
     functions that each operate on mutually exclusive partitions of the
     input. For a separable function F(X), we assume that the input X is a
@@ -758,70 +771,63 @@ class SeparableObjective(BaseObjective):
     components ``(f1, f2, ..., fn)`` so that
     ``F(X) = f1(x1) + f2(x2) + ... + fn(xn)``.
 
-    {common_summary}
+    {function_summary}
 
+    """
 
-    Attributes
-    ----------
-
+    _doc_function_attributes = """
     components : tuple
-        The component Objective objects.
+        The component Function objects.
 
-    conjugate : :class:`SeparableObjective` object
-        The corresponding separable conjugate Objective.
+    {function_attributes}
 
-    {common_attributes}
+    """
 
-
-    See Also
-    --------
-
-    BaseObjective : Base objective class.
-
-
-    Notes
-    -----
-
+    _doc_function_notes = """
     The gradient and prox operators of a separable function are simply the
     combination of the gradients and proxes of the component functions:
     ``grad_F(X) = ( grad_f1(x1), grad_f2(x2), ..., grad_fn(xn) )`` and
     similarly for the prox operator.
 
-    {common_notes}
+    {function_notes}
 
     """
-    )
 
-    @_init_docstring_wrapper
+    _doc_init_summary = """
+    The Function objects the comprise the separable function are passed
+    as positional arguments. Transformation parameters for the entire
+    separable function, applied in addition to and after any possible
+    transformations included in the component functions, can be supplied as
+    keyword arguments.
+
+    {init_summary}
+
+    """
+
+    _doc_init_params = """
+    components : tuple of :class:`.BaseFunction` objects
+        Non-keyword arguments are the component Functions that comprise
+        the separable function.
+
+    {init_params}
+
+    """
+
     def __init__(self, *components, **kwargs):
-        """Create separable Objective as combination of component Objectives.
+        """Create separable Function as combination of component Functions.
 
-        The Objective objects the comprise the separable function are passed
-        as positional arguments. Transformation parameters for the entire
-        separable objective, applied in addition to and after any possible
-        transformations included in the component objective functions, can be
-        supplied as keyword arguments.
-
-        {common_summary}
+        {init_summary}
 
 
         Parameters
         ----------
 
-        *components : Objective objects
-            Non-keyword arguments are the component Objectives that comprise
-            the separable objective function.
-
-
-        Other Parameters
-        ----------------
-
-        {common_params}
+        {init_params}
 
 
         """
         self._components = components
-        super(SeparableObjective, self).__init__(**kwargs)
+        super(SeparableFunction, self).__init__(**kwargs)
 
     def _component_arg_gen(self, X):
         for comp, x in zip(self._components, X):
@@ -829,28 +835,28 @@ class SeparableObjective(BaseObjective):
 
     @property
     def components(self):
-        """Component Objective objects of the separable objective function."""
+        """Component Function objects of the separable function."""
         return self._components
 
     @property
     def conjugate(self):
-        """Object for the conjugate Objective.
+        """Object for the conjugate Function.
 
-        The conjugate of a separable objective is the separable objective of
+        The conjugate of a separable function is the separable function of
         the conjugate of the parts.
 
 
         See Also
         --------
 
-        BaseObjective.conjugate
+        BaseFunction.conjugate
 
         """
         conj_comps = tuple(comp.conjugate for comp in self._components)
-        return SeparableObjective(*conj_comps)
+        return SeparableFunction(*conj_comps)
 
     def fun(self, X):
-        """Evaluate the separable objective function at X.
+        """Evaluate the separable function at X.
 
         Parameters
         ----------
@@ -880,7 +886,7 @@ class SeparableObjective(BaseObjective):
         return y
 
     def grad(self, X):
-        """Evaluate gradient of the separable objective function at X.
+        """Evaluate gradient of the separable function at X.
 
         Parameters
         ----------
@@ -905,7 +911,7 @@ class SeparableObjective(BaseObjective):
         return separray(*(comp.grad(x) for comp, x in compx))
 
     def prox(self, X, lmbda=1):
-        """Evaluate prox operator of the separable objective function at X.
+        """Evaluate prox operator of the separable function at X.
 
         Parameters
         ----------

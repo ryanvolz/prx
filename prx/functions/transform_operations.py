@@ -6,48 +6,7 @@
 #
 # The full license is in the LICENSE file, distributed with this software.
 # ----------------------------------------------------------------------------
-"""Function factories for simple operations on functions, grads, and proxes.
-
-.. currentmodule:: prx.objectives.transform_operations
-
-
-Apply function transform to function
-------------------------------------
-
-.. autosummary::
-    :toctree:
-
-    addconst_fun
-    addlinear_fun
-    scale_fun
-    shift_fun
-    stretch_fun
-
-
-Apply function transform to gradient
-------------------------------------
-
-.. autosummary::
-    :toctree:
-
-    addlinear_grad
-    scale_grad
-    shift_grad
-    stretch_grad
-
-
-Apply function transform to prox operator
------------------------------------------
-
-.. autosummary::
-    :toctree:
-
-    addlinear_prox
-    scale_prox
-    shift_prox
-    stretch_prox
-
-"""
+"""Function factories for simple operations on functions, grads, and proxes."""
 
 from __future__ import division
 

@@ -6,48 +6,23 @@
 #
 # The full license is in the LICENSE file, distributed with this software.
 # ----------------------------------------------------------------------------
-"""Objective classes for polynomial functions.
-
-.. currentmodule:: prx.objectives.polynomials
-
-Polynomials
------------
-
-.. autosummary::
-    :toctree:
-
-    Quadratic
-    Affine
-    Const
-
-Related Indicators
-------------------
-
-.. autosummary::
-    :toctree:
-
-    PointInd
-
-"""
+"""Function classes for polynomial functions and related indicators."""
 
 from __future__ import division
 
 import numpy as np
 
+from . import base as _base
 from ..fun.norms import l2normsqhalf
 from ..operator_class import DiagLinop
-from .objective_classes import (BaseObjective, IndicatorObjective,
-                                _class_docstring_wrapper,
-                                _init_docstring_wrapper)
 
 __all__ = (
     'Quadratic', 'Affine', 'Const', 'PointInd',
 )
 
 
-class Quadratic(BaseObjective):
-    __doc__ = _class_docstring_wrapper(
-        """Objective class for a quadratic function.
+class Quadratic(_base.BaseFunction):
+    """Function class for a quadratic function.
 
     This function is defined as::
 
@@ -57,13 +32,34 @@ class Quadratic(BaseObjective):
     the linear term, `c` is a scalar constant, and `s` is a scaling
     constant.
 
-    {common_summary}
+    {function_summary}
 
 
     Attributes
     ----------
 
-    A : LinearOperator
+    {quadratic_params}
+
+    {function_attributes}
+
+
+    See Also
+    --------
+
+    Affine : Subtype with a zero quadratic term.
+    Const : Subtype with zero quadratic and linear terms.
+    .BaseFunction : Parent class.
+
+
+    Notes
+    -----
+
+    {function_notes}
+
+    """
+
+    _doc_quadratic_params = """
+    A : :class:`.LinearOperator`
         Linear operator defining the quadratic term.
 
     b : array
@@ -75,27 +71,12 @@ class Quadratic(BaseObjective):
     s : float | int
         Scaling of quadratic term.
 
-    {common_attributes}
-
-
-    See Also
-    --------
-
-    Affine : Subtype with a zero quadratic term.
-    Const : Subtype with zero quadratic and linear terms.
-    .BaseObjective : Parent class.
-
-
-    Notes
-    -----
-
-    {common_notes}
-
     """
-    )
 
-    def __new__(cls, A=None, b=None, c=None, s=1, scale=None, stretch=None,
-                shift=None, linear=None, const=None):
+    def __new__(
+        cls, A=None, b=None, c=None, s=1, scale=None, stretch=None, shift=None,
+        linear=None, const=None,
+    ):
         # if quadratic term is None, want to define an Affine or Const
         if A is None:
             # if linear terms are None, want to define a Const function
@@ -122,30 +103,21 @@ class Quadratic(BaseObjective):
             )
             return obj
 
-    @_init_docstring_wrapper
-    def __init__(self, A=None, b=None, c=None, s=1, scale=None, stretch=None,
-                 shift=None, linear=None, const=None):
-        """Create Objective object for a quadratic function.
+    def __init__(
+        self, A=None, b=None, c=None, s=1, scale=None, stretch=None,
+        shift=None, linear=None, const=None,
+    ):
+        """Create Function object for a quadratic function.
 
-        {common_summary}
+        {init_summary}
 
 
         Parameters
         ----------
 
-        A : LinearOperator, optional
-            Linear operator defining the quadratic term: l2normsqhalf(A(x)).
+        {quadratic_params}
 
-        b : array, optional
-            Vector defining the linear term: Re(<b, x>).
-
-        c : float | int, optional
-            Constant term.
-
-        s : float | int, optional
-            Scaling of quadratic term.
-
-        {common_params}
+        {init_params}
 
         """
         # change 'None's to identities
@@ -207,18 +179,22 @@ class Quadratic(BaseObjective):
 
     @property
     def A(self):
+        """Linear operator defining the quadratic term."""
         return self._A
 
     @property
     def b(self):
+        """Vector defining the linear term: Re(<b, x>)."""
         return self._b
 
     @property
     def c(self):
+        """Constant term."""
         return self._c
 
     @property
     def s(self):
+        """Scaling of quadratic term."""
         return self._s
 
     def fun(self, x):
@@ -284,26 +260,24 @@ class Const(Affine):
         return x
 
 
-class PointInd(IndicatorObjective):
-    __doc__ = _class_docstring_wrapper(
-        """Objective class for the point indicator function.
+class PointInd(_base.IndicatorFunction):
+    """Function class for the point indicator function.
 
-    {common_summary}
+    {function_summary}
 
 
     Attributes
     ----------
 
-    p : array
-        The point at which this function is defined.
+    {point_params}
 
-    {common_attributes}
+    {function_attributes}
 
 
     See Also
     --------
 
-    .IndicatorObjective : Parent class.
+    .IndicatorFunction : Parent class.
 
 
     Notes
@@ -312,30 +286,32 @@ class PointInd(IndicatorObjective):
     The indicator function is zero at the given point p and infinity
     everywhere else. Its gradient is undefined.
 
+    {function_notes}
+
     The prox operator returns the defining point.
 
     """
-    )
 
-    @_init_docstring_wrapper
-    def __init__(self, p, scale=None, stretch=None, shift=None,
-                 linear=None, const=None):
-        """Create Objective that defines an indicator function.
+    _doc_point_params = """
+    p : array
+        The point at which this function is defined.
 
-        {common_summary}
+    """
 
-        Since this objective is an indicator, `scale` can be eliminated::
+    def __init__(
+        self, p, scale=None, stretch=None, shift=None, linear=None, const=None,
+    ):
+        """Create Function that defines an indicator function.
 
-            s*f(a*x + b) => f(a*x + b)
+        {init_summary}
 
 
         Parameters
         ----------
 
-        p : array
-            The point at which this function is defined.
+        {point_params}
 
-        {common_params}
+        {init_params}
 
         """
         # linear can be eliminated by evaluating at point and bringing into
@@ -379,6 +355,7 @@ class PointInd(IndicatorObjective):
 
     @property
     def p(self):
+        """The point at which this function is defined."""
         return self._p
 
     def fun(self, x):

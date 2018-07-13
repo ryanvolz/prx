@@ -2,11 +2,12 @@
 
 .. currentmodule:: prx
 
+
 Standard Problems
 -----------------
 
 .. autosummary::
-    :toctree:
+   :toctree:
 
     problems
 
@@ -45,6 +46,7 @@ Functions, Gradients, and Prox Operators
 """
 from . import algorithms
 from . import fun
+from . import functions
 from . import grad
 from . import objectives
 from . import problems

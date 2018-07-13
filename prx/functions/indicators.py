@@ -6,69 +6,39 @@
 #
 # The full license is in the LICENSE file, distributed with this software.
 # ----------------------------------------------------------------------------
-"""Objective classes for indicator functions.
-
-.. currentmodule:: prx.objectives.indicators
-
-General Indicators
-------------------
-
-.. autosummary::
-    :toctree:
-
-    NNegInd
-    NPosInd
-    ZerosInd
-    PSDInd
-    PSDIndStokes
-
-Norm Ball Indicators
---------------------
-
-.. autosummary::
-    :toctree:
-
-    L1BallInd
-    L2BallInd
-    LInfBallInd
-
-"""
+"""Function classes for indicator functions."""
 
 from __future__ import division
 
 import numpy as np
 
+from . import base as _base
 from ..prox.projections import (proj_nneg, proj_npos, proj_psd,
                                 proj_psd_stokes, proj_zeros)
-from .norms import L1BallInd, L2BallInd, LInfBallInd
-from .objective_classes import (IndicatorObjective, _class_docstring_wrapper,
-                                _init_docstring_wrapper)
 
 __all__ = (
     'NNegInd', 'NPosInd', 'ZerosInd',
     'PSDInd', 'PSDIndStokes',
-    'L1BallInd', 'L2BallInd', 'LInfBallInd',
 )
 
 
-class NNegInd(IndicatorObjective):
-    __doc__ = _class_docstring_wrapper(
-        """Objective class for the non-negative indicator function.
+class NNegInd(_base.IndicatorFunction):
+    """Function class for the non-negative indicator function.
 
-    {common_summary}
+    {function_summary}
 
 
     Attributes
     ----------
 
-    {common_attributes}
+    {function_attributes}
 
 
     See Also
     --------
 
-    .IndicatorObjective : Parent class.
-    NPosInd : Conjugate objective.
+    .IndicatorFunction : Parent class.
+    NPosInd : Conjugate function.
     .proj_nneg : Prox operator projection function.
 
 
@@ -78,11 +48,12 @@ class NNegInd(IndicatorObjective):
     The indicator function is zero for vectors with only non-negative
     entries and infinity if any of the entries are negative.
 
+    {function_notes}
+
     The prox operator is Euclidean projection onto the non-negative
     halfspace, i.e. the negative entries are set to zero.
 
     """
-    )
 
     @property
     def _conjugate_class(self):
@@ -100,24 +71,23 @@ class NNegInd(IndicatorObjective):
         return proj_nneg(x)
 
 
-class NPosInd(IndicatorObjective):
-    __doc__ = _class_docstring_wrapper(
-        """Objective class for the non-positive indicator function.
+class NPosInd(_base.IndicatorFunction):
+    """Function class for the non-positive indicator function.
 
-    {common_summary}
+    {function_summary}
 
 
     Attributes
     ----------
 
-    {common_attributes}
+    {function_attributes}
 
 
     See Also
     --------
 
-    .IndicatorObjective : Parent class.
-    NNegInd : Conjugate objective.
+    .IndicatorFunction : Parent class.
+    NNegInd : Conjugate function.
     .proj_npos : Prox operator projection function.
 
 
@@ -127,11 +97,12 @@ class NPosInd(IndicatorObjective):
     The indicator function is zero for vectors with only non-positive
     entries and infinity if any of the entries are positive.
 
+    {function_notes}
+
     The prox operator is Euclidean projection onto the non-positive
     halfspace, i.e. the positive entries are set to zero.
 
     """
-    )
 
     @property
     def _conjugate_class(self):
@@ -149,11 +120,10 @@ class NPosInd(IndicatorObjective):
         return proj_npos(x)
 
 
-class ZerosInd(IndicatorObjective):
-    __doc__ = _class_docstring_wrapper(
-        """Objective class for the indicator of prescribed zero elements.
+class ZerosInd(_base.IndicatorFunction):
+    """Function class for the indicator of prescribed zero elements.
 
-    {common_summary}
+    {function_summary}
 
 
     Attributes
@@ -162,13 +132,13 @@ class ZerosInd(IndicatorObjective):
     z : boolean array
         Array specifying the zero locations, requiring x[z] == 0.
 
-    {common_attributes}
+    {function_attributes}
 
 
     See Also
     --------
 
-    .IndicatorObjective : Parent class.
+    .IndicatorFunction : Parent class.
     .proj_zeros : Prox operator projection function.
 
 
@@ -179,22 +149,19 @@ class ZerosInd(IndicatorObjective):
     specified places, infinity if any of the required zero entries are
     nonzero.
 
+    {function_notes}
+
     The prox operator is Euclidean projection onto the set with
     specified zeros (x[z] is set to 0).
 
     """
-    )
 
-    @_init_docstring_wrapper
-    def __init__(self, z, scale=None, stretch=None, shift=None,
-                 linear=None, const=None):
-        """Create Objective that defines an indicator function.
+    def __init__(
+        self, z, scale=None, stretch=None, shift=None, linear=None, const=None,
+    ):
+        """Create Function that defines an indicator function.
 
-        {common_summary}
-
-        Since this objective is an indicator, `scale` can be eliminated::
-
-            s*f(a*x + b) => f(a*x + b)
+        {init_summary}
 
 
         Parameters
@@ -203,7 +170,7 @@ class ZerosInd(IndicatorObjective):
         z : boolean array
             Array specifying the zero locations, requiring x[z] == 0.
 
-        {common_params}
+        {init_params}
 
         """
         # stretch can be eliminated by bringing into shift
@@ -236,6 +203,7 @@ class ZerosInd(IndicatorObjective):
 
     @property
     def z(self):
+        """Boolean array giving the zero locations."""
         return self._z
 
     def fun(self, x):
@@ -250,11 +218,10 @@ class ZerosInd(IndicatorObjective):
         return proj_zeros(x, z=self._z)
 
 
-class PSDInd(IndicatorObjective):
-    __doc__ = _class_docstring_wrapper(
-        """Objective class for the positive semidefinite indicator function.
+class PSDInd(_base.IndicatorFunction):
+    r"""Function class for the positive semidefinite indicator function.
 
-    {common_summary}
+    {function_summary}
 
 
     Attributes
@@ -265,13 +232,13 @@ class PSDInd(IndicatorObjective):
         :math:`X \succeq \epsilon I` instead of the PSD cone. The prox
         operator sets eigenvalues less than `epsilon` to `epsilon`.
 
-    {common_attributes}
+    {function_attributes}
 
 
     See Also
     --------
 
-    .IndicatorObjective : Parent class.
+    .IndicatorFunction : Parent class.
     PSDIndStokes : Specialized PSD indicator for matrices as Stokes parameters.
     .proj_psd : Prox operator projection function.
 
@@ -282,22 +249,20 @@ class PSDInd(IndicatorObjective):
     The indicator function is zero for matrices M that are positive
     semidefinite (all eigenvalues are >= 0) and infinity otherwise.
 
+    {function_notes}
+
     The prox operator is Euclidean projection to the nearest positive
     semidefinite matrix (negative eigenvalues are set to zero).
 
     """
-    )
 
-    @_init_docstring_wrapper
-    def __init__(self, epsilon=0, scale=None, stretch=None, shift=None,
-                 linear=None, const=None):
-        """Create Objective that defines an indicator function.
+    def __init__(
+        self, epsilon=0, scale=None, stretch=None, shift=None, linear=None,
+        const=None,
+    ):
+        r"""Create Function that defines an indicator function.
 
-        {common_summary}
-
-        Since this objective is an indicator, `scale` can be eliminated::
-
-            s*f(a*x + b) => f(a*x + b)
+        {init_summary}
 
 
         Parameters
@@ -308,7 +273,7 @@ class PSDInd(IndicatorObjective):
             :math:`X \succeq \epsilon I` instead of the PSD cone. The prox
             operator sets eigenvalues less than `epsilon` to `epsilon`.
 
-        {common_params}
+        {init_params}
 
         """
         self._epsilon = epsilon
@@ -324,6 +289,7 @@ class PSDInd(IndicatorObjective):
 
     @property
     def epsilon(self):
+        """Magnitude of identity shift to indicator cone."""
         return self._epsilon
 
     def fun(self, X):
@@ -342,14 +308,13 @@ class PSDInd(IndicatorObjective):
 
 
 class PSDIndStokes(PSDInd):
-    __doc__ = _class_docstring_wrapper(
-        """Objective class for the positive semidefinite indicator function.
+    r"""Function class for the positive semidefinite indicator function.
 
     This indicator handles the special case of a block 2x2 Hermitian matrix
     represented by Stokes parameters where the projection can be achieved
     efficiently without an eigen-decomposition.
 
-    {common_summary}
+    {function_summary}
 
 
     Attributes
@@ -360,13 +325,13 @@ class PSDIndStokes(PSDInd):
         :math:`X \succeq \epsilon I` instead of the PSD cone. The prox
         operator sets eigenvalues less than `epsilon` to `epsilon`.
 
-    {common_attributes}
+    {function_attributes}
 
 
     See Also
     --------
 
-    .IndicatorObjective : Parent class.
+    .IndicatorFunction : Parent class.
     PSDInd : General PSD indicator.
     .proj_psd_stokes : Prox operator projection function.
 
@@ -376,6 +341,8 @@ class PSDIndStokes(PSDInd):
 
     The indicator function is zero for matrices M that are positive
     semidefinite (all eigenvalues are >= 0) and infinity otherwise.
+
+    {function_notes}
 
     The prox operator is Euclidean projection to the nearest positive
     semidefinite matrix (negative eigenvalues are set to zero).
@@ -403,7 +370,6 @@ class PSDIndStokes(PSDInd):
         )
 
     """
-    )
 
     def fun(self, x_s):
         """Indicator for positive semidefinite matrices as Stokes params."""

@@ -6,45 +6,17 @@
 #
 # The full license is in the LICENSE file, distributed with this software.
 # ----------------------------------------------------------------------------
-"""Objective classes for norm and norm ball indicator functions.
-
-.. currentmodule:: prx.objectives.norms
-
-Norms
------
-
-.. autosummary::
-    :toctree:
-
-    L1Norm
-    L1L2Norm
-    L2Norm
-    L2NormSqHalf
-    LInfNorm
-
-Norm Ball Indicators
---------------------
-
-.. autosummary::
-    :toctree:
-
-    L1BallInd
-    L2BallInd
-    LInfBallInd
-
-"""
+"""Function classes for norm and norm ball indicator functions."""
 
 from __future__ import division
 
 import numpy as np
 
+from . import base as _base
 from ..fun.norms import l1l2norm, l1norm, l2norm, l2normsqhalf, linfnorm
 from ..grad import grad_l2sqhalf
 from ..prox.norms import prox_l1, prox_l1l2, prox_l2, prox_l2sqhalf, prox_linf
 from ..prox.projections import proj_l1, proj_l2, proj_linf
-from .objective_classes import (NormBallObjective, NormObjective,
-                                NormSqObjective, _class_docstring_wrapper,
-                                _init_docstring_wrapper)
 
 __all__ = (
     'L1Norm', 'L1L2Norm', 'L2Norm', 'L2NormSqHalf', 'LInfNorm',
@@ -52,24 +24,23 @@ __all__ = (
 )
 
 
-class L1Norm(NormObjective):
-    __doc__ = _class_docstring_wrapper(
-        """Objective class for the l1-norm, ``sum(abs(x))``.
+class L1Norm(_base.NormFunction):
+    """Function class for the l1-norm, ``sum(abs(x))``.
 
-    {common_summary}
+    {function_summary}
 
 
     Attributes
     ----------
 
-    {common_attributes}
+    {function_attributes}
 
 
     See Also
     --------
 
-    .NormObjective : Parent class.
-    L1L2Norm : Combined l1- and l2-norm objective.
+    .NormFunction : Parent class.
+    L1L2Norm : Combined l1- and l2-norm Function.
     .l1norm : Associated function.
     .prox_l1 : Prox operator function.
 
@@ -79,13 +50,14 @@ class L1Norm(NormObjective):
 
     ``fun(x) = sum(abs(x))``
 
+    {function_notes}
+
     The prox operator is soft thresholding::
 
         st(v[k], l) = {{ v[k] - l*v[k]/abs(v[k])  if abs(v[k]) > l
                       {{           0              otherwise
 
     """
-    )
 
     @property
     def _conjugate_class(self):
@@ -94,25 +66,24 @@ class L1Norm(NormObjective):
     prox = staticmethod(prox_l1)
 
 
-class L1L2Norm(NormObjective):
-    __doc__ = _class_docstring_wrapper(
-        """Objective class for the combined l1- and l2-norm.
+class L1L2Norm(_base.NormFunction):
+    """Function class for the combined l1- and l2-norm.
 
-    {common_summary}
+    {function_summary}
 
 
     Attributes
     ----------
 
-    {common_attributes}
+    {function_attributes}
 
 
     See Also
     --------
 
-    .NormObjective : Parent class.
-    L1Norm : l1-norm objective.
-    L2Norm : l2-norm objective.
+    .NormFunction : Parent class.
+    L1Norm : l1-norm Function.
+    L2Norm : l2-norm Function.
     .l1l2norm : Associated function.
     .prox_l1l2 : Prox operator function.
 
@@ -122,6 +93,8 @@ class L1L2Norm(NormObjective):
 
     ``fun(x) = l1norm(l2norm(x, axis))``
 
+    {function_notes}
+
     The prox operator is block soft thresholding::
 
         bst(v[k, :], l) =
@@ -129,19 +102,14 @@ class L1L2Norm(NormObjective):
          {{                 0                    otherwise
 
     """
-    )
 
-    @_init_docstring_wrapper
-    def __init__(self, axis=-1, scale=None, stretch=None, shift=None,
-                 linear=None, const=None):
-        """Create Objective that defines a norm function.
+    def __init__(
+        self, axis=-1, scale=None, stretch=None, shift=None, linear=None,
+        const=None,
+    ):
+        """Create Function object that defines a norm function.
 
-        {common_summary}
-
-        Since this objective is a norm, `stretch` can be eliminated by
-        absorbing it into `scale` and `shift`::
-
-            s*f(a*x + b) => a*s*f(x + b/a)
+        {init_summary}
 
 
         Parameters
@@ -151,7 +119,7 @@ class L1L2Norm(NormObjective):
             Axis or axes over which to calculate the l2-norm. The prox
             operator is applied over all remaining axes.
 
-        {common_params}
+        {init_params}
 
         """
         self._axis = axis
@@ -162,6 +130,7 @@ class L1L2Norm(NormObjective):
 
     @property
     def axis(self):
+        """Axis over which the l2-norm is calculated."""
         return self._axis
 
     def fun(self, x):
@@ -173,24 +142,23 @@ class L1L2Norm(NormObjective):
         return prox_l1l2(x, lmbda=lmbda, axis=self._axis)
 
 
-class L2Norm(NormObjective):
-    __doc__ = _class_docstring_wrapper(
-        """Objective class for the l2-norm, ``sqrt(sum(abs(x)**2))``.
+class L2Norm(_base.NormFunction):
+    """Function class for the l2-norm, ``sqrt(sum(abs(x)**2))``.
 
-    {common_summary}
+    {function_summary}
 
 
     Attributes
     ----------
 
-    {common_attributes}
+    {function_attributes}
 
 
     See Also
     --------
 
-    .NormObjective : Parent class.
-    L1L2Norm : Combined l1- and l2-norm objective.
+    .NormFunction : Parent class.
+    L1L2Norm : Combined l1- and l2-norm Function.
     .l2norm : Associated function.
     .prox_l2 : Prox operator function.
 
@@ -200,13 +168,14 @@ class L2Norm(NormObjective):
 
     ``fun(x) = sqrt(sum(abs(x)**2))``
 
+    {function_notes}
+
     The prox operator is block soft thresholding for block=(all of v)::
 
         bst(v, l) = {{ v - l*v/l2norm(v)  if l2norm(v) > l
                     {{       0            otherwise
 
     """
-    )
 
     @property
     def _conjugate_class(self):
@@ -215,24 +184,23 @@ class L2Norm(NormObjective):
     prox = staticmethod(prox_l2)
 
 
-class L2NormSqHalf(NormSqObjective):
-    __doc__ = _class_docstring_wrapper(
-        """Objective class for half the squared l2-norm, 0.5*sum(abs(x)**2)).
+class L2NormSqHalf(_base.NormSqFunction):
+    """Function class for half the squared l2-norm, 0.5*sum(abs(x)**2)).
 
-    {common_summary}
+    {function_summary}
 
 
     Attributes
     ----------
 
-    {common_attributes}
+    {function_attributes}
 
 
     See Also
     --------
 
-    .NormSqObjective : Parent class.
-    L2Norm : l2-norm objective.
+    .NormSqFunction : Parent class.
+    L2Norm : l2-norm Function.
     .l2sqhalf : Associated function.
     .prox_l2sqhalf : Prox operator function.
 
@@ -242,12 +210,13 @@ class L2NormSqHalf(NormSqObjective):
 
     ``fun(x) = 0.5*sum(abs(x)**2))``
 
+    {function_notes}
+
     The prox operator is the shrinkage function::
 
         shrink(v, l) = v/(1 + l)
 
     """
-    )
 
     @property
     def _conjugate_class(self):
@@ -257,23 +226,22 @@ class L2NormSqHalf(NormSqObjective):
     prox = staticmethod(prox_l2sqhalf)
 
 
-class LInfNorm(NormObjective):
-    __doc__ = _class_docstring_wrapper(
-        """Objective class for the linf-norm, ``max(abs(x))``.
+class LInfNorm(_base.NormFunction):
+    """Function class for the linf-norm, ``max(abs(x))``.
 
-    {common_summary}
+    {function_summary}
 
 
     Attributes
     ----------
 
-    {common_attributes}
+    {function_attributes}
 
 
     See Also
     --------
 
-    .NormObjective : Parent class.
+    .NormFunction : Parent class.
     .linfnorm : Associated function.
     .prox_linf : Prox operator function.
 
@@ -283,11 +251,12 @@ class LInfNorm(NormObjective):
 
     ``fun(x) = max(abs(x))``
 
+    {function_notes}
+
     The prox operator is the peak shrinkage function, which minimizes the
     maximum value for a reduction of lmbda in the l1-norm.
 
     """
-    )
 
     @property
     def _conjugate_class(self):
@@ -296,11 +265,10 @@ class LInfNorm(NormObjective):
     prox = staticmethod(prox_linf)
 
 
-class L1BallInd(NormBallObjective):
-    __doc__ = _class_docstring_wrapper(
-        """Objective class for the indicator of the l1-ball.
+class L1BallInd(_base.NormBallFunction):
+    """Function class for the indicator of the l1-ball.
 
-    {common_summary}
+    {function_summary}
 
 
     Attributes
@@ -309,13 +277,13 @@ class L1BallInd(NormBallObjective):
     radius : float | int
         Radius of the l1-ball indicator.
 
-    {common_attributes}
+    {function_attributes}
 
 
     See Also
     --------
 
-    .NormBallObjective : Parent class.
+    .NormBallFunction : Parent class.
     .l1norm : l1-norm function.
     .proj_l1 : Prox operator projection function.
 
@@ -326,10 +294,11 @@ class L1BallInd(NormBallObjective):
     The indicator function is zero for vectors inside the ball, infinity
     for vectors outside the ball.
 
+    {function_notes}
+
     The prox operator is Euclidean projection onto the l1-ball.
 
     """
-    )
 
     @property
     def _conjugate_class(self):
@@ -350,11 +319,10 @@ class L1BallInd(NormBallObjective):
         return proj_l1(x, radius=self.radius)
 
 
-class L2BallInd(NormBallObjective):
-    __doc__ = _class_docstring_wrapper(
-        """Objective class for the indicator of the l2-ball.
+class L2BallInd(_base.NormBallFunction):
+    """Function class for the indicator of the l2-ball.
 
-    {common_summary}
+    {function_summary}
 
 
     Attributes
@@ -363,13 +331,13 @@ class L2BallInd(NormBallObjective):
     radius : float | int
         Radius of the l2-ball indicator.
 
-    {common_attributes}
+    {function_attributes}
 
 
     See Also
     --------
 
-    .NormBallObjective : Parent class.
+    .NormBallFunction : Parent class.
     .l2norm : l2-norm function.
     .proj_l2 : Prox operator projection function.
 
@@ -380,13 +348,14 @@ class L2BallInd(NormBallObjective):
     The indicator function is zero for vectors inside the ball, infinity
     for vectors outside the ball.
 
+    {function_notes}
+
     The prox operator is Euclidean projection onto the l2-ball.
 
     """
-    )
 
     @property
-    def conjugate_class(self):
+    def _conjugate_class(self):
         return L2Norm
 
     def fun(self, x):
@@ -404,11 +373,10 @@ class L2BallInd(NormBallObjective):
         return proj_l2(x, radius=self.radius)
 
 
-class LInfBallInd(NormBallObjective):
-    __doc__ = _class_docstring_wrapper(
-        """Objective class for the indicator of the linf-ball.
+class LInfBallInd(_base.NormBallFunction):
+    """Function class for the indicator of the linf-ball.
 
-    {common_summary}
+    {function_summary}
 
 
     Attributes
@@ -417,13 +385,13 @@ class LInfBallInd(NormBallObjective):
     radius : float | int
         Radius of the linf-ball indicator.
 
-    {common_attributes}
+    {function_attributes}
 
 
     See Also
     --------
 
-    .NormBallObjective : Parent class.
+    .NormBallFunction : Parent class.
     .linfnorm : linf-norm function.
     .proj_linf : Prox operator projection function.
 
@@ -434,10 +402,11 @@ class LInfBallInd(NormBallObjective):
     The indicator function is zero for vectors inside the ball, infinity
     for vectors outside the ball.
 
+    {function_notes}
+
     The prox operator is Euclidean projection onto the linf-ball.
 
     """
-    )
 
     @property
     def _conjugate_class(self):
