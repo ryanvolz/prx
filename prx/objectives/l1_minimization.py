@@ -16,7 +16,7 @@ from .. import algorithms as _alg
 from .. import functions as _fun
 from ._common import backends
 
-__all__ = ('bpdn', 'dantzig', 'l1rls', 'srlasso')
+__all__ = ('bpdn', 'dantzig', 'L1RLS', '_l1rls', 'srlasso')
 
 
 @backends(_alg.admmlin, _alg.pdhg)
@@ -177,8 +177,124 @@ def dantzig(A, Astar, b, delta, x0, **kwargs):
     return args, kwargs
 
 
+class L1RLS(_split_objectives.SplitObjectiveAffine):
+    """Solve the l1-regularized least squares problem.
+
+    Given `A`, `b`, `lmbda`, and `w`, solve for ``x``::
+
+        minimize  0.5*l2norm(A(x) - b)**2 + lmbda*l1norm(w * x)
+
+    This problem is sometimes called the LASSO since it is equivalent to the
+    original `Lasso` formulation for appropriate lmbda as a function of tau.
+
+    {objective_with_algorithm_description}
+
+
+    Attributes
+    ----------
+
+    {objective_attributes}
+
+
+    See Also
+    --------
+
+    BPDN, Dantzig, .Lasso, SRLasso, {algorithm_self}
+
+
+    Notes
+    -----
+
+    {algorithm_notes}
+
+    The accelerated proximal gradient algorithm applied specifically to the
+    l1-regularized least squares problem is discussed in [BT09]_.
+
+
+    References
+    ----------
+
+    .. [BT09] A. Beck and M. Teboulle, "A Fast Iterative Shrinkage-Thresholding
+       Algorithm for Linear Inverse Problems," SIAM Journal on Imaging
+       Sciences, vol. 2, no. 1, pp. 183-202, Jan. 2009.
+
+    {algorithm_references}
+
+    """
+
+    _doc_objective_parameters = """
+    lmbda : float
+        A positive number giving the l1-norm scaling.
+
+    w : float | array, optional
+        A scalar or array giving the weighting on ``x`` inside the l1-norm.
+
+    axis : False | None | int | tuple of ints, optional
+        If this argument is given, the l1-norm is replaced by the combined
+        l1- and l2-norm with the l2-norm taken over the specified axes:
+        ``l1norm(l2norm(x, axis))``. This can be used to solve the "block"
+        or "group" sparsity problem.
+
+    """
+
+    def __init__(self, lmbda=1, w=1, axis=False, **kwargs):
+        """Initialize l1-regularized least squares problem.
+
+        Parameters
+        ----------
+
+        {objective_parameters}
+
+
+        Other Parameters
+        ----------------
+
+        {algorithm_parameters}
+
+        """
+        self.lmbda = lmbda
+        self.w = w
+        self.axis = axis
+        super(L1RLS, self).__init__(**kwargs)
+
+    def validate_params(self):
+        """."""
+        # check lmbda > 0
+        if self.lmbda <= 0:
+            raise ValueError('lmbda must be positive')
+
+        self.w = np.asarray(self.w)
+        if np.any(self.w == 0):
+            raise ValueError('w must be nonzero')
+
+        # set split objective parameters based on lmbda and axis
+        if self.axis is False:
+            F = _fun.L1Norm(scale=self.lmbda, stretch=self.w)
+        else:
+            F = _fun.L1L2Norm(axis=self.axis, scale=self.lmbda, stretch=self.w)
+        G = _fun.L2NormSqHalf()
+        self.F = F.fun
+        self.proxF = F.prox
+        self.G = G.fun
+        self.gradG = G.grad
+        self.proxG = G.prox
+
+        return super(L1RLS, self).validate_params()
+
+    def get_params(self, deep=True):
+        """."""
+        params = super(L1RLS, self).get_params(deep=deep)
+        params.update(lmbda=self.lmbda, w=self.w, axis=self.axis)
+        return params
+
+    def set_params(self, lmbda=None, w=None, axis=None, **alg_params):
+        """."""
+        self._assign_params(lmbda=lmbda, w=w, axis=axis)
+        return super(L1RLS, self).set_params(**alg_params)
+
+
 @backends(_alg._proxgradaccel, _alg.admmlin, _alg.pdhg, _alg.proxgrad)
-def l1rls(A, Astar, b, lmbda, x0, **kwargs):
+def _l1rls(A, Astar, b, lmbda, x0, **kwargs):
     """Solve the l1-regularized least squares problem.
 
     Given A, b, and lmbda, solve for x::

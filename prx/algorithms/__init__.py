@@ -12,6 +12,15 @@ Algorithms
     proxgrad_algos
 
 
+Base Classes
+------------
+
+.. autosummary::
+    :toctree:
+
+    base
+
+
 In Development
 --------------
 
