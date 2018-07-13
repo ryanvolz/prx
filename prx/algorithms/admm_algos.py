@@ -6,17 +6,7 @@
 #
 # The full license is in the LICENSE file, distributed with this software.
 # ----------------------------------------------------------------------------
-"""Alternating direction method of multipliers algorithms.
-
-.. currentmodule:: prx.algorithms.admm_algos
-
-.. autosummary::
-    :toctree:
-
-    admm
-    admmlin
-
-"""
+"""Alternating direction method of multipliers algorithms."""
 
 from __future__ import division
 
@@ -421,7 +411,7 @@ def admmlin(F, G, A, Astar, b, x0, y0=None, stepsize=1.0, backtrack=0.5,
     See Also
     --------
 
-    admm, .proxgrad, .proxgradaccel
+    admm, .proxgrad, ._proxgradaccel
 
 
     Notes

@@ -6,20 +6,7 @@
 #
 # The full license is in the LICENSE file, distributed with this software.
 # ----------------------------------------------------------------------------
-"""Prox operators of norm functions.
-
-.. currentmodule:: prx.prox.norms
-
-.. autosummary::
-    :toctree:
-
-    prox_l1
-    prox_l1l2
-    prox_l2
-    prox_l2sqhalf
-    prox_linf
-
-"""
+"""Prox operators of norm functions."""
 
 from __future__ import division
 
@@ -71,7 +58,8 @@ def prox_l1(v, lmbda=1):
 
     """
     vmod = np.abs(v)
-    thresh_mult = np.maximum(1 - lmbda/vmod, 0)
+    with np.errstate(divide='ignore'):
+        thresh_mult = np.maximum(1 - lmbda/vmod, 0)
     return thresh_mult*v
 
 
@@ -121,7 +109,8 @@ def prox_l1l2(v, lmbda=1, axis=-1):
 
     """
     blknorm = l2norm(v, axis=axis, keepdims=True)
-    thresh_mult = np.maximum(1 - lmbda/blknorm, 0)
+    with np.errstate(divide='ignore'):
+        thresh_mult = np.maximum(1 - lmbda/blknorm, 0)
     return thresh_mult*v
 
 
@@ -166,7 +155,8 @@ def prox_l2(v, lmbda=1):
 
     """
     l2nrm = l2norm(v)
-    thresh_mult = np.maximum(1 - lmbda/l2nrm, 0)
+    with np.errstate(divide='ignore'):
+        thresh_mult = np.maximum(1 - lmbda/l2nrm, 0)
     return thresh_mult*v
 
 
@@ -256,5 +246,6 @@ def prox_linf(v, lmbda=1):
     # peak clipping threshold that will reduce l1-norm of v by lmbda
     peak = (cs[idx] - lmbda) / (1 + idx)
     # now clip all values to the peak
-    clip_mult = np.minimum(peak/vmod, 1)
+    with np.errstate(divide='ignore'):
+        clip_mult = np.minimum(peak/vmod, 1)
     return clip_mult*v

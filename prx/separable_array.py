@@ -7,16 +7,7 @@
 # The full license is in the LICENSE file, distributed with this software.
 # ----------------------------------------------------------------------------
 
-"""Separable array class.
-
-.. currentmodule:: prx.separable_array
-
-.. autosummary::
-    :toctree:
-
-    separray
-
-"""
+"""Separable array class."""
 
 import numpy as np
 
@@ -27,7 +18,7 @@ class separray(np.ndarray):
     """Separable array, for iterating over parts of an array.
 
     Iterating over this array iterates over views to the separate parts of the
-    array as defined from initialization. Aside from that and the `parts`
+    array as defined from initialization. Aside from that and the :attr:`parts`
     attribute, it is functionally equivalent to its base class, numpy's
     ndarray.
 
@@ -50,7 +41,7 @@ class separray(np.ndarray):
 
         The provided arrays are flattened and concatenated in the order
         given to make the combined array. The array views accessible with the
-        `parts` attribute and through iteration provide views into the
+        :attr:`parts` attribute and through iteration provide views into the
         combined array that correspond to the location of the original arrays.
 
 

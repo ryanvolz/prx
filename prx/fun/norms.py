@@ -6,20 +6,7 @@
 #
 # The full license is in the LICENSE file, distributed with this software.
 # ----------------------------------------------------------------------------
-"""Norm functions.
-
-.. currentmodule:: prx.fun.norms
-
-.. autosummary::
-    :toctree:
-
-    l1norm
-    l1l2norm
-    l2norm
-    l2normsqhalf
-    linfnorm
-
-"""
+"""Norm functions."""
 
 import numpy as np
 

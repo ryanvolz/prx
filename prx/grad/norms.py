@@ -6,17 +6,7 @@
 #
 # The full license is in the LICENSE file, distributed with this software.
 # ----------------------------------------------------------------------------
-"""Gradients of norm functions.
-
-.. currentmodule:: prx.grad.norms
-
-.. autosummary::
-    :toctree:
-
-    grad_l2sqhalf
-
-
-"""
+"""Gradients of norm functions."""
 
 from __future__ import division
 

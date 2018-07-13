@@ -6,16 +6,7 @@
 #
 # The full license is in the LICENSE file, distributed with this software.
 # ----------------------------------------------------------------------------
-"""Primal-dual algorithms.
-
-.. currentmodule:: prx.algorithms.primaldual_algos
-
-.. autosummary::
-    :toctree:
-
-    pdhg
-
-"""
+"""Primal-dual algorithms."""
 
 from __future__ import division
 

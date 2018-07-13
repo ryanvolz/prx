@@ -6,23 +6,7 @@
 #
 # The full license is in the LICENSE file, distributed with this software.
 # ----------------------------------------------------------------------------
-"""Projection operators, prox operators of indicator functions.
-
-.. currentmodule:: prx.prox.projections
-
-.. autosummary::
-    :toctree:
-
-    proj_l1
-    proj_l2
-    proj_linf
-    proj_nneg
-    proj_npos
-    proj_psd
-    proj_psd_stokes
-    proj_zeros
-
-"""
+"""Projection operators, prox operators of indicator functions."""
 
 from __future__ import division
 

@@ -11,7 +11,7 @@ from __future__ import division
 
 import numpy as np
 
-from ..algorithms import proxgrad, proxgradaccel
+from ..algorithms import proxgrad, _proxgradaccel
 from ..fun.norms import linfnorm
 from ..objectives import L1Norm, L2NormSqHalf
 from .thresholding import medestnoise, softthresh
@@ -31,7 +31,7 @@ def fista(A, Astar, b, lmbda, x0, **kwargs):
     F = L1Norm(scale=lmbda)
     G = L2NormSqHalf()
 
-    return proxgradaccel(F, G, A, Astar, b, x0, **kwargs)
+    return _proxgradaccel(F, G, A, Astar, b, x0, **kwargs)
 
 
 # iterative soft thresholding with threshold set by constant false alarm rate

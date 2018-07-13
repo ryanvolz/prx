@@ -6,9 +6,12 @@ PYTHON ?= python
 
 PACKAGE = prx
 
-.PHONY: all clean clean_build clean_coverage clean_inplace clean_sphinxbuild code_analysis code_check dist distclean doc doc_force in inplace inplace_force pdf test test_code test_coverage
+.PHONY: all build_dir clean clean_build clean_coverage clean_inplace clean_sphinxbuild code_analysis code_check dist distclean doc doc_force in inplace inplace_force pdf test test_code test_coverage
 
 all: clean inplace test
+
+build_dir:
+	-mkdir build
 
 clean:
 	-$(PYTHON) setup.py clean
@@ -28,9 +31,6 @@ clean_inplace:
 	-find $(PACKAGE) \( -name '*.dll' -o -name '*.so' \) -exec rm {} \;
 	-find $(PACKAGE) -name '*.html' -exec rm {} \;
 
-clean_sphinxbuild:
-	-rm -rf build/sphinx
-
 code_analysis:
 	-pylint --output-format colorized --extension-pkg-whitelist=numpy $(PACKAGE)
 
@@ -41,7 +41,7 @@ code_check:
 dist: clean_egginfo
 	$(PYTHON) setup.py sdist
 
-distclean: clean_build clean_inplace clean_sphinxbuild
+distclean: clean_build clean_inplace
 	make -C doc distclean
 
 doc: inplace

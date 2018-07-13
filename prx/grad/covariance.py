@@ -6,17 +6,7 @@
 #
 # The full license is in the LICENSE file, distributed with this software.
 # ----------------------------------------------------------------------------
-"""Gradients of covariance likelihood functions.
-
-.. currentmodule:: prx.grad.covariance
-
-.. autosummary::
-    :toctree:
-
-    grad_normcov_negloglik
-
-
-"""
+"""Gradients of covariance likelihood functions."""
 
 import numpy as np
 

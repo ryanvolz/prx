@@ -9,28 +9,56 @@ Standard Problems
 .. autosummary::
    :toctree:
 
-    problems
+   objectives.l1_minimization
+   objectives.least_squares
+
+
+Custom Problems
+---------------
+
+Objectives
+**********
+
+.. autosummary::
+   :toctree:
+
+   objectives
+   objectives.split_objectives
+   ~objectives.split_objectives.SplitObjectiveAffine
+
+Functions
+*********
+
+.. autosummary::
+   :toctree:
+
+   functions
+   functions.covariance
+   functions.norms
+   functions.indicators
+   functions.polynomials
+   functions.SeparableFunction
+   separable_array.separray
+
+Algorithms
+**********
+
+.. autosummary::
+   :toctree:
+
+   algorithms
+   algorithms.admm_algos
+   algorithms.proxgrad_algos
 
 
 Specifying Linear Operators
 ---------------------------
 
 .. autosummary::
-    :toctree:
+   :toctree:
 
-    operator_class
-    operator_utils
-
-
-Solving Custom Problems
------------------------
-
-.. autosummary::
-    :toctree:
-
-    algorithms
-    objectives
-    separable_array
+   operator_class
+   operator_utils
 
 
 Functions, Gradients, and Prox Operators
@@ -49,8 +77,7 @@ from . import fun
 from . import functions
 from . import grad
 from . import objectives
-from . import problems
-from .problems import *
+from .objectives import *
 from . import prox
 from .operator_class import *
 from .operator_utils import *

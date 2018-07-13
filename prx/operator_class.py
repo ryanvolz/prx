@@ -7,19 +7,7 @@
 # The full license is in the LICENSE file, distributed with this software.
 # ----------------------------------------------------------------------------
 
-"""Linear operator classes.
-
-.. currentmodule:: prx.operator_class
-
-.. autosummary::
-    :toctree:
-
-    LinearOperator
-    DiagLinop
-    MatrixLinop
-    FixedSizeLinop
-
-"""
+"""Linear operator classes."""
 
 import numpy as np
 
@@ -32,20 +20,20 @@ class LinearOperator(object):
     """Linear operator A.
 
     This class defines a linear operator through its forward and adjoint
-    operations. The forward operation is called using the `forward` method,
-    while the adjoint operation is called using the `adjoint` method.
+    operations. The forward operation is called using the :meth:`forward`
+    method, while the adjoint operation is called using the :meth:`adjoint`
+    method.
 
     For specifying a particular operator, initialize this class with the
     forward and adjoint functions as arguments. Alternatively, you can inherit
-    from this class and override the `_forward` and `_adjoint` methods.
-
-    .. automethod:: __init__
+    from this class and override the :meth:`_forward` and :meth:`_adjoint`
+    methods.
 
 
     Attributes
     ----------
 
-    H : LinearOperator
+    H : :class:`.LinearOperator`
         Object corresponding to the adjoint operator (i.e., the forward and
         adjoint functions are swapped).
 
@@ -80,7 +68,7 @@ class LinearOperator(object):
         raise NotImplementedError
 
     def forward(self, x, out=None):
-        """Calculate the forward operation, A(x).
+        """Calculate the forward operation, ``A(x)``.
 
         Parameters
         ----------
@@ -118,7 +106,7 @@ class LinearOperator(object):
     __call__ = forward
 
     def adjoint(self, y, out=None):
-        """Calculate the adjoint operation, A*(y).
+        """Calculate the adjoint operation, ``A*(y)``.
 
         Parameters
         ----------
@@ -163,19 +151,15 @@ class LinearOperator(object):
 
 
 class DiagLinop(LinearOperator):
-    """Diagonal linear operator A(x) = s*x (element-wise multiplication).
-
-    .. automethod:: __init__
-
-    """
+    """Diagonal linear operator ``A(x) = s*x`` (element-wise mult.)."""
 
     def __init__(self, s):
-        """Create a diagonal linear operator A(x) = s*x.
+        """Create a diagonal linear operator ``A(x) = s*x``.
 
         Parameters
         ----------
 
-        s : float, int, or ndarray
+        s : float | int | ndarray
             Scalar or array defining the diagonal linear operator.
 
         """
@@ -192,19 +176,15 @@ class DiagLinop(LinearOperator):
 
 
 class MatrixLinop(LinearOperator):
-    """Matrix linear operator A(x) = np.dot(M, x).
-
-    .. automethod:: __init__
-
-    """
+    """Matrix linear operator ``A(x) = np.dot(M, x)``."""
 
     def __init__(self, M):
-        """Create a matrix linear operator A(x) = np.dot(M, x).
+        """Create a matrix linear operator ``A(x) = np.dot(M, x)``.
 
         Parameters
         ----------
 
-        M : matrix or ndarray
+        M : matrix | ndarray
             Matrix defining the linear operator.
 
         """
@@ -224,13 +204,12 @@ class FixedSizeLinop(LinearOperator):
     """Fixed size linear operator A.
 
     This class defines a linear operator through its forward and adjoint
-    operations. The forward operation is called using the `forward` method,
-    while the adjoint operation is called using the `adjoint` method.
+    operations. The forward operation is called using the :meth:`forward`
+    method, while the adjoint operation is called using the :meth:`adjoint`
+    method.
 
     For specifying a particular operator, inherit from this class and override
-    the `_forward` and `_adjoint` methods.
-
-    .. automethod:: __init__
+    the :meth:`_forward` and :meth:`_adjoint` methods.
 
 
     Attributes
@@ -277,7 +256,7 @@ class FixedSizeLinop(LinearOperator):
         raise NotImplementedError
 
     def forward(self, x, out=None):
-        """Calculate the forward operation, A(x).
+        """Calculate the forward operation, ``A(x)``.
 
         Parameters
         ----------
@@ -301,7 +280,7 @@ class FixedSizeLinop(LinearOperator):
         return self._forward(x, out)
 
     def adjoint(self, y, out=None):
-        """Calculate the adjoint operation, A*(y).
+        """Calculate the adjoint operation, ``A*(y)``.
 
         Parameters
         ----------

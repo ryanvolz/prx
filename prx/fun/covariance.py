@@ -6,16 +6,7 @@
 #
 # The full license is in the LICENSE file, distributed with this software.
 # ----------------------------------------------------------------------------
-"""Covariance likelihood functions.
-
-.. currentmodule:: prx.fun.covariance
-
-.. autosummary::
-    :toctree:
-
-    normcov_negloglik
-
-"""
+"""Covariance likelihood functions."""
 
 import numpy as np
 

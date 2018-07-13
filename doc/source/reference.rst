@@ -2,6 +2,6 @@ API Reference
 =============
 
 .. autosummary::
-    :toctree: generated
+   :toctree: generated
 
-    prx
+   prx
