@@ -1,18 +1,18 @@
-#-----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 # Copyright (c) 2014, 'prx' developers (see AUTHORS file)
 # All rights reserved.
 #
 # Distributed under the terms of the MIT license.
 #
 # The full license is in the LICENSE file, distributed with this software.
-#-----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 
-from setuptools import setup, find_packages
 # to use a consistent encoding
 from codecs import open
 from os import path
 
 import versioneer
+from setuptools import find_packages, setup
 
 # custom setup.py commands
 cmdclass = versioneer.get_cmdclass()
@@ -51,7 +51,7 @@ setup(
     packages=find_packages(),
     install_requires=['Bottleneck', 'numpy', 'scipy'],
     extras_require={
-        'develop' : ['flake8', 'nose', 'pylint', 'twine', 'wheel'],
+        'develop': ['flake8', 'nose', 'pylint', 'twine', 'wheel'],
         'doc': ['numpydoc', 'sphinx'],
     },
 
