@@ -24,6 +24,7 @@ Objectives
 
    objectives
    objectives.split_objectives
+   ~objectives.split_objectives.SplitObjective
    ~objectives.split_objectives.SplitObjectiveAffine
 
 Functions

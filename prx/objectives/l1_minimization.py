@@ -208,19 +208,19 @@ class L1RLS(_split_objectives.SplitObjectiveAffine):
     {algorithm_notes}
 
     The accelerated proximal gradient algorithm applied specifically to the
-    l1-regularized least squares problem is discussed in [BT09]_.
+    l1-regularized least squares problem is discussed in [#BT09]_.
 
 
     References
     ----------
 
-    .. [BT09] A. Beck and M. Teboulle, "A Fast Iterative Shrinkage-Thresholding
-       Algorithm for Linear Inverse Problems," SIAM Journal on Imaging
-       Sciences, vol. 2, no. 1, pp. 183-202, Jan. 2009.
-
     {algorithm_references}
 
+    .. [#BT09] {BT09}
+
     """
+
+    _doc_objective_self = ':class:`.L1RLS`'
 
     _doc_objective_parameters = """
     lmbda : float

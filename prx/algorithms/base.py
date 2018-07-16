@@ -10,13 +10,16 @@
 
 from six import with_metaclass
 
+from . import references as _refs
 from ..docstring_helpers import DocstringSubstituteMeta
 from ..fun.norms import linfnorm
 
 __all__ = ('BaseOptAlgorithm', 'BaseIterativeAlgorithm')
 
 
-class BaseOptAlgorithm(with_metaclass(DocstringSubstituteMeta, object)):
+class BaseOptAlgorithm(with_metaclass(
+    DocstringSubstituteMeta, _refs.AlgorithmReferences,
+)):
     """Base class for optimization algorithms.
 
     Subclasses should implement :meth:`minimize` and add any necessary
@@ -40,10 +43,18 @@ class BaseOptAlgorithm(with_metaclass(DocstringSubstituteMeta, object)):
 
     """
 
-    _doc_state_argument = """
+    _doc_evaluate_state_argument = """
     state : dict
-        State dictionary, with entries varying by objective. The state
-        defines a point at which the objective is evaluated.
+        State dictionary, with entries varying by objective and algorithm. The
+        state defines a point at which the objective is evaluated.
+
+    """
+
+    _doc_initial_state_argument = """
+    state : dict
+        Initial state dictionary, with required entries varying by objective
+        and algorithm. The state defines a point at which the objective is
+        evaluated.
 
     """
 
@@ -79,6 +90,8 @@ class BaseOptAlgorithm(with_metaclass(DocstringSubstituteMeta, object)):
 
         {algorithm_objective_parameter}
 
+        {algorithm_parameters}
+
         """
         self.objective = objective
         if kwargs:
@@ -91,7 +104,7 @@ class BaseOptAlgorithm(with_metaclass(DocstringSubstituteMeta, object)):
         Returns
         -------
 
-        self : :class:`BaseOptAlgorithm`
+        self : {algorithm_self}
 
         """
         return self
@@ -122,7 +135,7 @@ class BaseOptAlgorithm(with_metaclass(DocstringSubstituteMeta, object)):
         Returns
         -------
 
-        self : :class:`BaseOptAlgorithm`
+        self : {algorithm_self}
 
         """
         valid_params = self.get_params()
@@ -139,14 +152,15 @@ class BaseOptAlgorithm(with_metaclass(DocstringSubstituteMeta, object)):
         Parameters
         ----------
 
-        {state_argument}
+        {initial_state_argument}
 
         {keyword_arguments}
 
         Returns
         -------
 
-        self : :class:`BaseOptAlgorithm`
+        obj : :class:`BaseObjective`
+            The minimized Objective object.
 
         """
         raise NotImplementedError
@@ -157,7 +171,7 @@ class BaseOptAlgorithm(with_metaclass(DocstringSubstituteMeta, object)):
         Parameters
         ----------
 
-        {state_argument}
+        {evaluate_state_argument}
 
 
         Returns
@@ -224,16 +238,7 @@ class BaseIterativeAlgorithm(BaseOptAlgorithm):
         self, objective, rel_tol=1e-6, abs_tol=1e-10, tol_norm=linfnorm,
         max_iter=10000, print_period=100, **kwargs
     ):
-        """Initialize iterative optimization algorithm.
-
-        Parameters
-        ----------
-
-        {algorithm_objective_parameter}
-
-        {algorithm_parameters}
-
-        """
+        """."""
         super(BaseIterativeAlgorithm, self).__init__(objective, **kwargs)
         self.rel_tol = rel_tol
         self.abs_tol = abs_tol
@@ -308,6 +313,21 @@ class BaseIterativeAlgorithm(BaseOptAlgorithm):
         customize each iteration. Variables in the `state` dictionary that
         are not prefixed with an underscore can be modified and will affect the
         subsequent iteration step.
+
+
+        Parameters
+        ----------
+
+        {initial_state_argument}
+
+        {keyword_arguments}
+
+
+        Yields
+        ------
+
+        state : dict
+            A dictionary of iteration state variables.
 
         """
         raise NotImplementedError

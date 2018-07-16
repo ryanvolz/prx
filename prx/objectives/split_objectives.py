@@ -11,10 +11,10 @@
 from . import base as _base
 from .. import algorithms as _alg
 
-__all__ = ('SplitObjectiveAffine',)
+__all__ = ('SplitObjective', 'SplitObjectiveAffine')
 
 
-class _SplitObjective(_base.BaseObjective):
+class SplitObjective(_base.BaseObjective):
     """Class for split objectives of the form ``F(x) + G(z)``.
 
     The first part of the objective, ``F(x)``, is a function of the state
@@ -48,9 +48,11 @@ class _SplitObjective(_base.BaseObjective):
 
     """
 
-    _doc_state_argument = """
+    _doc_objective_self = ':class:`.SplitObjective`'
+
+    _doc_evaluate_state_argument = """
     state : dict
-        State dictionary. This must contain:
+        State dictionary containing:
 
         x : array_like
             Point at which the first part of the objective, `F`, is evaluated.
@@ -89,37 +91,24 @@ class _SplitObjective(_base.BaseObjective):
     def __init__(
         self, F=None, proxF=None, G=None, gradG=None, proxG=None, **alg_kwargs
     ):
-        """Create objective of the form ``F(x) + G(z)``.
-
-        Parameters
-        ----------
-
-        {objective_parameters}
-
-
-        Other Parameters
-        ----------------
-
-        {algorithm_parameters}
-
-        """
+        """."""
         self.F = F
         self.proxF = proxF
         self.G = G
         self.gradG = gradG
         self.proxG = proxG
-        super(_SplitObjective, self).__init__(**alg_kwargs)
+        super(SplitObjective, self).__init__(**alg_kwargs)
 
     def validate_params(self):
         """."""
         # existence of F, proxF, G, (gradG or proxG) is checked by the
         # Algorithm so that the Algorithm itself can ensure that it has a
         # compatible Objective
-        return super(_SplitObjective, self).validate_params()
+        return super(SplitObjective, self).validate_params()
 
     def get_params(self, deep=True):
         """."""
-        params = super(_SplitObjective, self).get_params(deep=deep)
+        params = super(SplitObjective, self).get_params(deep=deep)
         params.update(
             F=self.F, proxF=self.proxF, G=self.G, gradG=self.gradG,
             proxG=self.proxG,
@@ -131,7 +120,7 @@ class _SplitObjective(_base.BaseObjective):
     ):
         """."""
         self._assign_params(F=F, proxF=proxF, G=G, gradG=gradG, proxG=proxG)
-        return super(_SplitObjective, self).set_params(**alg_params)
+        return super(SplitObjective, self).set_params(**alg_params)
 
     def evaluate(self, state):
         """Evaluate the objective: ``F(x) + G(z)``.
@@ -144,7 +133,7 @@ class _SplitObjective(_base.BaseObjective):
         Parameters
         ----------
 
-        {state_argument}
+        {evaluate_state_argument}
 
 
         Returns
@@ -162,26 +151,7 @@ class _SplitObjective(_base.BaseObjective):
         state['_val'] = val
         return val
 
-    def minimize(self, state, **kwargs):
-        """Minimize the objective using {algorithm_self}.
 
-        Parameters
-        ----------
-
-        {state_argument}
-
-        {keyword_arguments}
-
-
-        Returns
-        -------
-
-        self : :class:`_SplitObjective`
-
-        """
-        super(_SplitObjective, self).minimize(state, **kwargs)
-
-
-SplitObjectiveAffine = _SplitObjective.with_alg(
+SplitObjectiveAffine = SplitObjective.with_alg(
     _alg.ProxGradAccel, 'SplitObjectiveAffine',
 )

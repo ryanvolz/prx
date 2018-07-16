@@ -29,8 +29,18 @@ In Development
 
     primaldual_algos
 
+
+References
+----------
+
+.. autosummary::
+    :toctree:
+
+    references
+
 """
 
+from . import references
 from .admm_algos import *
 from .primaldual_algos import *
 from .proxgrad_algos import *

@@ -300,7 +300,7 @@ class ProxGrad(_base.BaseIterativeAlgorithm):
     References
     ----------
 
-    {algorithm_references_primary}
+    {algorithm_references}
 
     """
 
@@ -324,44 +324,44 @@ class ProxGrad(_base.BaseIterativeAlgorithm):
 
         Gradient step with respect to `G`::
 
-            grad_new = Astar(G.grad(A(x) - b))
+            grad_new = Astar(gradG(A(x) - b))
             y_new = x - stepsize*grad_new
 
         Prox step with respect to `F`::
 
-            x_new = F.prox(y_new, stepsize)
+            x_new = proxF(y_new, stepsize)
 
     Convergence is determined in terms of the residual::
 
         r = (x_new - x) - step_size * (grad_new - grad)
 
-    The basic algorithm is described in section 4.2 of [PB14]_. Expanding
-    backtracking line search is due to [SGB14]_ and [BCG11]_.
+    The basic algorithm is described in section 4.2 of [#PB14]_. Expanding
+    backtracking line search is due to [#SGB14]_ and [#BCG11]_.
 
     """
 
-    __doc_algorithm_references = """
-    .. [PB14]{0} N. Parikh and S. Boyd, "Proximal Algorithms," Foundations and
-       Trends in Optimization, vol. 1, no. 3, pp. 123-231, 2013.
+    _doc_algorithm_references = """
+    .. [#PB14] {PB14}
 
-    .. [SGB14]{0} K. Scheinberg, D. Goldfarb, and X. Bai, "Fast First-Order
-       Methods for Composite Convex Optimization with Backtracking,"
-       Found Comput Math, pp. 389-417, Mar. 2014.
+    .. [#SGB14] {SGB14}
 
-    .. [BCG11]{0} S. R. Becker, E. J. Candes, and M. C. Grant, "Templates for
-       convex cone problems with  applications to sparse signal recovery,"
-       Mathematical Programming Computation, vol. 3, no. 3, pp. 165-218,
-       Aug. 2011.
+    .. [#BCG11] {BCG11}
 
     """
-
-    _doc_algorithm_references_primary = __doc_algorithm_references.format('')
-    _doc_algorithm_references = __doc_algorithm_references.format('_')
 
     _doc_algorithm_objective_attributes = """
     x_ : array_like
         Value of the optimization variable, set after minimization has
         converged through :meth:`minimize` or :meth:`self.alg.iterate`.
+
+    """
+
+    _doc_initial_state_argument = """
+    state : dict
+        Initial state dictionary containing:
+
+            x : array_like
+                Initial value for the optimization variable.
 
     """
 
@@ -421,16 +421,7 @@ class ProxGrad(_base.BaseIterativeAlgorithm):
         self, objective, step_size=1.0, step_dir=None, backtrack=0.5,
         expand=1.25, **kwargs
     ):
-        """Initialize proximal gradient algorithm parameters.
-
-        Parameters
-        ----------
-
-        {algorithm_objective_parameter}
-
-        {algorithm_parameters}
-
-        """
+        """."""
         super(ProxGrad, self).__init__(objective, **kwargs)
         self.step_size = step_size
         self.backtrack = backtrack
@@ -484,34 +475,14 @@ class ProxGrad(_base.BaseIterativeAlgorithm):
         )
         return params
 
+    def minimize(self, state, A, Astar, b):
+        """."""
+        return super(ProxGrad, self).minimize(
+            state, A=A, Astar=Astar, b=b,
+        )
+
     def iterate(self, state, A, Astar, b):
-        """Create generator that yields the `state` dictionary after each step.
-
-        You can inspect the `state` dictionary for useful information to
-        customize each iteration. Variables in the `state` dictionary that
-        are not prefixed with an underscore can be modified and will affect the
-        subsequent iteration step.
-
-
-        Parameters
-        ----------
-
-        state : dict
-            Initial state dictionary. This must contain:
-
-                x : array_like
-                    Initial value for the optimization variable.
-
-        {keyword_arguments}
-
-
-        Yields
-        ------
-
-        state : dict
-            A dictionary of iteration state variables.
-
-        """
+        """."""
         # get initial iterate value
         try:
             x0 = state['x']
@@ -749,12 +720,12 @@ def _proxgradaccel(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5,
 
         Gradient step with respect to `G`::
 
-            grad_new = Astar(G.grad(A(w) - b))
+            grad_new = Astar(gradG(A(w) - b))
             z_new = x - stepsize*grad_new
 
         Prox step with respect to `F`::
 
-            x_new = F.prox(z_new, stepsize)
+            x_new = proxF(z_new, stepsize)
 
     Convergence is determined in terms of the residual::
 
@@ -940,7 +911,7 @@ class ProxGradAccel(_base.BaseIterativeAlgorithm):
     References
     ----------
 
-    {algorithm_references_primary}
+    {algorithm_references}
 
     """
 
@@ -984,37 +955,36 @@ class ProxGradAccel(_base.BaseIterativeAlgorithm):
 
         r = (x_new - x) - step_size * (grad_new - grad)
 
-    The basic algorithm is described in section 4.3 of [PB14]_. Expanding
-    backtracking line search is due to [SGB14]_ and [BCG11]_. Adaptive restart
-    of the acceleration comes from [OC13]_.
+    The basic algorithm is described in section 4.3 of [#PB14]_. Expanding
+    backtracking line search is due to [#SGB14]_ and [#BCG11]_. Adaptive
+    restart of the acceleration comes from [#OC13]_.
 
     """
 
-    __doc_algorithm_references = """
-    .. [PB14]_ N. Parikh and S. Boyd, "Proximal Algorithms," Foundations and
-       Trends in Optimization, vol. 1, no. 3, pp. 123-231, 2013.
+    _doc_algorithm_references = """
+    .. [#PB14] {PB14}
 
-    .. [SGB14]_ K. Scheinberg, D. Goldfarb, and X. Bai, "Fast First-Order
-       Methods for Composite Convex Optimization with Backtracking,"
-       Found Comput Math, pp. 389-417, Mar. 2014.
+    .. [#SGB14] {SGB14}
 
-    .. [BCG11]_ S. R. Becker, E. J. Candes, and M. C. Grant, "Templates for
-       convex cone problems with  applications to sparse signal recovery,"
-       Mathematical Programming Computation, vol. 3, no. 3, pp. 165-218,
-       Aug. 2011.
+    .. [#BCG11] {BCG11}
 
-    .. [OC13]{0} B. O'Donoghue and E. Candes, "Adaptive Restart for Accelerated
-       Gradient Schemes," Found Comput Math, pp. 1-18, 2013.
+    .. [#OC13] {OC13}
 
     """
-
-    _doc_algorithm_references_primary = __doc_algorithm_references.format('')
-    _doc_algorithm_references = __doc_algorithm_references.format('_')
 
     _doc_algorithm_objective_attributes = """
     x_ : array_like
         Value of the optimization variable, set after minimization has
         converged through :meth:`minimize` or :meth:`self.alg.iterate`.
+
+    """
+
+    _doc_initial_state_argument = """
+    state : dict
+        Initial state dictionary containing:
+
+            x : array_like
+                Initial value for the optimization variable.
 
     """
 
@@ -1079,16 +1049,7 @@ class ProxGradAccel(_base.BaseIterativeAlgorithm):
         self, objective, step_size=1.0, step_dir=None, backtrack=0.5,
         expand=1.25, restart=True, **kwargs
     ):
-        """Initialize accelerated proximal gradient algorithm parameters.
-
-        Parameters
-        ----------
-
-        {algorithm_objective_parameter}
-
-        {algorithm_parameters}
-
-        """
+        """."""
         super(ProxGradAccel, self).__init__(objective, **kwargs)
         self.step_size = step_size
         self.backtrack = backtrack
@@ -1147,34 +1108,14 @@ class ProxGradAccel(_base.BaseIterativeAlgorithm):
         )
         return params
 
+    def minimize(self, state, A, Astar, b):
+        """."""
+        return super(ProxGradAccel, self).minimize(
+            state, A=A, Astar=Astar, b=b,
+        )
+
     def iterate(self, state, A, Astar, b):
-        """Create generator that yields the `state` dictionary after each step.
-
-        You can inspect the `state` dictionary for useful information to
-        customize each iteration. Variables in the `state` dictionary that
-        are not prefixed with an underscore can be modified and will affect the
-        subsequent iteration step.
-
-
-        Parameters
-        ----------
-
-        state : dict
-            Initial state dictionary. This must contain:
-
-                x : array_like
-                    Initial value for the optimization variable.
-
-        {keyword_arguments}
-
-
-        Yields
-        ------
-
-        state : dict
-            A dictionary of iteration state variables.
-
-        """
+        """."""
         # get initial iterate value
         try:
             x0 = state['x']

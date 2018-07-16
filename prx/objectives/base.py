@@ -149,6 +149,8 @@ class BaseObjective(with_metaclass(ObjectiveAlgorithmMeta, object)):
 
     """
 
+    _doc_objective_self = ':class:`.BaseObjective`'
+
     _doc_objective_with_algorithm_description = """
     This Objective uses the {{algorithm_self}} algorithm class to
     instantiate self.alg.
@@ -158,7 +160,7 @@ class BaseObjective(with_metaclass(ObjectiveAlgorithmMeta, object)):
     """
 
     _doc_objective_attributes = """
-    alg : :class:`.BaseOptAlgorithm`
+    alg : {{algorithm_self}}
         Algorithm object that implements the :meth:`minimize` method for this
         objective. For more details or to learn how to customize the algorithm,
         consult this object's class documentation.
@@ -216,7 +218,7 @@ class BaseObjective(with_metaclass(ObjectiveAlgorithmMeta, object)):
         Returns
         -------
 
-        self : :class:`BaseObjective`
+        self : {objective_self}
 
         """
         self.alg.validate_params()
@@ -266,7 +268,7 @@ class BaseObjective(with_metaclass(ObjectiveAlgorithmMeta, object)):
         Returns
         -------
 
-        self : :class:`BaseObjective`
+        self : {objective_self}
 
         """
         self.alg.set_params(**alg_params)
@@ -278,7 +280,7 @@ class BaseObjective(with_metaclass(ObjectiveAlgorithmMeta, object)):
         Parameters
         ----------
 
-        {state_argument}
+        {evaluate_state_argument}
 
 
         Returns
@@ -299,7 +301,7 @@ class BaseObjective(with_metaclass(ObjectiveAlgorithmMeta, object)):
         Parameters
         ----------
 
-        {state_argument}
+        {evaluate_state_argument}
 
 
         Returns
@@ -312,12 +314,16 @@ class BaseObjective(with_metaclass(ObjectiveAlgorithmMeta, object)):
         raise NotImplementedError
 
     def minimize(self, state, **kwargs):
-        """Minimize the objective using {algorithm_self}.
+        """Minimize the objective using the associated algorithm.
+
+        See ``self.alg.minimize`` for details pertaining to the specific
+        algorithm in use.
+
 
         Parameters
         ----------
 
-        {state_argument}
+        {initial_state_argument}
 
         {keyword_arguments}
 
@@ -325,7 +331,7 @@ class BaseObjective(with_metaclass(ObjectiveAlgorithmMeta, object)):
         Returns
         -------
 
-        self : :class:`BaseObjective`
+        self : {objective_self}
 
         """
         return self.alg.minimize(state, **kwargs)
