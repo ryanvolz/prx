@@ -48,6 +48,8 @@ class SplitObjective(_base.BaseObjective):
 
     """
 
+    _alg_cls = _alg.ADMM
+
     _doc_objective_self = ':class:`.SplitObjective`'
 
     _doc_evaluate_state_argument = """

@@ -12,16 +12,17 @@ from __future__ import division
 
 import numpy as np
 
+from . import base as _base
 from ..fun.norms import l2norm, l2normsqhalf
 from ._common import docstring_wrapper as _docstring_wrapper
 
-__all__ = ('admm', 'admmlin')
+__all__ = ('_admm', 'admmlin', 'ADMM')
 
 
 @_docstring_wrapper
-def admm(F, G, x0, y0=None, pen=1.0, residgap=2, penfactor=1.5, reltol=1e-6,
-         abstol=1e-10, maxits=10000, moreinfo=False, printrate=100,
-         xstar=None):
+def _admm(F, G, x0, y0=None, pen=1.0, residgap=2, penfactor=1.5, reltol=1e-6,
+          abstol=1e-10, maxits=10000, moreinfo=False, printrate=100,
+          xstar=None):
     """Minimize ``F(x) + G(x)`` using ADMM.
 
     ADMM, for Alternating Direction Method of Multipliers, is an algorithm for
@@ -268,6 +269,298 @@ def admm(F, G, x0, y0=None, pen=1.0, residgap=2, penfactor=1.5, reltol=1e-6,
         return x
 
 
+class ADMM(_base.BaseIterativeAlgorithm):
+    """Class for the Alternating Direction Method of Multipliers algorithm.
+
+    {algorithm_description}
+
+
+    Attributes
+    ----------
+
+    {algorithm_attributes}
+
+
+    See Also
+    --------
+
+    {algorithm_see_also}
+
+
+    Notes
+    -----
+
+    {algorithm_notes}
+
+
+    References
+    ----------
+
+    {algorithm_references}
+
+    """
+
+    _doc_algorithm_description = """
+    ADMM, for Alternating Direction Method of Multipliers, is an algorithm for
+    solving convex optimization problems with a split objective function of
+    the form ``F(x) + G(x)``. The method is also known as Douglas-Rachford
+    splitting. ADMM is most useful when the objective is non-smooth and the
+    prox operator of F+G would be hard to solve, but the prox operators of F
+    and G separately are easy to solve. This implementation includes a varying
+    penalty parameter that helps improve convergence.
+
+    Many splittings of the objective function might be possible, including
+    swapping the roles of F and G, and the resulting optimization problems
+    will be different. If F encodes constraints, then the solution will
+    always satisfy them exactly. Conversely, any constraints in G will only
+    be satisfied in the limit, and therefore the solution may not meet them
+    exactly. It may be wise to try different splittings of a particular
+    problem to find out which formulation works best.
+
+    """
+
+    _doc_algorithm_self = ':class:`.ADMM`'
+
+    _doc_algorithm_see_also = ':class:`.ADMMLin`'
+
+    _doc_algorithm_notes = """
+    It is often convenient to think of ADMM in terms of the consensus form
+    of the optimization problem::
+
+        minimize    F(x) + G(z)
+        subject to  x - z = 0.
+
+    In this form, a second variable z is introduced with the constraint that
+    z equal x. It is natural to then consider an optimization method that
+    alternately optimizes in terms of x and z, with a correction to enforce
+    the constraint. ADMM is such an iterative first-order optimization method
+    where each iteration is composed of three steps:
+
+        Prox step with respect to `F`::
+
+            x_new = proxF(z - u, pen)
+
+        Prox step with respect to `G`::
+
+            z_new = proxG(x_new + u, pen)
+
+        Dual step for the constraint that ``x_new == z_new``::
+
+            u_new = u + x_new - z_new
+
+    Convergence is determined in terms of both primal and dual residuals:
+
+        Primal feasibility residual::
+
+            r = x_new - z_new
+
+        Dual feasibility residual::
+
+            s = (z_new - z)/pen
+
+    The basic algorithm is described in section 4.4 of [#PB14]_. Varying
+    penalty parameter is suggested in [#BPC_11]_.
+
+    """
+
+    _doc_algorithm_references = """
+    .. [#PB14] {PB14}
+
+    .. [#BPC_11] {BPC_11}
+
+    """
+
+    _doc_algorithm_objective_attributes = """
+    x_ : array_like
+        Value of the optimization variable, set after minimization has
+        converged through :meth:`minimize` or :meth:`self.alg.iterate`.
+
+    """
+
+    _doc_initial_state_argument = """
+    state : dict
+        Initial state dictionary containing:
+
+            x : array_like
+                Initial value for the optimization variable.
+
+            y : array_like, optional
+                Initial value for ``y = u/penalty``, the unscaled dual variable
+                of `x`.
+
+    """
+
+    _doc_keyword_arguments = ''
+
+    _doc_algorithm_parameters = """
+    penalty : float, optional
+        Initial penalty parameter, the function of which is to balance
+        progress between the primal and dual spaces.
+
+    resid_gap : float, optional
+        A value greater than one. If the ratio or inverse ratio of the
+        primal residual to dual residual exceeds this number within the first
+        100 iterations, the penalty parameter will be adjusted by
+        `penalty_factor` to help normalize the residuals.
+
+    penalty_factor : float, optional
+        A value greater than one. If the residual gap is reached, the penalty
+        parameter will be multiplied or divided by `penalty_factor` to help
+        normalize the residuals.
+
+    {algorithm_parameters}
+
+    """
+
+    def __init__(
+        self, objective, penalty=1.0, resid_gap=2, penalty_factor=1.5, **kwargs
+    ):
+        """."""
+        super(ADMM, self).__init__(objective, **kwargs)
+        self.penalty = penalty
+        self.resid_gap = resid_gap
+        self.penalty_factor = penalty_factor
+
+        self.print_str = (
+            '{_iter}: val={_val:.5}, pen={penalty:.4},'
+            ' resid_p={_resid_p_nrm:.4} ({_resid_p_thresh:.3}),'
+            ' resid_d={_resid_d_nrm:.4} ({_resid_d_thresh:.3})'
+        )
+
+    def validate_params(self):
+        """."""
+        self.penalty = float(self.penalty)
+        if self.penalty <= 0:
+            raise ValueError('penalty must be positive')
+
+        self.resid_gap = float(self.resid_gap)
+        if self.resid_gap <= 1:
+            raise ValueError('resid_gap must be greater than 1')
+
+        self.penalty_factor = float(self.penalty_factor)
+        if self.penalty_factor <= 1:
+            raise ValueError('penalty_factor must be greater than 1')
+
+        # check for Objective compatibility
+        for pname in ('F', 'proxF', 'G', 'proxG'):
+            p = getattr(self.objective, pname)
+            if p is None or not callable(p):
+                errstr = 'self.objective.{0} must be set to a callable'
+                raise ValueError(errstr.format(pname))
+
+        return super(ADMM, self).validate_params()
+
+    def get_params(self, deep=True):
+        """."""
+        params = super(ADMM, self).get_params(deep=deep)
+        params.update(
+            penalty=self.penalty, resid_gap=self.resid_gap,
+            penalty_factor=self.penalty_factor,
+        )
+        return params
+
+    def minimize(self, state):
+        """."""
+        return super(ADMM, self).minimize(state)
+
+    def iterate(self, state):
+        """."""
+        # get initial iterate value
+        try:
+            x0 = state['x']
+        except KeyError:
+            errstr = (
+                'Keyword arguments for state must include an initial value for'
+                ' x.'
+            )
+            raise ValueError(errstr)
+
+        try:
+            y0 = state['y']
+        except KeyError:
+            y0 = np.zeros_like(x0)
+
+        # set absolute tolerance threshold based on taking the tolerance norm
+        # of a residual vector with all entries equal to abs_tol
+        abs_tol_thresh = self.abs_tol * self.tol_norm(np.ones_like(x0))
+
+        # initialize state
+        u0 = y0 * self.penalty
+        z0 = self.objective.proxG(x0 + u0, self.penalty)
+        self.objective.state_ = dict(
+            x=x0, u=u0, z=z0, penalty=self.penalty, _iter=0,
+            _backtracks=0, _resid_p=np.full_like(x0, np.inf),
+            _resid_p_nrm=np.inf, _resid_d=np.full_like(y0, np.inf),
+            _resid_d_nrm=np.inf, _resid_thresh=abs_tol_thresh,
+        )
+        # update with passed-in state
+        self.objective.state_.update(state)
+
+        yield self.objective.state_
+
+        s = self.objective.state_
+        for s['_iter'] in range(1, self.max_iter + 1):
+            # primal updates
+            x = self.objective.proxF(s['z'] - s['u'], s['penalty'])
+            z = self.objective.proxG(x + s['u'], s['penalty'])
+
+            # residual calculation
+            resid_p = x - z
+            resid_d = (z - s['z']) / s['penalty']
+
+            # dual update
+            u = s['u'] + resid_p
+
+            # norms for convergence check
+            resid_p_nrm = self.tol_norm(resid_p)
+            resid_d_nrm = self.tol_norm(resid_d)
+            x_nrm = self.tol_norm(x)
+            u_nrm = self.tol_norm(u)
+            z_nrm = self.tol_norm(z)
+
+            # thresholds for convergence check
+            resid_p_thresh = abs_tol_thresh + self.rel_tol * min(x_nrm, z_nrm)
+            resid_d_thresh = (
+                abs_tol_thresh + self.rel_tol * u_nrm / s['penalty']
+            )
+
+            # update state variables
+            s['x'] = x
+            s['u'] = u
+            s['z'] = z
+
+            # update informational state variables
+            s['_resid_p'] = resid_p
+            s['_resid_d'] = resid_d
+            s['_resid_p_nrm'] = resid_p_nrm
+            s['_resid_d_nrm'] = resid_d_nrm
+            s['_resid_p_thresh'] = resid_p_thresh
+            s['_resid_d_thresh'] = resid_d_thresh
+
+            # yield state at this iteration step
+            yield s
+
+            # check for convergence
+            # can't calculate dual function value, so best stopping criterion
+            # is to see if primal and dual feasibility residuals are small
+            if resid_p_nrm < resid_p_thresh and resid_d_nrm < resid_d_thresh:
+                break
+
+            # penalty parameter adjustment
+            if s['_iter'] <= 100:
+                if resid_p_nrm > self.resid_gap * resid_d_nrm:
+                    s['penalty'] = s['penalty'] / self.penalty_factor
+                    # scaled dual variable u=y*pen, so update u with y constant
+                    s['u'] = s['u'] / self.penalty_factor
+                elif resid_d_nrm > self.resid_gap * resid_p_nrm:
+                    s['penalty'] = s['penalty'] * self.penalty_factor
+                    # scaled dual variable u=y*pen, so update u with y constant
+                    s['u'] = s['u'] * self.penalty_factor
+
+        # iterations have converged, store the resulting iterate
+        self.objective.x_ = s['x']
+
+
 @_docstring_wrapper
 def admmlin(F, G, A, Astar, b, x0, y0=None, stepsize=1.0, backtrack=0.5,
             expand=1.25, pen=1.0, residgap=10, penfactor=1.5, relax=1.0,
@@ -411,7 +704,7 @@ def admmlin(F, G, A, Astar, b, x0, y0=None, stepsize=1.0, backtrack=0.5,
     See Also
     --------
 
-    admm, ._proxgrad, ._proxgradaccel
+    _admm, ._proxgrad, ._proxgradaccel
 
 
     Notes

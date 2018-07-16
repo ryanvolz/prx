@@ -14,7 +14,7 @@ import numpy as np
 
 from six import with_metaclass
 
-from ..algorithms import admm as _admm
+from ..algorithms import _admm
 from ..docstring_helpers import DocstringSubstituteMeta
 from ..separable_array import separray
 from .transform_operations import (addconst_fun, addlinear_fun, addlinear_grad,
