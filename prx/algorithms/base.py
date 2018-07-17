@@ -43,13 +43,6 @@ class BaseOptAlgorithm(with_metaclass(
 
     """
 
-    _doc_evaluate_state_argument = """
-    state : dict
-        State dictionary, with entries varying by objective and algorithm. The
-        state defines a point at which the objective is evaluated.
-
-    """
-
     _doc_initial_state_argument = """
     state : dict
         Initial state dictionary, with required entries varying by objective
@@ -165,24 +158,6 @@ class BaseOptAlgorithm(with_metaclass(
         """
         raise NotImplementedError
 
-    def evaluate(self, state):
-        """Return the objective value given a state.
-
-        Parameters
-        ----------
-
-        {evaluate_state_argument}
-
-
-        Returns
-        -------
-
-        val : float
-            The objective value.
-
-        """
-        return self.objective.evaluate(state)
-
 
 class BaseIterativeAlgorithm(BaseOptAlgorithm):
     """Base class for iterative optimization algorithms.
@@ -290,7 +265,7 @@ class BaseIterativeAlgorithm(BaseOptAlgorithm):
         for state in self.iterate(state, **kwargs):
             if (self.print_period is not None
                     and (state['_iter'] % self.print_period) == 0):
-                self.evaluate(state)
+                self.objective.evaluate(state)
                 print(self.print_str.format(**state))
 
         if self.print_period is not None:

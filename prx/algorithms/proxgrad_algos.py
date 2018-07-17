@@ -129,7 +129,7 @@ def _proxgrad(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5, expand=1.25,
     See Also
     --------
 
-    _proxgradaccel, .admmlin
+    _proxgradaccel, ._admmlin
 
 
     Notes
@@ -325,11 +325,11 @@ class ProxGrad(_base.BaseIterativeAlgorithm):
         Gradient step with respect to `G`::
 
             grad_new = Astar(gradG(A(x) - b))
-            y_new = x - stepsize*grad_new
+            xp = x - step_size*grad_new
 
         Prox step with respect to `F`::
 
-            x_new = proxF(y_new, stepsize)
+            x_new = proxF(xp, step_size)
 
     Convergence is determined in terms of the residual::
 
@@ -703,7 +703,7 @@ def _proxgradaccel(F, G, A, Astar, b, x0, stepsize=1.0, backtrack=0.5,
     See Also
     --------
 
-    _proxgrad, .admmlin
+    _proxgrad, ._admmlin
 
 
     Notes
@@ -945,11 +945,11 @@ class ProxGradAccel(_base.BaseIterativeAlgorithm):
         Gradient step with respect to `G`::
 
             grad_new = Astar(G.grad(A(xp) - b))
-            y_new = xp - stepsize*grad_new
+            xpp = xp - step_size*grad_new
 
         Prox step with respect to `F`::
 
-            x_new = F.prox(y_new, stepsize)
+            x_new = F.prox(xpp, step_size)
 
     Convergence is determined in terms of the residual::
 

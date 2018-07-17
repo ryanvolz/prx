@@ -184,6 +184,13 @@ class BaseObjective(with_metaclass(ObjectiveAlgorithmMeta, object)):
 
     """
 
+    _doc_evaluate_state_argument = """
+    state : dict
+        State dictionary, with entries varying by objective and algorithm. The
+        state defines a point at which the objective is evaluated.
+
+    """
+
     _doc_objective_parameters = ''
 
     _alg_cls = None

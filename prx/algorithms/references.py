@@ -23,6 +23,10 @@ refs = dict(
         "Distributed Optimization and Statistical Learning via the Alternating
         Direction Method of Multipliers," Found. Trends Mach. Learn., vol. 3,
         no. 1, pp. 1-122, Jan. 2011.""",
+    EZC10="""E. Esser, X. Zhang, and T. F. Chan, "A General Framework for a
+        Class of First Order Primal-Dual Algorithms for Convex Optimization in
+        Imaging Science," SIAM Journal on Imaging Sciences, vol. 3, no. 4, pp.
+        1015-1046, Jan. 2010.""",
     OC13="""B. O'Donoghue and E. Candes, "Adaptive Restart for Accelerated
         Gradient Schemes," Found Comput Math, pp. 1-18, 2013.""",
     PB14="""N. Parikh and S. Boyd, "Proximal Algorithms," Foundations and
