@@ -19,7 +19,7 @@ from ._common import backends
 __all__ = ('bpdn', 'dantzig', 'L1RLS', '_l1rls', 'srlasso')
 
 
-@backends(_alg._admmlin, _alg.pdhg)
+@backends(_alg._admmlin, _alg._pdhg)
 def bpdn(A, Astar, b, eps, x0, **kwargs):
     """Solve the basis pursuit denoising problem.
 
@@ -90,7 +90,7 @@ def bpdn(A, Astar, b, eps, x0, **kwargs):
     return args, kwargs
 
 
-@backends(_alg._admmlin, _alg.pdhg)
+@backends(_alg._admmlin, _alg._pdhg)
 def dantzig(A, Astar, b, delta, x0, **kwargs):
     """Solve the Dantzig selector problem.
 
@@ -293,7 +293,7 @@ class L1RLS(_split_objectives.SplitObjectiveAffine):
         return super(L1RLS, self).set_params(**alg_params)
 
 
-@backends(_alg._proxgradaccel, _alg._admmlin, _alg.pdhg, _alg._proxgrad)
+@backends(_alg._proxgradaccel, _alg._admmlin, _alg._pdhg, _alg._proxgrad)
 def _l1rls(A, Astar, b, lmbda, x0, **kwargs):
     """Solve the l1-regularized least squares problem.
 
@@ -375,7 +375,7 @@ def _l1rls(A, Astar, b, lmbda, x0, **kwargs):
     return args, kwargs
 
 
-@backends(_alg._admmlin, _alg.pdhg)
+@backends(_alg._admmlin, _alg._pdhg)
 def srlasso(A, Astar, b, lmbda, x0, **kwargs):
     """Solve the square root LASSO problem.
 

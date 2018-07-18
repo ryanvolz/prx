@@ -385,8 +385,8 @@ class ADMM(_base.BaseIterativeAlgorithm):
                 Initial value for the optimization variable.
 
             y : array_like, optional
-                Initial value for ``y = u/penalty``, the unscaled dual variable
-                of `x`.
+                Initial value for ``y = u/penalty``, the unscaled dual
+                variable.
 
     """
 
@@ -1028,8 +1028,8 @@ class ADMMLin(_base.BaseIterativeAlgorithm):
                 Initial value for the optimization variable.
 
             y : array_like, optional
-                Initial value for ``y = u/penalty``, the unscaled dual variable
-                of `x`.
+                Initial value for ``y = u/penalty``, the unscaled dual
+                variable.
 
     """
 
