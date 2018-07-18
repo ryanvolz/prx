@@ -19,6 +19,9 @@ refs = dict(
         convex cone problems with  applications to sparse signal recovery,"
         Mathematical Programming Computation, vol. 3, no. 3, pp. 165-218,
         Aug. 2011.""",
+    BCW11="""A. Belloni, V. Chernozhukov, and L. Wang, "Square-root lasso:
+        pivotal recovery of sparse signals via conic programming," Biometrika,
+        vol. 98, no. 4, pp. 791-806, Dec. 2011.""",
     BPC_11="""S. Boyd, N. Parikh, E. Chu, B. Peleato, and J. Eckstein,
         "Distributed Optimization and Statistical Learning via the Alternating
         Direction Method of Multipliers," Found. Trends Mach. Learn., vol. 3,
@@ -34,6 +37,9 @@ refs = dict(
     SGB14="""K. Scheinberg, D. Goldfarb, and X. Bai, "Fast First-Order
         Methods for Composite Convex Optimization with Backtracking,"
         Found Comput Math, pp. 389-417, Mar. 2014.""",
+    Tib96="""R. Tibshirani, "Regression Shrinkage and Selection via the Lasso,"
+        Journal of the Royal Statistical Society. Series B (Methodological),
+        vol. 58, no. 1, pp. 267-288, Jan. 1996.""",
 )
 
 

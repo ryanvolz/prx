@@ -13,7 +13,9 @@ import numpy as np
 from . import base as _base
 from .. import algorithms as _alg
 
-__all__ = ('SplitObjective', 'SplitObjectiveAffine')
+__all__ = (
+    'SplitObjective', 'SplitObjectiveAffine', 'SplitObjectiveAffineProx',
+)
 
 
 class SplitObjective(_base.BaseObjective):
@@ -194,4 +196,8 @@ class SplitObjective(_base.BaseObjective):
 
 SplitObjectiveAffine = SplitObjective.with_alg(
     _alg.ProxGradAccel, 'SplitObjectiveAffine',
+)
+
+SplitObjectiveAffineProx = SplitObjective.with_alg(
+    _alg.ADMMLin, 'SplitObjectiveAffineProx',
 )

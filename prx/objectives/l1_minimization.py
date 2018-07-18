@@ -16,11 +16,119 @@ from .. import algorithms as _alg
 from .. import functions as _fun
 from ._common import backends
 
-__all__ = ('bpdn', 'dantzig', 'L1RLS', '_l1rls', 'srlasso')
+__all__ = ('_bpdn', '_dantzig', '_l1rls', '_srlasso',
+           'BPDN', 'Dantzig')
+
+
+class BPDN(_split_objectives.SplitObjectiveAffineProx):
+    """Solve the basis pursuit denoising problem.
+
+    Given `A`, `b`, `eps`, and `w`, solve for ``x``::
+
+        minimize    l1norm(w * x)
+        subject to  l2norm(A(x) - b) <= eps
+
+    {objective_with_algorithm_description}
+
+
+    Attributes
+    ----------
+
+    {objective_attributes}
+
+
+    See Also
+    --------
+
+    Dantzig, .L1RLS, .L1RootLS, .Lasso, {algorithm_self}
+
+
+    Notes
+    -----
+
+    {algorithm_notes}
+
+
+    References
+    ----------
+
+    {algorithm_references}
+
+    """
+
+    _doc_objective_self = ':class:`.BPDN`'
+
+    _doc_objective_parameters = """
+    eps : float
+        A positive number describing the l2-norm constraint.
+
+    w : float | array, optional
+        A scalar or array giving the weighting on ``x`` inside the l1-norm.
+
+    axis : False | None | int | tuple of ints, optional
+        If this argument is given, the l1-norm is replaced by the combined
+        l1- and l2-norm with the l2-norm taken over the specified axes:
+        ``l1norm(l2norm(x, axis))``. This can be used to solve the "block"
+        or "group" sparsity problem.
+
+    """
+
+    def __init__(self, eps=1, w=1, axis=False, **kwargs):
+        """Initialize basis pursuit denoising problem.
+
+        Parameters
+        ----------
+
+        {objective_parameters}
+
+
+        Other Parameters
+        ----------------
+
+        {algorithm_parameters}
+
+        """
+        self.eps = eps
+        self.w = w
+        self.axis = axis
+        super(BPDN, self).__init__(**kwargs)
+
+    def validate_params(self):
+        """."""
+        if self.eps <= 0:
+            raise ValueError('eps must be positive')
+
+        self.w = np.asarray(self.w)
+        if np.any(self.w == 0):
+            raise ValueError('w must be nonzero')
+
+        # set split objective parameters
+        if self.axis is False:
+            F = _fun.L1Norm(stretch=self.w)
+        else:
+            F = _fun.L1L2Norm(axis=self.axis, stretch=self.w)
+        G = _fun.L2BallInd(radius=self.eps)
+        self.F = F.fun
+        self.proxF = F.prox
+        self.G = G.fun
+        self.proxG = G.prox
+
+        return super(BPDN, self).validate_params()
+
+    def get_params(self, deep=True):
+        """."""
+        params = super(BPDN, self).get_params(deep=deep)
+        params.update(eps=self.eps, w=self.w, axis=self.axis)
+        return params
+
+    def set_params(self, eps=None, w=None, axis=None, **alg_params):
+        """."""
+        self._assign_params(eps=eps, w=w, axis=axis)
+        return super(BPDN, self).set_params(**alg_params)
 
 
 @backends(_alg._admmlin, _alg._pdhg)
-def bpdn(A, Astar, b, eps, x0, **kwargs):
+def _bpdn(A, Astar, b, eps, x0, **kwargs):
     """Solve the basis pursuit denoising problem.
 
     Given A, b, and eps, solve for x::
@@ -74,7 +182,7 @@ def bpdn(A, Astar, b, eps, x0, **kwargs):
     See Also
     --------
 
-    dantzig, l1rls, .lasso, srlasso, {seealso}
+    _dantzig, _l1rls, ._lasso, _srlasso, {seealso}
 
     """
     try:
@@ -90,8 +198,121 @@ def bpdn(A, Astar, b, eps, x0, **kwargs):
     return args, kwargs
 
 
+class Dantzig(_split_objectives.SplitObjectiveAffineProx):
+    """Solve the Dantzig selector problem.
+
+    Given `A`, `b`, `delta`, and `w`, solve for ``x``::
+
+        minimize    l1norm(w * x)
+        subject to  linfnorm(A(x) - b) <= delta
+
+    For the classic formulation of the Dantzig selector problem, `A` and `b`
+    should be composed such that ``A(x) = Bstar(B(x))`` and ``b = Bstar(c)``
+    for `B` and `c` describing the underlying measurement equation
+    ``B(x) = c + noise`` and `Bstar` giving the adjoint of `B`. In that case,
+    `A` will be self-adjoint with ``A == Astar``.
+
+    {objective_with_algorithm_description}
+
+
+    Attributes
+    ----------
+
+    {objective_attributes}
+
+
+    See Also
+    --------
+
+    BPDN, .L1RLS, .L1RootLS, .Lasso, {algorithm_self}
+
+
+    Notes
+    -----
+
+    {algorithm_notes}
+
+
+    References
+    ----------
+
+    {algorithm_references}
+
+    """
+
+    _doc_objective_self = ':class:`.Dantzig`'
+
+    _doc_objective_parameters = """
+    delta : float
+        A positive number describing the linf-norm constraint.
+
+    w : float | array, optional
+        A scalar or array giving the weighting on ``x`` inside the l1-norm.
+
+    axis : False | None | int | tuple of ints, optional
+        If this argument is given, the l1-norm is replaced by the combined
+        l1- and l2-norm with the l2-norm taken over the specified axes:
+        ``l1norm(l2norm(x, axis))``. This can be used to solve the "block"
+        or "group" sparsity problem.
+
+    """
+
+    def __init__(self, delta=1, w=1, axis=False, **kwargs):
+        """Initialize Dantzig selector problem.
+
+        Parameters
+        ----------
+
+        {objective_parameters}
+
+
+        Other Parameters
+        ----------------
+
+        {algorithm_parameters}
+
+        """
+        self.delta = delta
+        self.w = w
+        self.axis = axis
+        super(Dantzig, self).__init__(**kwargs)
+
+    def validate_params(self):
+        """."""
+        if self.delta <= 0:
+            raise ValueError('delta must be positive')
+
+        self.w = np.asarray(self.w)
+        if np.any(self.w == 0):
+            raise ValueError('w must be nonzero')
+
+        # set split objective parameters
+        if self.axis is False:
+            F = _fun.L1Norm(stretch=self.w)
+        else:
+            F = _fun.L1L2Norm(axis=self.axis, stretch=self.w)
+        G = _fun.LInfBallInd(radius=self.delta)
+        self.F = F.fun
+        self.proxF = F.prox
+        self.G = G.fun
+        self.proxG = G.prox
+
+        return super(Dantzig, self).validate_params()
+
+    def get_params(self, deep=True):
+        """."""
+        params = super(Dantzig, self).get_params(deep=deep)
+        params.update(delta=self.delta, w=self.w, axis=self.axis)
+        return params
+
+    def set_params(self, delta=None, w=None, axis=None, **alg_params):
+        """."""
+        self._assign_params(delta=delta, w=w, axis=axis)
+        return super(Dantzig, self).set_params(**alg_params)
+
+
 @backends(_alg._admmlin, _alg._pdhg)
-def dantzig(A, Astar, b, delta, x0, **kwargs):
+def _dantzig(A, Astar, b, delta, x0, **kwargs):
     """Solve the Dantzig selector problem.
 
     Given A, b, and delta, solve for x::
@@ -145,7 +366,7 @@ def dantzig(A, Astar, b, delta, x0, **kwargs):
     See Also
     --------
 
-    bpdn, l1rls, .lasso, srlasso, {seealso}
+    _bpdn, _l1rls, ._lasso, _srlasso, {seealso}
 
 
     References
@@ -177,122 +398,6 @@ def dantzig(A, Astar, b, delta, x0, **kwargs):
     return args, kwargs
 
 
-class L1RLS(_split_objectives.SplitObjectiveAffine):
-    """Solve the l1-regularized least squares problem.
-
-    Given `A`, `b`, `lmbda`, and `w`, solve for ``x``::
-
-        minimize  0.5*l2norm(A(x) - b)**2 + lmbda*l1norm(w * x)
-
-    This problem is sometimes called the LASSO since it is equivalent to the
-    original `Lasso` formulation for appropriate lmbda as a function of tau.
-
-    {objective_with_algorithm_description}
-
-
-    Attributes
-    ----------
-
-    {objective_attributes}
-
-
-    See Also
-    --------
-
-    BPDN, Dantzig, .Lasso, SRLasso, {algorithm_self}
-
-
-    Notes
-    -----
-
-    {algorithm_notes}
-
-    The accelerated proximal gradient algorithm applied specifically to the
-    l1-regularized least squares problem is discussed in [#BT09]_.
-
-
-    References
-    ----------
-
-    {algorithm_references}
-
-    .. [#BT09] {BT09}
-
-    """
-
-    _doc_objective_self = ':class:`.L1RLS`'
-
-    _doc_objective_parameters = """
-    lmbda : float
-        A positive number giving the l1-norm scaling.
-
-    w : float | array, optional
-        A scalar or array giving the weighting on ``x`` inside the l1-norm.
-
-    axis : False | None | int | tuple of ints, optional
-        If this argument is given, the l1-norm is replaced by the combined
-        l1- and l2-norm with the l2-norm taken over the specified axes:
-        ``l1norm(l2norm(x, axis))``. This can be used to solve the "block"
-        or "group" sparsity problem.
-
-    """
-
-    def __init__(self, lmbda=1, w=1, axis=False, **kwargs):
-        """Initialize l1-regularized least squares problem.
-
-        Parameters
-        ----------
-
-        {objective_parameters}
-
-
-        Other Parameters
-        ----------------
-
-        {algorithm_parameters}
-
-        """
-        self.lmbda = lmbda
-        self.w = w
-        self.axis = axis
-        super(L1RLS, self).__init__(**kwargs)
-
-    def validate_params(self):
-        """."""
-        # check lmbda > 0
-        if self.lmbda <= 0:
-            raise ValueError('lmbda must be positive')
-
-        self.w = np.asarray(self.w)
-        if np.any(self.w == 0):
-            raise ValueError('w must be nonzero')
-
-        # set split objective parameters based on lmbda and axis
-        if self.axis is False:
-            F = _fun.L1Norm(scale=self.lmbda, stretch=self.w)
-        else:
-            F = _fun.L1L2Norm(axis=self.axis, scale=self.lmbda, stretch=self.w)
-        G = _fun.L2NormSqHalf()
-        self.F = F.fun
-        self.proxF = F.prox
-        self.G = G.fun
-        self.gradG = G.grad
-        self.proxG = G.prox
-
-        return super(L1RLS, self).validate_params()
-
-    def get_params(self, deep=True):
-        """."""
-        params = super(L1RLS, self).get_params(deep=deep)
-        params.update(lmbda=self.lmbda, w=self.w, axis=self.axis)
-        return params
-
-    def set_params(self, lmbda=None, w=None, axis=None, **alg_params):
-        """."""
-        self._assign_params(lmbda=lmbda, w=w, axis=axis)
-        return super(L1RLS, self).set_params(**alg_params)
-
-
 @backends(_alg._proxgradaccel, _alg._admmlin, _alg._pdhg, _alg._proxgrad)
 def _l1rls(A, Astar, b, lmbda, x0, **kwargs):
     """Solve the l1-regularized least squares problem.
@@ -302,7 +407,7 @@ def _l1rls(A, Astar, b, lmbda, x0, **kwargs):
         minimize  0.5*l2norm(A(x) - b)**2 + lmbda*l1norm(x)
 
     This problem is sometimes called the LASSO since it is equivalent to the
-    original :func:`lasso` formulation for appropriate lmbda as a function of
+    original :func:`_lasso` formulation for appropriate lmbda as a function of
     tau.
 
 
@@ -351,7 +456,7 @@ def _l1rls(A, Astar, b, lmbda, x0, **kwargs):
     See Also
     --------
 
-    bpdn, dantzig, .lasso, srlasso, {seealso}
+    _bpdn, _dantzig, ._lasso, _srlasso, {seealso}
 
 
     References
@@ -376,14 +481,14 @@ def _l1rls(A, Astar, b, lmbda, x0, **kwargs):
 
 
 @backends(_alg._admmlin, _alg._pdhg)
-def srlasso(A, Astar, b, lmbda, x0, **kwargs):
+def _srlasso(A, Astar, b, lmbda, x0, **kwargs):
     """Solve the square root LASSO problem.
 
     Given A, b, and lmbda, solve for x::
 
         minimize  l2norm(A(x) - b) + lmbda*l1norm(x)
 
-    The square root LASSO may be preferred to :func:`l1rls` since the
+    The square root LASSO may be preferred to :func:`_l1rls` since the
     selection of the parameter `lmbda` need not depend on the noise level of
     the measurements `b` (under the model where ``b = A(x) + n`` for some
     noise n). See [1]_ for more details.
@@ -434,7 +539,7 @@ def srlasso(A, Astar, b, lmbda, x0, **kwargs):
     See Also
     --------
 
-    bpdn, dantzig, l1rls, .lasso, {seealso}
+    _bpdn, _dantzig, _l1rls, ._lasso, {seealso}
 
 
     References
