@@ -41,8 +41,8 @@ class L1Norm(_base.NormFunction):
 
     .NormFunction : Parent class.
     L1L2Norm : Combined l1- and l2-norm Function.
-    .l1norm : Associated function.
-    .prox_l1 : Prox operator function.
+    prx.fun.norms.l1norm : Associated function.
+    prx.prox.norms.prox_l1 : Prox operator function.
 
 
     Notes
@@ -84,8 +84,8 @@ class L1L2Norm(_base.NormFunction):
     .NormFunction : Parent class.
     L1Norm : l1-norm Function.
     L2Norm : l2-norm Function.
-    .l1l2norm : Associated function.
-    .prox_l1l2 : Prox operator function.
+    prx.fun.norms.l1l2norm : Associated function.
+    prx.prox.norms.prox_l1l2 : Prox operator function.
 
 
     Notes
@@ -159,8 +159,8 @@ class L2Norm(_base.NormFunction):
 
     .NormFunction : Parent class.
     L1L2Norm : Combined l1- and l2-norm Function.
-    .l2norm : Associated function.
-    .prox_l2 : Prox operator function.
+    prx.fun.norms.l2norm : Associated function.
+    prx.prox.norms.prox_l2 : Prox operator function.
 
 
     Notes
@@ -201,8 +201,9 @@ class L2NormSqHalf(_base.NormSqFunction):
 
     .NormSqFunction : Parent class.
     L2Norm : l2-norm Function.
-    .l2sqhalf : Associated function.
-    .prox_l2sqhalf : Prox operator function.
+    prx.fun.norms.l2normsqhalf : Associated function.
+    prx.grad.norms.grad_l2sqhalf : Gradient function.
+    prx.prox.norms.prox_l2sqhalf : Prox operator function.
 
 
     Notes
@@ -242,8 +243,8 @@ class LInfNorm(_base.NormFunction):
     --------
 
     .NormFunction : Parent class.
-    .linfnorm : Associated function.
-    .prox_linf : Prox operator function.
+    prx.fun.norms.linfnorm : Associated function.
+    prx.prox.norms.prox_linf : Prox operator function.
 
 
     Notes
@@ -284,8 +285,8 @@ class L1BallInd(_base.NormBallFunction):
     --------
 
     .NormBallFunction : Parent class.
-    .l1norm : l1-norm function.
-    .proj_l1 : Prox operator projection function.
+    prx.fun.norms.l1norm : l1-norm function.
+    prx.prox.projections.proj_l1 : Prox operator projection function.
 
 
     Notes
@@ -338,8 +339,8 @@ class L2BallInd(_base.NormBallFunction):
     --------
 
     .NormBallFunction : Parent class.
-    .l2norm : l2-norm function.
-    .proj_l2 : Prox operator projection function.
+    prx.fun.norms.l2norm : l2-norm function.
+    prx.prox.projections.proj_l2 : Prox operator projection function.
 
 
     Notes
@@ -392,8 +393,8 @@ class LInfBallInd(_base.NormBallFunction):
     --------
 
     .NormBallFunction : Parent class.
-    .linfnorm : linf-norm function.
-    .proj_linf : Prox operator projection function.
+    prx.fun.norms.linfnorm : linf-norm function.
+    prx.prox.projections.proj_linf : Prox operator projection function.
 
 
     Notes

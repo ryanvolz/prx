@@ -47,6 +47,8 @@ class NormCovNegLogLik(_base.BaseFunction):
     --------
 
     .IndicatorFunction : Parent class.
+    prx.fun.covariance.normcov_negloglik : Associated function.
+    prx.grad.covariance.grad_normcov_negloglik : Gradient function.
 
 
     Notes

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # ----------------------------------------------------------------------------
 # Copyright (c) 2014, 2016, 2018 'prx' developers (see AUTHORS file)
 # All rights reserved.
@@ -221,54 +222,15 @@ def proj_npos(v):
     return np.minimum(v, 0)
 
 
-def proj_zeros(v, z):
-    """Project v onto set with specified zeros z (set v[z] = 0).
-
-    This prox operator solves for x in::
-
-        minimize    l2normsqhalf(x - v)
-        subject to  x[z] == 0
-
-    which is Euclidean projection onto the space where x[z] == 0.
-
-
-    Parameters
-    ----------
-
-    v : array
-        Input array.
-
-    z : boolean array
-        Array specifying the zero locations at True entries.
-
-
-    Returns
-    -------
-
-    x : array
-        Result.
-
-
-    See Also
-    --------
-
-    proj_nneg, proj_npos
-
-    """
-    x = v.copy()
-    x[z] = 0
-    return x
-
-
 def proj_psd(V, epsilon=0):
-    """Project Hermitian matrix onto positive semidefinite cone.
+    ur"""Project Hermitian matrix onto positive semidefinite cone.
 
     In effect, this sets negative eigenvalues set to 0.
 
     This prox operator solves for X in::
 
         minimize    l2normsqhalf(X - V, axis=(-2, -1))
-        subject to  X >= 0 (in matrix inequality sense)
+        subject to  X ≽ 0 (in matrix inequality sense)
 
     which is Euclidean projection onto the positive semidefinite cone.
 
@@ -281,8 +243,8 @@ def proj_psd(V, epsilon=0):
 
     epsilon : float, optional
         When `epsilon` is non-zero, project onto the cone given by
-        :math:`X \succeq \epsilon I` instead of the PSD cone. This sets
-        eigenvalues less than `epsilon` to `epsilon`.
+        ``X ≽ epsilon * I`` instead of the PSD cone. This sets eigenvalues less
+        than `epsilon` to `epsilon`.
 
 
     Returns
@@ -308,7 +270,7 @@ def proj_psd(V, epsilon=0):
 
 
 def proj_psd_stokes(v_s, epsilon=0):
-    """Project Hermitian matrix onto positive semidefinite cone.
+    ur"""Project Hermitian matrix onto positive semidefinite cone.
 
     In effect, this sets negative eigenvalues set to 0. This function handles
     the special case of a block 2x2 Hermitian matrix represented by Stokes
@@ -318,7 +280,7 @@ def proj_psd_stokes(v_s, epsilon=0):
     This prox operator solves for X in::
 
         minimize    l2normsqhalf(X - V, axis=(-2, -1))
-        subject to  X >= 0 (in matrix inequality sense)
+        subject to  X ≽ 0
 
     which is Euclidean projection onto the positive semidefinite cone where V
     is the equivalent matrix corresponding to the Stokes parameters `v_s`.
@@ -333,8 +295,8 @@ def proj_psd_stokes(v_s, epsilon=0):
 
     epsilon : float, optional
         When `epsilon` is non-zero, project onto the cone given by
-        :math:`X \succeq \epsilon I` instead of the PSD cone. This sets
-        eigenvalues less than `epsilon` to `epsilon`.
+        ``X ≽ epsilon * I`` instead of the PSD cone. This sets eigenvalues less
+        than `epsilon` to `epsilon`.
 
 
     Returns
@@ -401,3 +363,42 @@ def proj_psd_stokes(v_s, epsilon=0):
     # since i, q, u, v are views into x_s, we can simply return x_s after
     # having written the modified values to i, q, u, v
     return x_s
+
+
+def proj_zeros(v, z):
+    """Project v onto set with specified zeros z (set v[z] = 0).
+
+    This prox operator solves for x in::
+
+        minimize    l2normsqhalf(x - v)
+        subject to  x[z] == 0
+
+    which is Euclidean projection onto the space where x[z] == 0.
+
+
+    Parameters
+    ----------
+
+    v : array
+        Input array.
+
+    z : boolean array
+        Array specifying the zero locations at True entries.
+
+
+    Returns
+    -------
+
+    x : array
+        Result.
+
+
+    See Also
+    --------
+
+    proj_nneg, proj_npos
+
+    """
+    x = v.copy()
+    x[z] = 0
+    return x

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # ----------------------------------------------------------------------------
 # Copyright (c) 2014-2018, 'prx' developers (see AUTHORS file)
 # All rights reserved.
@@ -17,8 +18,7 @@ from ..prox.projections import (proj_nneg, proj_npos, proj_psd,
                                 proj_psd_stokes, proj_zeros)
 
 __all__ = (
-    'NNegInd', 'NPosInd', 'ZerosInd',
-    'PSDInd', 'PSDIndStokes',
+    'NNegInd', 'NPosInd', 'PSDInd', 'PSDIndStokes', 'ZerosInd',
 )
 
 
@@ -39,7 +39,7 @@ class NNegInd(_base.IndicatorFunction):
 
     .IndicatorFunction : Parent class.
     NPosInd : Conjugate function.
-    .proj_nneg : Prox operator projection function.
+    prx.prox.projections.proj_nneg : Prox operator projection function.
 
 
     Notes
@@ -88,7 +88,7 @@ class NPosInd(_base.IndicatorFunction):
 
     .IndicatorFunction : Parent class.
     NNegInd : Conjugate function.
-    .proj_npos : Prox operator projection function.
+    prx.prox.projections.proj_npos : Prox operator projection function.
 
 
     Notes
@@ -120,6 +120,179 @@ class NPosInd(_base.IndicatorFunction):
         return proj_npos(x)
 
 
+class PSDInd(_base.IndicatorFunction):
+    ur"""Function class for the positive semidefinite indicator function.
+
+    {function_summary}
+
+
+    Attributes
+    ----------
+
+    epsilon : float
+        When `epsilon` is non-zero, the indicator is for the cone given by
+        ``X ≽ epsilon * I`` instead of the PSD cone. The prox operator sets
+        eigenvalues less than `epsilon` to `epsilon`.
+
+    {function_attributes}
+
+
+    See Also
+    --------
+
+    .IndicatorFunction : Parent class.
+    PSDIndStokes : Specialized PSD indicator for matrices as Stokes parameters.
+    prx.prox.projections.proj_psd : Prox operator projection function.
+
+
+    Notes
+    -----
+
+    The indicator function is zero for matrices M that are positive
+    semidefinite (all eigenvalues are >= 0) and infinity otherwise.
+
+    {function_notes}
+
+    The prox operator is Euclidean projection to the nearest positive
+    semidefinite matrix (negative eigenvalues are set to zero).
+
+    """
+
+    def __init__(
+        self, epsilon=0, scale=None, stretch=None, shift=None, linear=None,
+        const=None,
+    ):
+        ur"""Create Function that defines an indicator function.
+
+        {init_summary}
+
+
+        Parameters
+        ----------
+
+        epsilon : float, optional
+            When `epsilon` is non-zero, the indicator is for the cone given by
+            ``X ≽ epsilon * I`` instead of the PSD cone. The prox operator sets
+            eigenvalues less than `epsilon` to `epsilon`.
+
+        {init_params}
+
+        """
+        self._epsilon = epsilon
+
+        super(PSDInd, self).__init__(
+            scale=scale, stretch=stretch, shift=shift,
+            linear=linear, const=const,
+        )
+
+    # @property
+    # def _conjugate_class(self):
+    #     return PSDInd
+
+    @property
+    def epsilon(self):
+        """Magnitude of identity shift to indicator cone."""
+        return self._epsilon
+
+    def fun(self, X):
+        """Indicator function for positive semidefinite matrices."""
+        w = np.linalg.eigvalsh(X)
+        # check for negative eigenvalues, but be forgiving for very small
+        # negative values relative to the maximum eignvalue
+        if np.any(np.min(w, axis=-1) < -np.spacing(np.max(w, axis=-1))):
+            return np.inf
+        else:
+            return 0
+
+    def prox(self, X, lmbda=1):
+        """Project Hermitian matrix onto positive semidefinite cone."""
+        return proj_psd(X, epsilon=self._epsilon)
+
+
+class PSDIndStokes(PSDInd):
+    ur"""Function class for the positive semidefinite indicator function.
+
+    This indicator handles the special case of a block 2x2 Hermitian matrix
+    represented by Stokes parameters where the projection can be achieved
+    efficiently without an eigen-decomposition.
+
+    {function_summary}
+
+
+    Attributes
+    ----------
+
+    epsilon : float
+        When `epsilon` is non-zero, the indicator is for the cone given by
+        ``X ≽ epsilon * I`` instead of the PSD cone. The prox operator sets
+        eigenvalues less than `epsilon` to `epsilon`.
+
+    {function_attributes}
+
+
+    See Also
+    --------
+
+    .IndicatorFunction : Parent class.
+    PSDInd : General PSD indicator.
+    prx.prox.projections.proj_psd_stokes : Prox operator projection function.
+
+
+    Notes
+    -----
+
+    The indicator function is zero for matrices M that are positive
+    semidefinite (all eigenvalues are >= 0) and infinity otherwise.
+
+    {function_notes}
+
+    The prox operator is Euclidean projection to the nearest positive
+    semidefinite matrix (negative eigenvalues are set to zero).
+
+    This indicator operates on 2x2 Hermitian blocks given in terms of Stokes
+    parameters (I, Q, U, V)::
+
+        [[  I + Q,   U - 1j*V, ],
+         [ U + 1j*V,  I - Q,   ]]
+
+    The Stokes parameters for all such blocks are passed as an array `s` such
+    that::
+
+        I = s[..., 0]
+        Q = s[..., 1]
+        U = s[..., 2]
+        V = s[..., 3]
+
+    The equivalent set of Hermitian matrices of shape (..., 2, 2) could be
+    formed from the (...,)-shaped Stokes parameter arrays as::
+
+        np.moveaxis(
+            np.asarray([[ I + Q, U - 1j*V], [U + 1j*V, I - Q]]),
+            [0, 1], [-2, -1],
+        )
+
+    """
+
+    def fun(self, x_s):
+        """Indicator for positive semidefinite matrices as Stokes params."""
+        i, q, u, v = [x_s[..., k] for k in range(4)]
+        if np.min(i) < -np.spacing(np.max(i)):
+            # negative intensity (trace of 2x2 block), obviously not PSD
+            return np.inf
+        else:
+            i_pol = np.sqrt(q ** 2 + u ** 2 + v ** 2)
+            i_diff = i - i_pol
+            if np.min(i_diff) < -np.spacing(np.max(i_diff)):
+                # polarized intensity higher than total (det of 2x2 block < 0)
+                return np.inf
+            else:
+                return 0
+
+    def prox(self, x_s, lmbda=1):
+        """Project matrix as Stokes params onto positive semidefinite cone."""
+        return proj_psd_stokes(x_s, epsilon=self._epsilon)
+
+
 class ZerosInd(_base.IndicatorFunction):
     """Function class for the indicator of prescribed zero elements.
 
@@ -139,7 +312,7 @@ class ZerosInd(_base.IndicatorFunction):
     --------
 
     .IndicatorFunction : Parent class.
-    .proj_zeros : Prox operator projection function.
+    prx.prox.projections.proj_zeros : Prox operator projection function.
 
 
     Notes
@@ -216,176 +389,3 @@ class ZerosInd(_base.IndicatorFunction):
     def prox(self, x, lmbda=1):
         """Projection onto the set with specified zeros (x[z] is set to 0)."""
         return proj_zeros(x, z=self._z)
-
-
-class PSDInd(_base.IndicatorFunction):
-    r"""Function class for the positive semidefinite indicator function.
-
-    {function_summary}
-
-
-    Attributes
-    ----------
-
-    epsilon : float
-        When `epsilon` is non-zero, the indicator is for the cone given by
-        :math:`X \succeq \epsilon I` instead of the PSD cone. The prox
-        operator sets eigenvalues less than `epsilon` to `epsilon`.
-
-    {function_attributes}
-
-
-    See Also
-    --------
-
-    .IndicatorFunction : Parent class.
-    PSDIndStokes : Specialized PSD indicator for matrices as Stokes parameters.
-    .proj_psd : Prox operator projection function.
-
-
-    Notes
-    -----
-
-    The indicator function is zero for matrices M that are positive
-    semidefinite (all eigenvalues are >= 0) and infinity otherwise.
-
-    {function_notes}
-
-    The prox operator is Euclidean projection to the nearest positive
-    semidefinite matrix (negative eigenvalues are set to zero).
-
-    """
-
-    def __init__(
-        self, epsilon=0, scale=None, stretch=None, shift=None, linear=None,
-        const=None,
-    ):
-        r"""Create Function that defines an indicator function.
-
-        {init_summary}
-
-
-        Parameters
-        ----------
-
-        epsilon : float, optional
-            When `epsilon` is non-zero, the indicator is for the cone given by
-            :math:`X \succeq \epsilon I` instead of the PSD cone. The prox
-            operator sets eigenvalues less than `epsilon` to `epsilon`.
-
-        {init_params}
-
-        """
-        self._epsilon = epsilon
-
-        super(PSDInd, self).__init__(
-            scale=scale, stretch=stretch, shift=shift,
-            linear=linear, const=const,
-        )
-
-    # @property
-    # def _conjugate_class(self):
-    #     return PSDInd
-
-    @property
-    def epsilon(self):
-        """Magnitude of identity shift to indicator cone."""
-        return self._epsilon
-
-    def fun(self, X):
-        """Indicator function for positive semidefinite matrices."""
-        w = np.linalg.eigvalsh(X)
-        # check for negative eigenvalues, but be forgiving for very small
-        # negative values relative to the maximum eignvalue
-        if np.any(np.min(w, axis=-1) < -np.spacing(np.max(w, axis=-1))):
-            return np.inf
-        else:
-            return 0
-
-    def prox(self, X, lmbda=1):
-        """Project Hermitian matrix onto positive semidefinite cone."""
-        return proj_psd(X, epsilon=self._epsilon)
-
-
-class PSDIndStokes(PSDInd):
-    r"""Function class for the positive semidefinite indicator function.
-
-    This indicator handles the special case of a block 2x2 Hermitian matrix
-    represented by Stokes parameters where the projection can be achieved
-    efficiently without an eigen-decomposition.
-
-    {function_summary}
-
-
-    Attributes
-    ----------
-
-    epsilon : float
-        When `epsilon` is non-zero, the indicator is for the cone given by
-        :math:`X \succeq \epsilon I` instead of the PSD cone. The prox
-        operator sets eigenvalues less than `epsilon` to `epsilon`.
-
-    {function_attributes}
-
-
-    See Also
-    --------
-
-    .IndicatorFunction : Parent class.
-    PSDInd : General PSD indicator.
-    .proj_psd_stokes : Prox operator projection function.
-
-
-    Notes
-    -----
-
-    The indicator function is zero for matrices M that are positive
-    semidefinite (all eigenvalues are >= 0) and infinity otherwise.
-
-    {function_notes}
-
-    The prox operator is Euclidean projection to the nearest positive
-    semidefinite matrix (negative eigenvalues are set to zero).
-
-    This indicator operates on 2x2 Hermitian blocks given in terms of Stokes
-    parameters (I, Q, U, V)::
-
-        [[  I + Q,   U - 1j*V, ],
-         [ U + 1j*V,  I - Q,   ]]
-
-    The Stokes parameters for all such blocks are passed as an array `s` such
-    that::
-
-        I = s[..., 0]
-        Q = s[..., 1]
-        U = s[..., 2]
-        V = s[..., 3]
-
-    The equivalent set of Hermitian matrices of shape (..., 2, 2) could be
-    formed from the (...,)-shaped Stokes parameter arrays as::
-
-        np.moveaxis(
-            np.asarray([[ I + Q, U - 1j*V], [U + 1j*V, I - Q]]),
-            [0, 1], [-2, -1],
-        )
-
-    """
-
-    def fun(self, x_s):
-        """Indicator for positive semidefinite matrices as Stokes params."""
-        i, q, u, v = [x_s[..., k] for k in range(4)]
-        if np.min(i) < -np.spacing(np.max(i)):
-            # negative intensity (trace of 2x2 block), obviously not PSD
-            return np.inf
-        else:
-            i_pol = np.sqrt(q ** 2 + u ** 2 + v ** 2)
-            i_diff = i - i_pol
-            if np.min(i_diff) < -np.spacing(np.max(i_diff)):
-                # polarized intensity higher than total (det of 2x2 block < 0)
-                return np.inf
-            else:
-                return 0
-
-    def prox(self, x_s, lmbda=1):
-        """Project matrix as Stokes params onto positive semidefinite cone."""
-        return proj_psd_stokes(x_s, epsilon=self._epsilon)
