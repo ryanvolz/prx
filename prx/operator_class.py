@@ -9,300 +9,396 @@
 
 """Linear operator classes."""
 
+try:
+    from inspect import getfullargspec as _getfullargspec
+except ImportError:
+    from inspect import getargspec as _getfullargspec
+
+import functools
+
 import numpy as np
 
+from six import with_metaclass
+
+from .docstring_helpers import DocstringSubstituteMeta
+
 __all__ = (
-    'LinearOperator', 'DiagLinop', 'MatrixLinop', 'FixedSizeLinop'
+    'DiagLinop', 'LinearOperator', 'MatrixLinop',
 )
 
 
-class LinearOperator(object):
-    """Linear operator A.
+class BaseLinearOperator(with_metaclass(DocstringSubstituteMeta, object)):
+    """{summary}
 
-    This class defines a linear operator through its forward and adjoint
-    operations. The forward operation is called using the :meth:`forward`
-    method, while the adjoint operation is called using the :meth:`adjoint`
-    method.
-
-    For specifying a particular operator, initialize this class with the
-    forward and adjoint functions as arguments. Alternatively, you can inherit
-    from this class and override the :meth:`_forward` and :meth:`_adjoint`
-    methods.
+    {description}
 
 
     Attributes
     ----------
 
+    {attributes}
+
+    """
+
+    _doc_summary = 'Linear operator A.'
+
+    _doc_description = """
+    This class defines a linear operator through its forward and adjoint
+    operations. The forward operation is called using the :meth:`forward`
+    method, while the adjoint operation is called using the :meth:`adjoint`
+    method.
+
+    """
+
+    _doc_attributes = """
     H : :class:`.LinearOperator`
         Object corresponding to the adjoint operator (i.e., the forward and
         adjoint functions are swapped).
 
+    inshape : tuple
+        Tuple giving the shape of the input array for the forward operation
+        and output array for the adjoint operation. May be `None` if unknown or
+        shape is not fixed.
+
+    indtype : dtype
+        Data type of the input array for the forward operation and output array
+        for the adjoint operation. May be `None` if unknown or dtype is not
+        fixed.
+
+    outshape : tuple
+        Tuple giving the shape of the output array for the forward operation
+        and input array for the adjoint operation. May be `None` if unknown or
+        shape is not fixed.
+
+    outdtype : dtype
+        Data type of the output array for the forward operation and input array
+        for the adjoint operation. May be `None` if unknown or dtype is not
+        fixed.
+
     """
 
-    def __init__(self, forward=None, adjoint=None):
-        """Create a linear operator with the given forward/adjoint functions.
+    _doc_parameters = """
+    inshape : tuple
+        Tuple giving the shape of the input array for the forward operation
+        and output array for the adjoint operation. May be `None` if unknown or
+        shape is not fixed.
+
+    indtype : dtype
+        Data type of the input array for the forward operation and output array
+        for the adjoint operation. May be `None` if unknown or dtype is not
+        fixed.
+
+    outshape : tuple
+        Tuple giving the shape of the output array for the forward operation
+        and input array for the adjoint operation. May be `None` if unknown or
+        shape is not fixed.
+
+    outdtype : dtype
+        Data type of the output array for the forward operation and input array
+        for the adjoint operation. May be `None` if unknown or dtype is not
+        fixed.
+
+    """
+
+    def __init__(
+        self, inshape=None, indtype=None, outshape=None, outdtype=None,
+        **kwargs
+    ):
+        """Initialize a linear operator object.
 
         Parameters
         ----------
 
-        forward : function
-            A(x), forward operator taking a single argument. If an
-            optional `out` keyword argument is accepted, it is used to specify
-            the output array.
-
-        adjoint : function
-            Astar(y), adjoint operator taking a single argument. If an
-            optional `out` keyword argument is accepted, it is used to specify
-            the output array.
+        {parameters}
 
         """
-        if forward is not None:
-            self._forward = forward
-        if adjoint is not None:
-            self._adjoint = adjoint
+        self._inshape = inshape
+        self._indtype = indtype
+        self._outshape = outshape
+        self._outdtype = outdtype
+        if kwargs:
+            errstr = 'Unrecognized argument to __init__: {0}.'
+            raise TypeError(errstr.format(kwargs))
 
-    def _forward(self, x):
-        raise NotImplementedError
+    _doc_forward_doc = """Calculate the forward operation, ``A(x)``.
 
-    def _adjoint(self, y):
-        raise NotImplementedError
+    Parameters
+    ----------
+
+    x : ndarray
+        Input to forward operation A.
+
+    out : ndarray
+        Optional pre-allocated array for storing the output.
+
+
+    Returns
+    -------
+
+    out : ndarray
+        Output of the forward operation A.
+
+
+    Notes
+    -----
+
+    Depending on the implementation of the specific operator, supplying an
+    `out` argument may not always avoid output memory allocation.
+
+    """
 
     def forward(self, x, out=None):
-        """Calculate the forward operation, ``A(x)``.
+        """{forward_doc}"""
+        raise NotImplementedError
 
-        Parameters
-        ----------
+    def A(self, x, out=None):
+        """{forward_doc}"""
+        return self.forward(x, out)
 
-        x : ndarray
-            Input to forward operation A.
+    def __call__(self, x, out=None):
+        """{forward_doc}"""
+        return self.forward(x, out)
 
-        out : ndarray
-            Optional pre-allocated array for storing the output.
+    _doc_adjoint_doc = """Calculate the adjoint operation, ``A*(y)``.
+
+    Parameters
+    ----------
+
+    y : ndarray
+        Input to adjoint operation A*.
+
+    out : ndarray
+        Optional pre-allocated array for storing the output.
 
 
-        Returns
-        -------
+    Returns
+    -------
 
-        out : ndarray
-            Output of the forward operation A.
+    out : ndarray
+        Output of the adjoint operation A*.
 
 
-        Notes
-        -----
+    Notes
+    -----
 
-        Supplying an `out` argument is only useful for avoiding output memory
-        allocation when the specified forward operator itself accepts an
-        `out` argument.
+    Depending on the implementation of the specific operator, supplying an
+    `out` argument may not always avoid output memory allocation.
 
-        """
-        if out is not None:
-            try:
-                out = self._forward(x, out=out)
-            except TypeError:
-                out[...] = self._forward(x)
-            return out
-        return self._forward(x)
-
-    __call__ = forward
+    """
 
     def adjoint(self, y, out=None):
-        """Calculate the adjoint operation, ``A*(y)``.
+        """{adjoint_doc}"""
+        raise NotImplementedError
 
-        Parameters
-        ----------
-
-        y : ndarray
-            Input to adjoint operation A*.
-
-        out : ndarray
-            Optional pre-allocated array for storing the output.
-
-
-        Returns
-        -------
-
-        out : ndarray
-            Output of the adjoint operation A*.
-
-
-        Notes
-        -----
-
-        Supplying an `out` argument is only useful for avoiding output memory
-        allocation when the specified adjoint operator itself accepts an
-        `out` argument.
-
-        """
-        if out is not None:
-            try:
-                out = self._adjoint(y, out=out)
-            except TypeError:
-                out[...] = self._adjoint(y)
-            return out
-        return self._adjoint(y)
-
-    # short aliases
-    A = forward
-    As = adjoint
+    def As(self, y, out=None):
+        """{adjoint_doc}"""
+        return self.adjoint(y, out)
 
     @property
     def H(self):
-        return LinearOperator(self._adjoint, self._forward)
+        """Object corresponding to the adjoint operator."""
+        return LinearOperator(
+            forward=self.adjoint, adjoint=self.forward,
+            inshape=self.outshape, indtype=self.outdtype,
+            outshape=self.inshape, outdtype=self.indtype,
+        )
+
+    @property
+    def inshape(self):
+        """Tuple giving the shape of the input array for the forward op."""
+        return self._inshape
+
+    @property
+    def indtype(self):
+        """Data type of the input array for the forward op."""
+        return self._indtype
+
+    @property
+    def outshape(self):
+        """Tuple giving the shape of the output array for the forward op."""
+        return self._outshape
+
+    @property
+    def outdtype(self):
+        """Data type of the output array for the forward op."""
+        return self._outdtype
 
 
-class DiagLinop(LinearOperator):
-    """Diagonal linear operator ``A(x) = s*x`` (element-wise mult.)."""
+class DiagLinop(BaseLinearOperator):
+    """."""
 
-    def __init__(self, s):
-        """Create a diagonal linear operator ``A(x) = s*x``.
+    _doc_summary = \
+        'Diagonal linear operator ``A(x) = s*x`` (element-wise mult.).'
 
-        Parameters
-        ----------
+    _doc_attributes = """
+    s : float | int | ndarray
+        Scalar or array defining the diagonal linear operator.
 
-        s : float | int | ndarray
-            Scalar or array defining the diagonal linear operator.
-
-        """
-        self._s = s
-        self._sconj = np.conj(s)
-
-        super(DiagLinop, self).__init__()
-
-    def _forward(self, x, out=None):
-        return np.multiply(self._s, x, out)
-
-    def _adjoint(self, y, out=None):
-        return np.multiply(self._sconj, y, out)
-
-
-class MatrixLinop(LinearOperator):
-    """Matrix linear operator ``A(x) = np.dot(M, x)``."""
-
-    def __init__(self, M):
-        """Create a matrix linear operator ``A(x) = np.dot(M, x)``.
-
-        Parameters
-        ----------
-
-        M : matrix | ndarray
-            Matrix defining the linear operator.
-
-        """
-        self._M = np.ascontiguousarray(M)
-        self._Ms = np.ascontiguousarray(np.conj(np.transpose(M)))
-
-        super(MatrixLinop, self).__init__()
-
-    def _forward(self, x, out=None):
-        return np.dot(self._M, x, out)
-
-    def _adjoint(self, y, out=None):
-        return np.dot(self._Ms, y, out)
-
-
-class FixedSizeLinop(LinearOperator):
-    """Fixed size linear operator A.
-
-    This class defines a linear operator through its forward and adjoint
-    operations. The forward operation is called using the :meth:`forward`
-    method, while the adjoint operation is called using the :meth:`adjoint`
-    method.
-
-    For specifying a particular operator, inherit from this class and override
-    the :meth:`_forward` and :meth:`_adjoint` methods.
-
-
-    Attributes
-    ----------
-
-    inshape, outshape : tuple
-        Tuples giving the shape of the input and output arrays of the forward
-        operation (output and input arrays of the adjoint operation),
-        respectively.
-
-    indtype, outdtype : dtype
-        Dtypes of the input and output arrays of the forward operation
-        (output and input arrays of the adjoint operation), respectively.
+    {attributes}
 
     """
 
-    def __init__(self, inshape, indtype, outshape, outdtype):
-        """Create a linear operator for the given input and output specs.
+    _doc_parameters = """
+    s : float | int | ndarray
+        Scalar or array defining the diagonal linear operator.
 
-        Parameters
-        ----------
+    {parameters}
 
-        inshape, outshape : tuple
-            Tuples giving the shape of the input and output arrays of the
-            forward operation (output and input arrays of the adjoint
-            operation), respectively.
+    """
 
-        indtype, outdtype : dtype
-            Dtypes of the input and output arrays of the forward operation
-            (output and input arrays of the adjoint operation), respectively.
-
-        """
-        self.inshape = inshape
-        self.indtype = indtype
-        self.outshape = outshape
-        self.outdtype = outdtype
-
-        super(FixedSizeLinop, self).__init__()
-
-    def _forward(self, x, out):
-        raise NotImplementedError
-
-    def _adjoint(self, y, out):
-        raise NotImplementedError
+    def __init__(self, s, **kwargs):
+        """."""
+        super(DiagLinop, self).__init__(**kwargs)
+        test_in = np.empty(self.inshape, self.indtype)
+        test_out = np.empty(self.outshape, self.outdtype)
+        try:
+            np.broadcast(s, test_in)
+            np.broadcast(s, test_out)
+        except ValueError:
+            errstr = (
+                's must have shape that is broadcastable with inshape and'
+                ' outshape (which must be the same)'
+            )
+            raise ValueError(errstr)
+        self._s = s
+        self._sconj = np.conj(s)
 
     def forward(self, x, out=None):
-        """Calculate the forward operation, ``A(x)``.
+        """."""
+        return np.multiply(self._s, x, out)
 
-        Parameters
-        ----------
+    def adjoint(self, y, out=None):
+        """."""
+        return np.multiply(self._sconj, y, out)
 
-        x : ndarray of shape `inshape` and dtype `indtype`
-            Input to forward operation A.
+    @property
+    def s(self):
+        """Scalar or array defining the diagonal linear operator."""
+        return self._s
 
-        out : ndarray of shape `outshape` and dtype `outdtype`
-            Optional pre-allocated array for storing the output.
 
+class LinearOperator(BaseLinearOperator):
+    """."""
 
-        Returns
-        -------
+    _doc_summary = \
+        'Linear operator built from supplied forward and adjoint functions.'
 
-        out : ndarray of shape `outshape` and dtype `outdtype`
-            Output of the forward operation A.
+    _doc_parameters = """
+    forward : function
+        A(x), forward operator taking a single argument. If an
+        optional `out` keyword argument is accepted, it is used to specify
+        the output array.
 
-        """
-        if out is None:
-            out = np.empty(self.outshape, self.outdtype)
+    adjoint : function
+        Astar(y), adjoint operator taking a single argument. If an
+        optional `out` keyword argument is accepted, it is used to specify
+        the output array.
+
+    {parameters}
+
+    """
+
+    def __init__(self, forward, adjoint, **kwargs):
+        """."""
+        super(LinearOperator, self).__init__(**kwargs)
+        self._forward = self._normalize_op_function(
+            forward, self._outshape, self._outdtype,
+        )
+        self._adjoint = self._normalize_op_function(
+            adjoint, self._inshape, self._indtype,
+        )
+
+    @staticmethod
+    def _normalize_op_function(fun, shape, dtype):
+        """Return function based on fun that has signature f(x, out=None)."""
+        argspec = _getfullargspec(fun)
+        if 'self' in argspec.args and argspec.args[0] == 'self':
+            argspec.args.pop(0)
+        nargs = len(argspec.args)
+        if nargs == 0 or nargs > 2:
+            errstr = 'Operator function {0} must accept 1 or 2 arguments.'
+            raise ValueError(errstr.format(fun))
+        elif nargs == 1:
+            # function does not have an out argument, wrap so it does
+            @functools.wraps(fun)
+            def fun_with_out(x, out=None):
+                if out is None:
+                    return fun(x)
+                else:
+                    out[...] = fun(x)
+                    return out
+            return fun_with_out
+
+        # now we have nargs=2, determine if second is required or not
+        if argspec.defaults is not None:
+            ndefaults = len(argspec.defaults)
+        else:
+            ndefaults = 0
+        npargs = nargs - ndefaults
+
+        if npargs <= 1:
+            # second argument is not required, fun is good as is
+            return fun
+
+        # fun requires a second argument, wrap so it doesn't
+        if shape is None or dtype is None:
+            errstr = (
+                'Either the operator function {0} must have an optional second'
+                ' (output) argument or the shape and dtype of its output must'
+                ' be specified.'
+            )
+            raise ValueError(errstr.format(fun))
+
+        @functools.wraps(fun)
+        def fun_with_optional_out(x, out=None):
+            if out is None:
+                out = np.empty(shape, dtype)
+            return fun(x, out)
+        return fun_with_optional_out
+
+    def forward(self, x, out=None):
+        """."""
         return self._forward(x, out)
 
     def adjoint(self, y, out=None):
-        """Calculate the adjoint operation, ``A*(y)``.
-
-        Parameters
-        ----------
-
-        y : ndarray of shape `outshape` and dtype `outdtype`
-            Input to adjoint operation A*.
-
-        out : ndarray of shape `outshape` and dtype `outdtype`
-            Optional pre-allocated array for storing the output.
-
-
-        Returns
-        -------
-
-        out : ndarray of shape `inshape` and dtype `indtype`
-            Output of the adjoint operation A*.
-
-        """
-        if out is None:
-            out = np.empty(self.inshape, self.indtype)
+        """."""
         return self._adjoint(y, out)
 
-    # short aliases
-    A = forward
-    As = adjoint
+
+class MatrixLinop(BaseLinearOperator):
+    """."""
+
+    _doc_summary = 'Matrix linear operator ``A(x) = np.matmul(M, x)``.'
+
+    _doc_parameters = """
+    M : matrix | ndarray
+        Matrix defining the linear operator.
+
+    """
+
+    def __init__(self, M):
+        """."""
+        self._M = np.ascontiguousarray(M)
+        self._Ms = np.ascontiguousarray(np.conj(np.transpose(M)))
+        Mshape = M.shape
+        if len(Mshape) == 1:
+            Mshape = (1,) + Mshape
+        inshape = Mshape[:-2] + Mshape[-1:]
+        outshape = Mshape[:-2] + Mshape[-2:-1]
+        super(MatrixLinop, self).__init__(
+            inshape=inshape, indtype=M.dtype,
+            outshape=outshape, outdtype=M.dtype,
+        )
+
+    def forward(self, x, out=None):
+        """."""
+        return np.matmul(self._M, x, out)
+
+    def adjoint(self, y, out=None):
+        """."""
+        return np.matmul(self._Ms, y, out)
+
+    @property
+    def M(self):
+        """Matrix defining the linear operator."""
+        return self._M
