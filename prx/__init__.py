@@ -9,6 +9,7 @@ Standard Problems
 .. autosummary::
    :toctree:
 
+   objectives.covariance_estimation
    objectives.l1_minimization
    objectives.least_squares
 
@@ -25,7 +26,6 @@ Objectives
    objectives
    objectives.split_objectives
    ~objectives.split_objectives.SplitObjective
-   ~objectives.split_objectives.SplitObjectiveAffine
 
 Functions
 *********
