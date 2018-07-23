@@ -121,7 +121,7 @@ class NPosInd(_base.IndicatorFunction):
 
 
 class PSDInd(_base.IndicatorFunction):
-    ur"""Function class for the positive semidefinite indicator function.
+    u"""Function class for the positive semidefinite indicator function.
 
     {function_summary}
 
@@ -162,7 +162,7 @@ class PSDInd(_base.IndicatorFunction):
         self, epsilon=0, scale=None, stretch=None, shift=None, linear=None,
         const=None,
     ):
-        ur"""Create Function that defines an indicator function.
+        u"""Create Function that defines an indicator function.
 
         {init_summary}
 
@@ -210,7 +210,7 @@ class PSDInd(_base.IndicatorFunction):
 
 
 class PSDIndStokes(PSDInd):
-    ur"""Function class for the positive semidefinite indicator function.
+    u"""Function class for the positive semidefinite indicator function.
 
     This indicator handles the special case of a block 2x2 Hermitian matrix
     represented by Stokes parameters where the projection can be achieved

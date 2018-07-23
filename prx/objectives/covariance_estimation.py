@@ -17,11 +17,11 @@ __all__ = ('NormCovML',)
 
 
 class NormCovML(_split_objectives.SplitObjectiveAffine):
-    ur"""Maximum likelihood covariance estimation of a normal random variable.
+    u"""Maximum likelihood covariance estimation of a normal random variable.
 
     Given `A`, `b`, `s`, and `epsilon`, solve for ``x``::
 
-        minimize    log(det( A(x) - b )) + tr( (A(x) - b) \ s )
+        minimize    log(det( A(x) - b )) + tr( (A(x) - b) \\ s )
         subject to  x ≽ epsilon * I
 
     The function above is the negative log-likelihood of the covariance ``x``

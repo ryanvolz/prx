@@ -223,7 +223,7 @@ def proj_npos(v):
 
 
 def proj_psd(V, epsilon=0):
-    ur"""Project Hermitian matrix onto positive semidefinite cone.
+    u"""Project Hermitian matrix onto positive semidefinite cone.
 
     In effect, this sets negative eigenvalues set to 0.
 
@@ -270,7 +270,7 @@ def proj_psd(V, epsilon=0):
 
 
 def proj_psd_stokes(v_s, epsilon=0):
-    ur"""Project Hermitian matrix onto positive semidefinite cone.
+    u"""Project Hermitian matrix onto positive semidefinite cone.
 
     In effect, this sets negative eigenvalues set to 0. This function handles
     the special case of a block 2x2 Hermitian matrix represented by Stokes
