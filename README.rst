@@ -9,7 +9,6 @@ Dependencies
 
 * numpy
 * scipy
-* bottleneck
 
 
 Installation

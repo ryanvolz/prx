@@ -49,7 +49,7 @@ setup(
     keywords='optimization prox proximal convex first-order',
 
     packages=find_packages(),
-    install_requires=['Bottleneck', 'numpy', 'scipy'],
+    install_requires=['numpy', 'scipy'],
     extras_require={
         'develop': ['flake8', 'nose', 'pylint', 'twine', 'wheel'],
         'doc': ['numpydoc', 'sphinx'],
