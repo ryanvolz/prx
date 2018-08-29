@@ -52,7 +52,7 @@ setup(
     install_requires=['numpy', 'scipy'],
     extras_require={
         'develop': ['flake8', 'nose', 'pylint', 'twine', 'wheel'],
-        'doc': ['numpydoc', 'sphinx'],
+        'doc': ['sphinx'],
     },
 
     cmdclass=cmdclass,
