@@ -459,21 +459,29 @@ class ADMM(_base.BaseIterativeAlgorithm):
         )
         return params
 
+    def prepare(self, state):
+        """."""
+        # make sure there is an initial iterate value
+        if 'x' not in state:
+            errstr = (
+                'Keyword arguments for state must include an initial value for'
+                ' x.'
+            )
+            raise ValueError(errstr)
+
+        return super(ADMM, self).prepare(state)
+
     def minimize(self, state):
         """."""
         return super(ADMM, self).minimize(state)
 
     def iterate(self, state):
         """."""
+        # validate parameters and arguments
+        self.prepare(state)
+
         # get initial iterate value
-        try:
-            x0 = state['x']
-        except KeyError:
-            errstr = (
-                'Keyword arguments for state must include an initial value for'
-                ' x.'
-            )
-            raise ValueError(errstr)
+        x0 = state['x']
 
         try:
             y0 = state['y']
@@ -912,7 +920,7 @@ def _admmlin(F, G, A, Astar, b, x0, y0=None, stepsize=1.0, backtrack=0.5,
         return x
 
 
-class ADMMLin(_base.BaseIterativeAlgorithm):
+class ADMMLin(_base.AffineOptArgsMixin, _base.BaseIterativeAlgorithm):
     """Class for the linearized ADMM algorithm.
 
     {algorithm_description}
@@ -1033,30 +1041,6 @@ class ADMMLin(_base.BaseIterativeAlgorithm):
 
     """
 
-    _doc_keyword_arguments = """
-    A : callable
-        ``A(x)`` is a linear operator, used in the `G` term of the objective
-        function: ``G(A(x) - b)``. Although not checked, it must obey the
-        linearity condition
-
-            ``A(a*x + b*y) == a*A(x) + b*A(y)``.
-
-    Astar : callable
-        ``Astar(z)``, the adjoint operator of `A`. By definition, `Astar`
-        satisfies
-
-            ``vdot(A(x), z) == vdot(x, Astar(z))``
-
-        for all x, z and the inner product ``vdot``. If, for instance, `A`
-        represented multiplication by a matrix M, `Astar` would then
-        represent multiplcation by the complex conjugate transpose of M.
-
-    b : np.ndarray
-        Constant used in the `G` term of the objective function:
-        ``G(A(x) - b)``.
-
-    """
-
     _doc_algorithm_parameters = """
     step_size : float, optional
         Initial step size when backtracking is used, or constant step size
@@ -1171,21 +1155,22 @@ class ADMMLin(_base.BaseIterativeAlgorithm):
         )
         return params
 
-    def minimize(self, state, A, Astar, b):
+    def prepare(self, state, A=None, Astar=None, b=None):
+        """."""
+        return super(ADMMLin, self).prepare(state, A=A, Astar=Astar, b=b)
+
+    def minimize(self, state, A=None, Astar=None, b=None):
         """."""
         return super(ADMMLin, self).minimize(state, A=A, Astar=Astar, b=b)
 
-    def iterate(self, state, A, Astar, b):
+    def iterate(self, state, A=None, Astar=None, b=None):
         """."""
+        # validate parameters and arguments
+        kwargs = self.prepare(state, A=A, Astar=Astar, b=b)
+        A, Astar, b = (kwargs['A'], kwargs['Astar'], kwargs['b'])
+
         # get initial iterate value
-        try:
-            x0 = state['x']
-        except KeyError:
-            errstr = (
-                'Keyword arguments for state must include an initial value for'
-                ' x.'
-            )
-            raise ValueError(errstr)
+        x0 = state['x']
 
         try:
             y0 = state['y']

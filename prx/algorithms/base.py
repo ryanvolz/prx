@@ -8,18 +8,27 @@
 # ----------------------------------------------------------------------------
 """Base optimizer algorithm classes."""
 
+import numpy as np
+
 from six import with_metaclass
 
 from . import references as _refs
+from .. import operator_class as _op
 from ..docstring_helpers import DocstringSubstituteMeta
 from ..fun.norms import linfnorm
 
-__all__ = ('BaseOptAlgorithm', 'BaseIterativeAlgorithm')
+__all__ = ('AffineOptArgsMixin', 'BaseOptAlgorithm', 'BaseIterativeAlgorithm')
 
 
-class BaseOptAlgorithm(with_metaclass(
+class AlgBase(with_metaclass(
     DocstringSubstituteMeta, _refs.AlgorithmReferences,
 )):
+    """Base class for algorithms and mixins."""
+
+    pass
+
+
+class BaseOptAlgorithm(AlgBase):
     """Base class for optimization algorithms.
 
     Subclasses should implement :meth:`minimize` and add any necessary
@@ -80,9 +89,7 @@ class BaseOptAlgorithm(with_metaclass(
 
         Parameters
         ----------
-
         {algorithm_objective_parameter}
-
         {algorithm_parameters}
 
         """
@@ -96,7 +103,6 @@ class BaseOptAlgorithm(with_metaclass(
 
         Returns
         -------
-
         self : {algorithm_self}
 
         """
@@ -107,14 +113,12 @@ class BaseOptAlgorithm(with_metaclass(
 
         Parameters
         ----------
-
         deep : boolean, optional
             No effect. Included for compatibility with scikit-learn estimators.
 
 
         Returns
         -------
-
         params : dict
             Parameter names mapped to their values.
 
@@ -127,7 +131,6 @@ class BaseOptAlgorithm(with_metaclass(
 
         Returns
         -------
-
         self : {algorithm_self}
 
         """
@@ -139,19 +142,39 @@ class BaseOptAlgorithm(with_metaclass(
             setattr(self, parameter, value)
         return self
 
+    def prepare(self, state, **kwargs):
+        """Perform common preparations before optimization is to be started.
+
+        This method validates the optimization arguments (those passed to e.g.
+        :meth:`minimize`) and the current set of algorithm parameters.
+
+        Parameters
+        ----------
+        {initial_state_argument}
+        {keyword_arguments}
+
+        Returns
+        -------
+        kwargs : dict
+            Dictionary of normalized keyword arguments.
+
+        """
+        # we only validate parameters just before minimizing to allow for
+        # efficiency in initialization and multiple set_params calls
+        self.objective.validate_params()
+
+        return kwargs
+
     def minimize(self, state, **kwargs):
         """Minimize the objective function given an initial state.
 
         Parameters
         ----------
-
         {initial_state_argument}
-
         {keyword_arguments}
 
         Returns
         -------
-
         obj : :class:`BaseObjective`
             The minimized Objective object.
 
@@ -256,10 +279,6 @@ class BaseIterativeAlgorithm(BaseOptAlgorithm):
 
     def minimize(self, state, **kwargs):
         """."""
-        # we only validate parameters just before minimizing to allow for
-        # efficiency in initialization and multiple set_params calls
-        self.objective.validate_params()
-
         # basic minimization: just loop through the iteration steps and print
         # a status update at a given period
         for state in self.iterate(state, **kwargs):
@@ -292,7 +311,6 @@ class BaseIterativeAlgorithm(BaseOptAlgorithm):
 
         Parameters
         ----------
-
         {initial_state_argument}
 
         {keyword_arguments}
@@ -300,9 +318,94 @@ class BaseIterativeAlgorithm(BaseOptAlgorithm):
 
         Yields
         ------
-
         state : dict
             A dictionary of iteration state variables.
 
         """
+        # overriding methods should call self.prepare()
         raise NotImplementedError
+
+
+class AffineOptArgsMixin(AlgBase):
+    """Algorithm mixin to prepare affine map optimization arguments."""
+
+    _doc_initial_state_argument = """
+    state : dict
+        Initial state dictionary containing:
+
+            x : array_like
+                Initial value for the optimization variable.
+
+    """
+
+    _doc_keyword_arguments = """
+    A : callable | (m, n) ndarray | BaseLinearOperator
+        ``A(x)`` is a linear operator, used in the `G` term of the objective
+        function: ``G(A(x) - b)``. Although not checked, it must obey the
+        linearity condition
+
+            ``A(a*x + b*y) == a*A(x) + b*A(y)``.
+
+    Astar : callable, optional
+        ``Astar(z)``, the adjoint operator of `A`. By definition, `Astar`
+        satisfies
+
+            ``vdot(A(x), z) == vdot(x, Astar(z))``
+
+        for all x, z and the inner product ``vdot``. If, for instance, `A`
+        represented multiplication by a matrix M, `Astar` would then
+        represent multiplcation by the complex conjugate transpose of M. If
+        None and `A` is a :class:`.BaseLinearOperator`, ``A.adjoint`` will be
+        used.
+
+    b : np.ndarray, optional
+        Constant used in the `G` term of the objective function:
+        ``G(A(x) - b)``. If None, 0 will be used.
+
+    """
+
+    def prepare(self, state, **kwargs):
+        """Perform common preparations before optimization is to be started.
+
+        This method validates the optimization arguments (those passed to e.g.
+        :meth:`minimize`) and the current set of algorithm parameters.
+
+        Parameters
+        ----------
+        {initial_state_argument}
+        {keyword_arguments}
+
+        Returns
+        -------
+        kwargs : dict
+            Dictionary of normalized keyword arguments.
+
+        """
+        # make sure there is an initial iterate value
+        if 'x' not in state:
+            errstr = (
+                'Keyword arguments for state must include an initial value for'
+                ' x.'
+            )
+            raise ValueError(errstr)
+
+        # check and normalize keyword arguments
+        if kwargs['A'] is None:
+            raise ValueError('Linear operator A must be specified.')
+        elif isinstance(kwargs['A'], np.ndarray):
+            kwargs['A'] = _op.MatrixLinop(kwargs['A'])
+
+        if kwargs['Astar'] is None:
+            if not isinstance(kwargs['A'], _op.BaseLinearOperator):
+                errstr = (
+                    'Linear operator Astar must be specified if A is not an'
+                    ' object of type BaseLinearOperator.'
+                )
+                raise ValueError(errstr)
+            else:
+                kwargs['Astar'] = kwargs['A'].adjoint
+
+        if kwargs['b'] is None:
+            kwargs['b'] = np.zeros_like(state['x'])
+
+        return super(AffineOptArgsMixin, self).prepare(state, **kwargs)
