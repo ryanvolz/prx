@@ -16,5 +16,5 @@ Installation
 ============
 
 * git clone https://github.com/ryanvolz/prx.git
-* cd radarmodel
+* cd prx
 * python setup.py install
